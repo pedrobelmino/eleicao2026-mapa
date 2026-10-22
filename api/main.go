@@ -250,8 +250,9 @@ func margemPercentual(margemVotos, vv int64) float64 {
 }
 
 type app struct {
-	cfg   config
-	dados *dados
+	cfg        config
+	dados      *dados
+	municipais map[string]*dadosUF
 }
 
 func novaApp(cfg config) (*app, error) {
@@ -259,7 +260,11 @@ func novaApp(cfg config) (*app, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &app{cfg: cfg, dados: dadosCarregados}, nil
+	return &app{
+		cfg:        cfg,
+		dados:      dadosCarregados,
+		municipais: carregarDadosMunicipais(cfg.DadosDir, dadosCarregados.Publico),
+	}, nil
 }
 
 func (a *app) handler() http.Handler {
@@ -280,11 +285,13 @@ func (a *app) rotear(w http.ResponseWriter, r *http.Request) {
 		manipulador = a.handleSerie2022
 	case "/api/ufs.geojson":
 		manipulador = a.handleUfsGeoJSON
-	case "/api/municipios.geojson":
-		manipulador = a.handleMunicipiosGeoJSON
 	default:
-		writeJSON(w, http.StatusNotFound, map[string]string{"erro": "não encontrado"})
-		return
+		var reconhecida bool
+		manipulador, reconhecida = a.rotaUFDados(r.URL.Path)
+		if !reconhecida {
+			writeJSON(w, http.StatusNotFound, map[string]string{"erro": "não encontrado"})
+			return
+		}
 	}
 
 	if r.Method != http.MethodGet && r.Method != http.MethodHead {
@@ -293,6 +300,44 @@ func (a *app) rotear(w http.ResponseWriter, r *http.Request) {
 	}
 
 	manipulador(w, r)
+}
+
+// rotaUFDados reconhece apenas /api/uf/{UF}/{recurso}. A UF é comparada com a
+// tabela fixa e o restante do caminho precisa casar exatamente; nada do path é
+// usado para montar nome de arquivo.
+func (a *app) rotaUFDados(caminho string) (http.HandlerFunc, bool) {
+	const prefixo = "/api/uf/"
+	if !strings.HasPrefix(caminho, prefixo) {
+		return nil, false
+	}
+
+	resto := strings.TrimPrefix(caminho, prefixo)
+	if resto == "" || strings.Contains(resto, "..") || strings.Contains(resto, `\`) {
+		return nil, false
+	}
+
+	partes := strings.Split(resto, "/")
+	if len(partes) != 2 || partes[0] == "" || partes[1] == "" {
+		return nil, false
+	}
+
+	uf := partes[0]
+	if !ufValida(uf) {
+		return nil, false
+	}
+
+	switch partes[1] {
+	case "municipios":
+		return a.handleUFMunicipios(uf), true
+	case "municipios.geojson":
+		return a.handleUFMunicipiosGeoJSON(uf), true
+	case "zonas":
+		return a.handleUFZonas(uf), true
+	case "zonas.geojson":
+		return a.handleUFZonasGeoJSON(uf), true
+	default:
+		return nil, false
+	}
 }
 
 type healthResposta struct {
@@ -474,10 +519,6 @@ func jsonString(valor string) []byte {
 
 func (a *app) handleUfsGeoJSON(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, a.dados.Malha)
-}
-
-func (a *app) handleMunicipiosGeoJSON(w http.ResponseWriter, _ *http.Request) {
-	writeJSON(w, http.StatusNotImplemented, map[string]string{"erro": "não implementado neste item"})
 }
 
 func writeJSON(w http.ResponseWriter, status int, valor any) {

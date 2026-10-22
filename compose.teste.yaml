@@ -1,0 +1,10 @@
+# Override de teste: mesma stack do compose.yaml, mas o front sai na 8100 para
+# provar antes de tocar em produção (127.0.0.1:8110 + 8099).
+#
+#   docker compose -p eleicao2026-teste -f compose.yaml -f compose.teste.yaml up -d --build
+#
+# `!override` troca a lista de portas herdada do compose.yaml (compose >= 2.24).
+services:
+  web:
+    ports: !override
+      - "127.0.0.1:8100:80"

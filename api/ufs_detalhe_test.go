@@ -1,0 +1,352 @@
+package main
+
+import (
+	"encoding/json"
+	"math"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+)
+
+func TestUFMunicipios(t *testing.T) {
+	aplicacao := novaAppDeTeste(t)
+
+	requisicao := httptest.NewRequest(http.MethodGet, "/api/uf/CE/municipios", nil)
+	resposta := httptest.NewRecorder()
+	aplicacao.handler().ServeHTTP(resposta, requisicao)
+
+	if resposta.Code != http.StatusOK {
+		t.Fatalf("status = %d, quer 200: %s", resposta.Code, resposta.Body.String())
+	}
+
+	var corpo struct {
+		UF              string `json:"uf"`
+		Eleicao         string `json:"eleicao"`
+		Turno           string `json:"turno"`
+		TotalMunicipios int    `json:"total_municipios"`
+		Totais          struct {
+			Total   int64 `json:"total"`
+			Validos int64 `json:"validos"`
+			Brancos int64 `json:"brancos"`
+			Nulos   int64 `json:"nulos"`
+			Secoes  int64 `json:"secoes"`
+		} `json:"totais"`
+		Municipios []struct {
+			CodIBGE int64 `json:"cd_ibge"`
+			CodTSE  int64 `json:"cd_tse"`
+			Total   int64 `json:"total"`
+			Secoes  int64 `json:"secoes"`
+		} `json:"municipios"`
+	}
+	if err := json.Unmarshal(resposta.Body.Bytes(), &corpo); err != nil {
+		t.Fatalf("decodificar resposta: %v", err)
+	}
+
+	if corpo.UF != "CE" {
+		t.Errorf("uf = %q, quer CE", corpo.UF)
+	}
+	if corpo.Eleicao == "" || corpo.Turno == "" {
+		t.Errorf("eleicao/turno vazios: %q/%q", corpo.Eleicao, corpo.Turno)
+	}
+	if corpo.TotalMunicipios != 184 {
+		t.Errorf("total_municipios = %d, quer 184", corpo.TotalMunicipios)
+	}
+	if len(corpo.Municipios) != 184 {
+		t.Errorf("municipios = %d, quer 184", len(corpo.Municipios))
+	}
+
+	var somaTotal, somaSecoes int64
+	for _, municipio := range corpo.Municipios {
+		somaTotal += municipio.Total
+		somaSecoes += municipio.Secoes
+	}
+	if somaTotal != 5910471 {
+		t.Errorf("soma dos totais = %d, quer 5910471", somaTotal)
+	}
+	if somaSecoes != 23765 {
+		t.Errorf("soma das seções = %d, quer 23765", somaSecoes)
+	}
+	if corpo.Totais.Total != 5910471 {
+		t.Errorf("totais.total = %d, quer 5910471", corpo.Totais.Total)
+	}
+	if corpo.Totais.Secoes != 23765 {
+		t.Errorf("totais.secoes = %d, quer 23765", corpo.Totais.Secoes)
+	}
+}
+
+func TestUFZonas(t *testing.T) {
+	aplicacao := novaAppDeTeste(t)
+
+	requisicao := httptest.NewRequest(http.MethodGet, "/api/uf/CE/zonas", nil)
+	resposta := httptest.NewRecorder()
+	aplicacao.handler().ServeHTTP(resposta, requisicao)
+
+	if resposta.Code != http.StatusOK {
+		t.Fatalf("status = %d, quer 200: %s", resposta.Code, resposta.Body.String())
+	}
+
+	var corpo struct {
+		UF         string `json:"uf"`
+		TotalZonas int    `json:"total_zonas"`
+		Totais     struct {
+			Total  int64 `json:"total"`
+			Secoes int64 `json:"secoes"`
+		} `json:"totais"`
+		Zonas []struct {
+			Zona    int64   `json:"zona"`
+			CodTSE  int64   `json:"cd_tse"`
+			Lat     float64 `json:"lat"`
+			Lon     float64 `json:"lon"`
+			Total   int64   `json:"total"`
+			Secoes  int64   `json:"secoes"`
+			AlturaM float64 `json:"altura_m"`
+			RaioM   float64 `json:"raio_m"`
+		} `json:"zonas"`
+	}
+	if err := json.Unmarshal(resposta.Body.Bytes(), &corpo); err != nil {
+		t.Fatalf("decodificar resposta: %v", err)
+	}
+
+	if corpo.TotalZonas != 205 {
+		t.Errorf("total_zonas = %d, quer 205", corpo.TotalZonas)
+	}
+	if len(corpo.Zonas) != 205 {
+		t.Errorf("zonas = %d, quer 205", len(corpo.Zonas))
+	}
+
+	var somaTotal, somaSecoes int64
+	for _, zona := range corpo.Zonas {
+		somaTotal += zona.Total
+		somaSecoes += zona.Secoes
+
+		if math.IsNaN(zona.Lat) || math.IsInf(zona.Lat, 0) || math.IsNaN(zona.Lon) || math.IsInf(zona.Lon, 0) {
+			t.Errorf("zona %d-%d com lat/lon não finitos: %v/%v", zona.CodTSE, zona.Zona, zona.Lat, zona.Lon)
+		}
+		if zona.AlturaM <= 0 {
+			t.Errorf("zona %d-%d com altura_m = %v, quer > 0", zona.CodTSE, zona.Zona, zona.AlturaM)
+		}
+		if zona.RaioM <= 0 {
+			t.Errorf("zona %d-%d com raio_m = %v, quer > 0", zona.CodTSE, zona.Zona, zona.RaioM)
+		}
+	}
+	if somaTotal != 5910471 {
+		t.Errorf("soma dos totais das zonas = %d, quer 5910471", somaTotal)
+	}
+	if somaSecoes != 23765 {
+		t.Errorf("soma das seções das zonas = %d, quer 23765", somaSecoes)
+	}
+	if corpo.Totais.Total != 5910471 {
+		t.Errorf("totais.total = %d, quer 5910471", corpo.Totais.Total)
+	}
+}
+
+func TestUFMunicipiosGeoJSON(t *testing.T) {
+	aplicacao := novaAppDeTeste(t)
+
+	requisicao := httptest.NewRequest(http.MethodGet, "/api/uf/CE/municipios.geojson", nil)
+	resposta := httptest.NewRecorder()
+	aplicacao.handler().ServeHTTP(resposta, requisicao)
+
+	if resposta.Code != http.StatusOK {
+		t.Fatalf("status = %d, quer 200: %s", resposta.Code, resposta.Body.String())
+	}
+	if contentType := resposta.Header().Get("Content-Type"); contentType != "application/geo+json" {
+		t.Errorf("Content-Type = %q, quer application/geo+json", contentType)
+	}
+
+	var colecao struct {
+		Type     string `json:"type"`
+		Features []struct {
+			ID         string `json:"id"`
+			Properties struct {
+				CodArea      string `json:"codarea"`
+				PartidoLider string `json:"partido_lider"`
+				Lider        string `json:"lider"`
+			} `json:"properties"`
+			Geometry json.RawMessage `json:"geometry"`
+		} `json:"features"`
+	}
+	if err := json.Unmarshal(resposta.Body.Bytes(), &colecao); err != nil {
+		t.Fatalf("decodificar resposta: %v", err)
+	}
+
+	if colecao.Type != "FeatureCollection" {
+		t.Errorf("type = %q, quer FeatureCollection", colecao.Type)
+	}
+	if len(colecao.Features) != 184 {
+		t.Fatalf("features = %d, quer 184", len(colecao.Features))
+	}
+
+	vistos := make(map[string]bool, len(colecao.Features))
+	for _, feature := range colecao.Features {
+		if len(feature.ID) != 7 {
+			t.Errorf("id = %q, quer 7 dígitos", feature.ID)
+		}
+		for _, digito := range feature.ID {
+			if digito < '0' || digito > '9' {
+				t.Errorf("id = %q não é numérico", feature.ID)
+				break
+			}
+		}
+		if vistos[feature.ID] {
+			t.Errorf("id repetido: %q", feature.ID)
+		}
+		vistos[feature.ID] = true
+
+		if feature.Properties.PartidoLider == "" {
+			t.Errorf("feature %s sem partido_lider", feature.ID)
+		}
+		if feature.Properties.Lider == "" {
+			t.Errorf("feature %s sem lider", feature.ID)
+		}
+		if len(feature.Geometry) == 0 {
+			t.Errorf("feature %s sem geometria", feature.ID)
+		}
+	}
+}
+
+func TestUFZonasGeoJSON(t *testing.T) {
+	aplicacao := novaAppDeTeste(t)
+
+	requisicao := httptest.NewRequest(http.MethodGet, "/api/uf/CE/zonas.geojson", nil)
+	resposta := httptest.NewRecorder()
+	aplicacao.handler().ServeHTTP(resposta, requisicao)
+
+	if resposta.Code != http.StatusOK {
+		t.Fatalf("status = %d, quer 200: %s", resposta.Code, resposta.Body.String())
+	}
+	if contentType := resposta.Header().Get("Content-Type"); contentType != "application/geo+json" {
+		t.Errorf("Content-Type = %q, quer application/geo+json", contentType)
+	}
+
+	var colecao struct {
+		Type     string `json:"type"`
+		Features []struct {
+			ID         string `json:"id"`
+			Properties struct {
+				Zona    int64   `json:"zona"`
+				CodTSE  int64   `json:"cd_tse"`
+				AlturaM float64 `json:"altura_m"`
+			} `json:"properties"`
+			Geometry struct {
+				Type        string         `json:"type"`
+				Coordinates [][][2]float64 `json:"coordinates"`
+			} `json:"geometry"`
+		} `json:"features"`
+	}
+	if err := json.Unmarshal(resposta.Body.Bytes(), &colecao); err != nil {
+		t.Fatalf("decodificar resposta: %v", err)
+	}
+
+	if colecao.Type != "FeatureCollection" {
+		t.Errorf("type = %q, quer FeatureCollection", colecao.Type)
+	}
+	if len(colecao.Features) != 205 {
+		t.Fatalf("features = %d, quer 205", len(colecao.Features))
+	}
+
+	for _, feature := range colecao.Features {
+		if feature.Geometry.Type != "Polygon" {
+			t.Errorf("feature %s: geometry.type = %q, quer Polygon", feature.ID, feature.Geometry.Type)
+			continue
+		}
+		if len(feature.Geometry.Coordinates) != 1 {
+			t.Errorf("feature %s: anéis = %d, quer 1", feature.ID, len(feature.Geometry.Coordinates))
+			continue
+		}
+		anel := feature.Geometry.Coordinates[0]
+		if len(anel) != 7 {
+			t.Errorf("feature %s: pontos = %d, quer 7", feature.ID, len(anel))
+			continue
+		}
+		if anel[0] != anel[len(anel)-1] {
+			t.Errorf("feature %s: primeiro ponto %v difere do último %v", feature.ID, anel[0], anel[len(anel)-1])
+		}
+		if feature.Properties.AlturaM <= 0 {
+			t.Errorf("feature %s: altura_m = %v, quer > 0", feature.ID, feature.Properties.AlturaM)
+		}
+	}
+}
+
+func TestUFRotasNaoEncontradas(t *testing.T) {
+	aplicacao := novaAppDeTeste(t)
+
+	casos := []string{
+		"/api/uf/XX/municipios",
+		"/api/uf/ce/municipios",
+		"/api/uf/CE/municipios/../../etc/passwd",
+		"/api/uf/CE/qualquercoisa",
+		"/api/uf/CE/%2e%2e/municipios",
+		"/api/uf//CE/municipios",
+		"/api/uf/CE/municipios/",
+	}
+	for _, caminho := range casos {
+		caminho := caminho
+		t.Run(caminho, func(t *testing.T) {
+			requisicao := httptest.NewRequest(http.MethodGet, caminho, nil)
+			resposta := httptest.NewRecorder()
+			aplicacao.handler().ServeHTTP(resposta, requisicao)
+
+			if resposta.Code != http.StatusNotFound {
+				t.Fatalf("status = %d, quer 404 (%s)", resposta.Code, resposta.Body.String())
+			}
+			var corpo map[string]string
+			if err := json.Unmarshal(resposta.Body.Bytes(), &corpo); err != nil {
+				t.Fatalf("decodificar resposta: %v", err)
+			}
+			if corpo["erro"] != "não encontrado" {
+				t.Errorf("erro = %q, quer %q", corpo["erro"], "não encontrado")
+			}
+		})
+	}
+}
+
+func TestUFSemDadosMunicipais(t *testing.T) {
+	aplicacao := novaAppDeTeste(t)
+
+	requisicao := httptest.NewRequest(http.MethodGet, "/api/uf/SP/municipios", nil)
+	resposta := httptest.NewRecorder()
+	aplicacao.handler().ServeHTTP(resposta, requisicao)
+
+	if resposta.Code != http.StatusNotFound {
+		t.Fatalf("status = %d, quer 404", resposta.Code)
+	}
+	var corpo map[string]string
+	if err := json.Unmarshal(resposta.Body.Bytes(), &corpo); err != nil {
+		t.Fatalf("decodificar resposta: %v", err)
+	}
+	if corpo["erro"] != "sem dados municipais para esta UF" {
+		t.Errorf("erro = %q, quer %q", corpo["erro"], "sem dados municipais para esta UF")
+	}
+}
+
+func TestUFZonasMetodoPost(t *testing.T) {
+	aplicacao := novaAppDeTeste(t)
+
+	requisicao := httptest.NewRequest(http.MethodPost, "/api/uf/CE/zonas", nil)
+	resposta := httptest.NewRecorder()
+	aplicacao.handler().ServeHTTP(resposta, requisicao)
+
+	if resposta.Code != http.StatusMethodNotAllowed {
+		t.Fatalf("status = %d, quer 405", resposta.Code)
+	}
+	var corpo map[string]string
+	if err := json.Unmarshal(resposta.Body.Bytes(), &corpo); err != nil {
+		t.Fatalf("decodificar resposta: %v", err)
+	}
+	if corpo["erro"] != "método não permitido" {
+		t.Errorf("erro = %q, quer %q", corpo["erro"], "método não permitido")
+	}
+}
+
+func TestRotaMunicipiosAntiga(t *testing.T) {
+	aplicacao := novaAppDeTeste(t)
+
+	requisicao := httptest.NewRequest(http.MethodGet, "/api/municipios.geojson", nil)
+	resposta := httptest.NewRecorder()
+	aplicacao.handler().ServeHTTP(resposta, requisicao)
+
+	if resposta.Code != http.StatusNotFound {
+		t.Fatalf("status = %d, quer 404", resposta.Code)
+	}
+}

@@ -1,4 +1,13 @@
-export default function Legend() {
+function nivelDoZoom(zoom) {
+  const z = Number(zoom)
+  if (!Number.isFinite(z) || z < 4.6) return 'UF'
+  if (z < 6.6) return 'zona'
+  return 'município'
+}
+
+export default function Legend({ zoom }) {
+  const nivel = nivelDoZoom(zoom)
+
   return (
     <aside className="legend" aria-label="Legenda do mapa">
       <div className="legend-title">margem do líder (pontos)</div>
@@ -11,6 +20,14 @@ export default function Legend() {
       <div className="legend-parties" aria-hidden="true">
         <span className="legend-party legend-party--pl">PL</span>
         <span className="legend-party legend-party--pt">PT</span>
+      </div>
+      <div className="nivel-indicador" data-nivel={nivel}>
+        <span>nível</span>
+        <strong>{nivel}</strong>
+      </div>
+      <div className="legend-niveis">
+        <span>zona eleitoral: altura = votos</span>
+        <span>município: cor do líder</span>
       </div>
       <p className="legend-note">fonte: TSE — dados públicos</p>
     </aside>
