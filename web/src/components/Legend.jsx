@@ -1,35 +1,62 @@
 // A legenda fala de UM nível por vez: com o zoom mudando a camada que está na
 // frente, misturar "zona" e "município" na mesma tela confunde. Os limites são
 // os mesmos usados pelas camadas do MapView (importados de mapa.js).
-import { NIVEIS_ZOOM_TEXTO, nivelPorZoom, ROTULO_NIVEL } from '../mapa.js'
+//
+// Régua de níveis (a mesma de nivelPorZoom, em mapa.js):
+//   macro (zoom < ZOOM_ZONA)         -> UF colorida por MARGEM
+//   estado (ZOOM_ZONA..MUNICIPIO)    -> ZONA eleitoral, prisma de 4 segmentos
+//   município (MUNICIPIO..LOCAL)     -> cor do líder no MUNICÍPIO
+//   local (>= ZOOM_LOCAL)            -> urna
+//
+// A regra do concreto só vale onde há cor de candidato disputando com apuração
+// parcial (macro e estado) — por isso o texto dela aparece só nesses níveis.
+import {
+  COR_CONCRETO,
+  CORES_PARTIDO,
+  NIVEIS_ZOOM_TEXTO,
+  nivelPorZoom,
+  ROTULO_NIVEL,
+} from '../mapa.js'
 
 const TEXTOS = {
-  uf: {
-    titulo: 'estado (UF)',
+  macro: {
+    titulo: 'estado (UF) — margem',
     mostraBarra: true,
-    itens: ['cor = partido do líder', 'intensidade = margem do líder (pontos)'],
+    mostraSegmentos: false,
+    regraConcreto: true,
+    itens: [
+      'cor = partido do líder na UF',
+      'tonalidade = margem do líder em pontos (0 a 40+)',
+      'toque na UF = abrir as zonas eleitorais',
+    ],
   },
   zona: {
-    titulo: 'zona eleitoral',
+    titulo: 'zona eleitoral — composição',
     mostraBarra: false,
+    mostraSegmentos: true,
+    regraConcreto: true,
     itens: [
-      'altura do prisma = votos da zona',
-      'cor = partido do líder na zona',
+      'altura do prisma = votos válidos da zona',
+      'os 4 segmentos empilhados dividem esses votos (abaixo)',
       'toque no prisma = detalhe da zona',
     ],
   },
   municipio: {
     titulo: 'município',
     mostraBarra: true,
+    mostraSegmentos: false,
+    regraConcreto: true,
     itens: [
       'cor = partido do líder no município',
-      'intensidade = margem do líder (pontos)',
+      'tonalidade = margem do líder em pontos (0 a 40+)',
       'toque no município = abrir locais de votação',
     ],
   },
   local: {
     titulo: 'local de votação (urna)',
     mostraBarra: false,
+    mostraSegmentos: false,
+    regraConcreto: false,
     itens: [
       'anel = % apurado',
       'disco sólido = 100%',
@@ -40,9 +67,25 @@ const TEXTOS = {
   },
 }
 
-function chaveDoZoom(zoom) {
+// Os 4 segmentos empilhados da barra de composição da zona, na ordem em que
+// sobem no prisma (base -> topo). As cores são as mesmas do MapView: se mudar
+// lá, muda aqui.
+const SEGMENTOS_ZONA = [
+  { rotulo: 'Lula (PT)', cor: CORES_PARTIDO.PT },
+  { rotulo: 'Flávio (PL)', cor: CORES_PARTIDO.PL },
+  { rotulo: 'outros', cor: '#6b7280' },
+  { rotulo: 'não apurado', cor: COR_CONCRETO },
+]
+
+export const REGRA_CONCRETO =
+  'regra do concreto: UF com apuração em andamento não recebe cor de ' +
+  'candidato — fica em cinza-concreto até secoes_apuradas = secoes_total.'
+
+// No zoom macro o nível do mapa é 'estado' (a UF é a unidade visível), mas o
+// texto da legenda é o da margem; por isso a chave própria 'macro'.
+export function chaveDoZoom(zoom) {
   const nivel = nivelPorZoom(zoom)
-  return nivel === 'estado' ? 'uf' : nivel
+  return nivel === 'estado' ? 'macro' : nivel
 }
 
 export default function Legend({ zoom }) {
@@ -52,7 +95,9 @@ export default function Legend({ zoom }) {
   const texto = TEXTOS[chave] || {
     titulo: ROTULO_NIVEL[nivelPorZoom(zoom)] || String(chave),
     mostraBarra: true,
-    itens: ['cor = partido do líder', 'intensidade = margem do líder (pontos)'],
+    mostraSegmentos: false,
+    regraConcreto: false,
+    itens: ['cor = partido do líder', 'tonalidade = margem do líder (pontos)'],
   }
 
   return (
@@ -61,35 +106,54 @@ export default function Legend({ zoom }) {
       data-nivel={chave}
       aria-label={`Legenda do mapa — nível ${texto.titulo}`}
     >
-      <div className="legend-title">
-        nível: {texto.titulo}
-      </div>
+      <div className="legend-title">nível: {texto.titulo}</div>
 
       {texto.mostraBarra ? (
         <>
           <div className="legend-bar" aria-hidden="true" />
           <div className="legend-scale" aria-hidden="true">
             <span>40+</span>
+            <span>margem em pontos</span>
             <span>0</span>
             <span>40+</span>
           </div>
-          <div className="legend-parties" aria-hidden="true">
-            <span className="legend-party legend-party--pl">PL</span>
-            <span className="legend-party legend-party--pt">PT</span>
-          </div>
         </>
-      ) : (
-        <div className="legend-parties" aria-hidden="true">
-          <span className="legend-party legend-party--pl">PL</span>
-          <span className="legend-party legend-party--pt">PT</span>
-        </div>
-      )}
+      ) : null}
+
+      {texto.mostraSegmentos ? (
+        <ul
+          className="legend-segmentos"
+          aria-label="Segmentos empilhados do prisma da zona"
+        >
+          {SEGMENTOS_ZONA.map((segmento) => (
+            <li key={segmento.rotulo}>
+              <i
+                aria-hidden="true"
+                className="legend-segmento-cor"
+                style={{ background: segmento.cor }}
+              />
+              {segmento.rotulo}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
+      <div className="legend-parties" aria-hidden="true">
+        <span className="legend-party legend-party--pl">PL</span>
+        <span className="legend-party legend-party--pt">PT</span>
+      </div>
 
       <ul className="legend-itens">
         {texto.itens.map((item) => (
           <li key={item}>{item}</li>
         ))}
       </ul>
+
+      {texto.regraConcreto ? (
+        <p className="legend-regra" data-regra="concreto">
+          {REGRA_CONCRETO}
+        </p>
+      ) : null}
 
       <p className="legend-note">
         níveis por zoom: {NIVEIS_ZOOM_TEXTO.join(' → ')}

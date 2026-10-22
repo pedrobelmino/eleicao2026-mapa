@@ -23,6 +23,11 @@ type config struct {
 	Serie2022File string
 	Porta         string
 	TSEBase       string
+	// ApuracaoDemo simula apuração parcial por UF (UF -> % de seções
+	// apuradas). Vazio = dados reais. Só existe para provar a exibição da
+	// apuração em andamento (barra com segmento de concreto e estado em
+	// concreto) sem esperar o dia da eleição. NUNCA ligado em produção.
+	ApuracaoDemo map[string]float64
 }
 
 func carregarConfig() config {
@@ -34,7 +39,48 @@ func carregarConfig() config {
 		Serie2022File: envOu("SERIE_2022_FILE", filepath.Join(dadosDir, "serie_historica_2022.jsonl")),
 		Porta:         envOu("PORT", "8080"),
 		TSEBase:       envOu("TSE_BASE", "https://resultados.tse.jus.br/oficial/ele2026"),
+		ApuracaoDemo:  lerApuracaoDemo(os.Getenv("APURACAO_DEMO")),
 	}
+}
+
+// lerApuracaoDemo lê APURACAO_DEMO="CE=78,RR=100" e devolve UF -> percentual
+// de seções apuradas simulada. Qualquer par inválido é ignorado, e a UF fora
+// da tabela fixa também (a tabela é o único de/para aceito).
+func lerApuracaoDemo(bruto string) map[string]float64 {
+	bruto = strings.TrimSpace(bruto)
+	if bruto == "" {
+		return nil
+	}
+
+	resultado := make(map[string]float64)
+	for _, par := range strings.Split(bruto, ",") {
+		partes := strings.Split(strings.TrimSpace(par), "=")
+		if len(partes) != 2 {
+			continue
+		}
+		sigla := strings.ToUpper(strings.TrimSpace(partes[0]))
+		if !ufValida(sigla) {
+			log.Printf("aviso: APURACAO_DEMO ignora UF desconhecida %q", sigla)
+			continue
+		}
+		valor, err := strconv.ParseFloat(strings.TrimSpace(partes[1]), 64)
+		if err != nil || math.IsNaN(valor) || math.IsInf(valor, 0) {
+			log.Printf("aviso: APURACAO_DEMO ignora percentual inválido em %q", par)
+			continue
+		}
+		if valor < 0 {
+			valor = 0
+		}
+		if valor > 100 {
+			valor = 100
+		}
+		resultado[sigla] = valor
+	}
+	if len(resultado) == 0 {
+		return nil
+	}
+	log.Printf("APURACAO_DEMO ativo (dados de apuração simulados, não são do TSE): %v", resultado)
+	return resultado
 }
 
 func envOu(chave, padrao string) string {
@@ -143,6 +189,10 @@ type propriedadesUF struct {
 	PartidoLider string  `json:"partido_lider"`
 	PctApurado   float64 `json:"pct_apurado"`
 	VV           int64   `json:"vv"`
+	// Seções apuradas / total da UF, lidas do oficial (st/ts). A cor do
+	// estado só é liberada quando secoes_apuradas == secoes_total.
+	SecoesApuradas int64 `json:"secoes_apuradas"`
+	SecoesTotal    int64 `json:"secoes_total"`
 }
 
 type featureSaida struct {
@@ -160,9 +210,13 @@ type dados struct {
 	Publico      *publico
 	PublicoBruto json.RawMessage
 	Malha        colecaoGeoJSON
+	// Curadoria do card de estado (figurinhas emoji + destaques + apelido),
+	// servida crua em /api/estados/identidade. Opcional: sem o arquivo a rota
+	// devolve {"UF":{}} e o card cai no layout sem figurinha.
+	Identidade json.RawMessage
 }
 
-func carregarDados(dadosDir string) (*dados, error) {
+func carregarDados(dadosDir string, apuracaoDemo map[string]float64) (*dados, error) {
 	caminhoPublico := filepath.Join(dadosDir, "publico.json")
 	caminhoMalha := filepath.Join(dadosDir, "malha_uf.geojson")
 
@@ -204,20 +258,24 @@ func carregarDados(dadosDir string) (*dados, error) {
 			return nil, fmt.Errorf("publico %s: UF %s (codarea %s) ausente", caminhoPublico, uf.Sigla, codArea)
 		}
 
+		secoesApuradas, secoesTotal, pctApurado := apuracaoDaUF(dadosUF, apuracaoDemo)
+
 		features = append(features, featureSaida{
 			Type: feature.Type,
 			Properties: propriedadesUF{
-				CodArea:      codArea,
-				UF:           uf.Sigla,
-				Nome:         uf.Nome,
-				Regiao:       dadosUF.Regiao,
-				Lider:        dadosUF.Lider,
-				LiderPct:     dadosUF.LiderPct,
-				MargemVotos:  dadosUF.MargemVotos,
-				MargemPct:    margemPercentual(dadosUF.MargemVotos, dadosUF.VV),
-				PartidoLider: partidoDoLider(dadosUF),
-				PctApurado:   dadosUF.PctApurado,
-				VV:           dadosUF.VV,
+				CodArea:        codArea,
+				UF:             uf.Sigla,
+				Nome:           uf.Nome,
+				Regiao:         dadosUF.Regiao,
+				Lider:          dadosUF.Lider,
+				LiderPct:       dadosUF.LiderPct,
+				MargemVotos:    dadosUF.MargemVotos,
+				MargemPct:      margemPercentual(dadosUF.MargemVotos, dadosUF.VV),
+				PartidoLider:   partidoDoLider(dadosUF),
+				PctApurado:     pctApurado,
+				VV:             dadosUF.VV,
+				SecoesApuradas: secoesApuradas,
+				SecoesTotal:    secoesTotal,
 			},
 			Geometry: feature.Geometry,
 		})
@@ -231,6 +289,39 @@ func carregarDados(dadosDir string) (*dados, error) {
 			Features: features,
 		},
 	}, nil
+}
+
+// apuracaoDaUF devolve (seções apuradas, seções totais, pct apurado) da UF.
+// A fonte oficial é st/ts do TSE (publico.json) e o percentual NUNCA é
+// estimado: é a razão entre os dois. No modo demo (APURACAO_DEMO) o número de
+// seções apuradas é reduzido deterministicamente para provar a exibição da
+// apuração em andamento, sem tocar nos dados oficiais.
+func apuracaoDaUF(uf ufPublico, apuracaoDemo map[string]float64) (int64, int64, float64) {
+	total := uf.Ts
+	if total <= 0 {
+		total = uf.St
+	}
+	if total < 0 {
+		total = 0
+	}
+
+	apuradas := uf.St
+	if apuradas < 0 {
+		apuradas = 0
+	}
+	if apuradas > total {
+		apuradas = total
+	}
+
+	if fator, existe := apuracaoDemo[uf.UF]; existe {
+		if fator >= 100 {
+			apuradas = total
+		} else {
+			apuradas = int64(math.Floor(float64(total) * fator / 100))
+		}
+	}
+
+	return apuradas, total, percentual(apuradas, total)
 }
 
 func partidoDoLider(uf ufPublico) string {
@@ -256,14 +347,14 @@ type app struct {
 }
 
 func novaApp(cfg config) (*app, error) {
-	dadosCarregados, err := carregarDados(cfg.DadosDir)
+	dadosCarregados, err := carregarDados(cfg.DadosDir, cfg.ApuracaoDemo)
 	if err != nil {
 		return nil, err
 	}
 	return &app{
 		cfg:        cfg,
 		dados:      dadosCarregados,
-		municipais: carregarDadosMunicipais(cfg.DadosDir, dadosCarregados.Publico),
+		municipais: carregarDadosMunicipais(cfg.DadosDir, dadosCarregados.Publico, cfg.ApuracaoDemo),
 	}, nil
 }
 

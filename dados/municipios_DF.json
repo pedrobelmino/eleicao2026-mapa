@@ -1,0 +1,231 @@
+{
+ "gerado_em": "2026-10-06T14:03:43-03:00",
+ "fonte": "TSE dados abertos — votacao_secao_2026_BR.zip (eleição 6257, turno 1) + eleitorado_local_votacao_2026.zip",
+ "gerado_por": "gera_municipios_secoes.py",
+ "uf": "DF",
+ "eleicao": "6257",
+ "turno": 1,
+ "cargo": "Presidente",
+ "candidatos": [
+  {
+   "n": "22",
+   "nmu": "FLAVIO BOLSONARO",
+   "nm": "FLAVIO NANTES BOLSONARO",
+   "votos": 909616,
+   "pct": 51.31
+  },
+  {
+   "n": "13",
+   "nmu": "LULA",
+   "nm": "LUIZ INÁCIO LULA DA SILVA",
+   "votos": 675627,
+   "pct": 38.11
+  },
+  {
+   "n": "55",
+   "nmu": "RONALDO CAIADO",
+   "nm": "RONALDO RAMOS CAIADO",
+   "votos": 85076,
+   "pct": 4.8
+  },
+  {
+   "n": "14",
+   "nmu": "RENAN SANTOS",
+   "nm": "RENAN ANTONIO FERREIRA DOS SANTOS",
+   "votos": 46714,
+   "pct": 2.63
+  },
+  {
+   "n": "70",
+   "nmu": "ESCRITOR AUGUSTO CURY",
+   "nm": "AUGUSTO JORGE CURY",
+   "votos": 45979,
+   "pct": 2.59
+  },
+  {
+   "n": "30",
+   "nmu": "ZEMA",
+   "nm": "ROMEU ZEMA NETO",
+   "votos": 4915,
+   "pct": 0.28
+  },
+  {
+   "n": "80",
+   "nmu": "SAMARA",
+   "nm": "SAMARA MARTINS DA SILVA FEITOSA",
+   "votos": 2297,
+   "pct": 0.13
+  },
+  {
+   "n": "16",
+   "nmu": "HERTZ DIAS",
+   "nm": "HERTZ DA CONCEICAO DIAS",
+   "votos": 828,
+   "pct": 0.05
+  },
+  {
+   "n": "27",
+   "nmu": "CLARIANA BARAO",
+   "nm": "CLARIANA ZACARKIM BARAO",
+   "votos": 716,
+   "pct": 0.04
+  },
+  {
+   "n": "29",
+   "nmu": "RUI COSTA PIMENTA",
+   "nm": "RUI COSTA PIMENTA",
+   "votos": 382,
+   "pct": 0.02
+  },
+  {
+   "n": "21",
+   "nmu": "EDMILSON COSTA",
+   "nm": "EDMILSON SILVA COSTA",
+   "votos": 334,
+   "pct": 0.02
+  },
+  {
+   "n": "35",
+   "nmu": "VETERINÁRIO WILSON GRASSI",
+   "nm": "WILSON GRASSI JUNIOR",
+   "votos": 324,
+   "pct": 0.02
+  },
+  {
+   "n": "28",
+   "nmu": "LEONARDO ALVES DE ARAUJO",
+   "nm": "LEONARDO ALVES DE ARAUJO",
+   "votos": 57,
+   "pct": 0.0
+  }
+ ],
+ "municipios": [
+  {
+   "cd_tse": 97012,
+   "cd_ibge": 5300108,
+   "nome": "BRASÍLIA",
+   "votos": {
+    "22": 909616,
+    "13": 675627,
+    "55": 85076,
+    "14": 46714,
+    "70": 45979,
+    "30": 4915,
+    "80": 2297,
+    "16": 828,
+    "27": 716,
+    "29": 382,
+    "21": 334,
+    "35": 324,
+    "28": 57
+   },
+   "votos_outros": 0,
+   "brancos": 25362,
+   "nulos": 33169,
+   "validos": 1772865,
+   "total": 1831396,
+   "secoes": 6969,
+   "secoes_com_coordenada": 6969,
+   "lider": "22",
+   "margem": 233989,
+   "margem_pct": 13.2
+  }
+ ],
+ "totais": {
+  "22": 909616,
+  "13": 675627,
+  "55": 85076,
+  "14": 46714,
+  "70": 45979,
+  "30": 4915,
+  "80": 2297,
+  "16": 828,
+  "27": 716,
+  "29": 382,
+  "21": 334,
+  "35": 324,
+  "28": 57,
+  "brancos": 25362,
+  "nulos": 33169,
+  "validos": 1772865,
+  "total": 1831396,
+  "municipios": 1,
+  "secoes": 6969
+ },
+ "conferencia": {
+  "status": "ok",
+  "uf_json": {
+   "fonte": "https://resultados.tse.jus.br/oficial/ele2026/6257/dados/df/df-c0001-e006257-u.json",
+   "vv": 1772808,
+   "tv": 1831396,
+   "candidatos": {
+    "22": 909616,
+    "55": 85076,
+    "13": 675627,
+    "16": 828,
+    "21": 334,
+    "27": 716,
+    "30": 4915,
+    "70": 45979,
+    "35": 324,
+    "80": 2297,
+    "14": 46714,
+    "29": 382
+   }
+  },
+  "dif_municipios_vs_uf": {
+   "22": 0,
+   "55": 0,
+   "13": 0,
+   "16": 0,
+   "21": 0,
+   "27": 0,
+   "30": 0,
+   "70": 0,
+   "35": 0,
+   "80": 0,
+   "14": 0,
+   "29": 0
+  },
+  "dif_secoes_vs_municipios": {
+   "22": 0,
+   "13": 0,
+   "55": 0,
+   "14": 0,
+   "70": 0,
+   "30": 0,
+   "80": 0,
+   "16": 0,
+   "27": 0,
+   "29": 0,
+   "21": 0,
+   "35": 0,
+   "28": 0
+  },
+  "checagem_total": {
+   "validos": 1772865,
+   "brancos": 25362,
+   "nulos": 33169,
+   "soma": 1831396,
+   "total": 1831396,
+   "dif": 0
+  },
+  "secoes_cobertura": {
+   "com_voto": 6969,
+   "com_coordenada": 6969,
+   "pct": 100.0
+  },
+  "votaveis_sem_oficial": [
+   {
+    "n": "28",
+    "nome": "LEONARDO ALVES DE ARAUJO",
+    "votos": 57
+   }
+  ],
+  "total_votos_sem_oficial": 57,
+  "nomes_sem_ibge": [],
+  "explicacao_diferenca": "57 votos de votável sem registro (presente no dump e ausente do JSON oficial); o TSE os contabiliza em tv - vv, junto com brancos (95) e nulos (96). Por isso a soma dos votos de candidatos (validos) pode superar vv. JSON oficial: vv=1772808, tv=1831396, vb=25362, vn=33169, vnt=57.",
+  "apelidos_ibge": {},
+  "ibge_ambiguos": []
+ }
+}

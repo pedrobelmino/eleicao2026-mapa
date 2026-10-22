@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strconv"
+	"strings"
 )
 
 // Dados municipais e seccionais de uma UF. Tudo é carregado uma única vez no
@@ -129,6 +130,20 @@ type zonaResposta struct {
 	PctApurado   float64 `json:"pct_apurado"`
 	AlturaM      float64 `json:"altura_m"`
 	RaioM        float64 `json:"raio_m"`
+	// Votos por candidato (13 = Lula/PT, 22 = Flávio Bolsonaro/PL) e o que
+	// sobrou para os demais. São a matéria-prima da barra de composição.
+	V13            int64 `json:"v13"`
+	V22            int64 `json:"v22"`
+	VOutros        int64 `json:"voutros"`
+	Validos        int64 `json:"validos"`
+	SecoesTotal    int64 `json:"secoes_total"`
+	SecoesApuradas int64 `json:"secoes_apuradas"`
+	// Segmentos da barra empilhada, em % dos votos válidos potenciais da zona.
+	// Somam 100 (o resto apurado é bar_nao_apurado).
+	BarFlavio     float64 `json:"bar_flavio"`
+	BarLula       float64 `json:"bar_lula"`
+	BarOutros     float64 `json:"bar_outros"`
+	BarNaoApurado float64 `json:"bar_nao_apurado"`
 	// LiderPct só é usado no GeoJSON de zonas; não faz parte da resposta tabular.
 	LiderPct float64 `json:"-"`
 }
@@ -233,6 +248,18 @@ type propriedadesZonaGeo struct {
 	Secoes       int64   `json:"secoes"`
 	PctApurado   float64 `json:"pct_apurado"`
 	AlturaM      float64 `json:"altura_m"`
+	// Barra de composição: votos por candidato e os 4 segmentos empilhados
+	// (Lula -> Flávio -> outros -> não apurado), em % e somando 100.
+	V13            int64   `json:"v13"`
+	V22            int64   `json:"v22"`
+	VOutros        int64   `json:"voutros"`
+	Validos        int64   `json:"validos"`
+	SecoesTotal    int64   `json:"secoes_total"`
+	SecoesApuradas int64   `json:"secoes_apuradas"`
+	BarLula        float64 `json:"bar_lula"`
+	BarFlavio      float64 `json:"bar_flavio"`
+	BarOutros      float64 `json:"bar_outros"`
+	BarNaoApurado  float64 `json:"bar_nao_apurado"`
 }
 
 type geometriaPoligono struct {
@@ -270,27 +297,80 @@ func ufValida(sigla string) bool {
 	return false
 }
 
-// carregarDadosMunicipais tenta carregar os arquivos municipais no boot. Qualquer
-// ausência ou falha gera apenas aviso no log: a API continua no ar sem esses dados.
-func carregarDadosMunicipais(dadosDir string, pub *publico) map[string]*dadosUF {
-	caminhoMunicipios := filepath.Join(dadosDir, "municipios.json")
+// arquivosMunicipios devolve os arquivos de dados municipais disponíveis: um por
+// UF (municipios_<UF>.json) e, por compatibilidade, o municipios.json das
+// instalações antigas, que só tinham o Ceará. O nome do arquivo nunca decide a
+// UF — isso sai do conteúdo, como sempre saiu.
+func arquivosMunicipios(dadosDir string) []string {
+	porUF, err := filepath.Glob(filepath.Join(dadosDir, "municipios_*.json"))
+	if err != nil {
+		log.Printf("aviso: glob de municipios_*.json falhou em %s: %v", dadosDir, err)
+		porUF = nil
+	}
+	sort.Strings(porUF)
+
+	if _, err := os.Stat(filepath.Join(dadosDir, "municipios.json")); err == nil {
+		porUF = append(porUF, filepath.Join(dadosDir, "municipios.json"))
+	}
+	return porUF
+}
+
+// carregarDadosMunicipais carrega no boot TODAS as UFs que tiverem arquivo. Cada
+// UF é independente: arquivo ausente ou inválido vira aviso no log e a UF fica
+// de fora, sem derrubar as outras. (Antes, o arquivo era um só e a UF vinha
+// dele; por isso SP, RJ, MG e BA respondiam "sem dados municipais".)
+func carregarDadosMunicipais(dadosDir string, pub *publico, apuracaoDemo map[string]float64) map[string]*dadosUF {
+	caminhos := arquivosMunicipios(dadosDir)
+	if len(caminhos) == 0 {
+		log.Printf("aviso: sem dados municipais em %s (procurei municipios_<UF>.json)", dadosDir)
+		return nil
+	}
+
+	resultado := make(map[string]*dadosUF, len(caminhos))
+	for _, caminho := range caminhos {
+		dados, uf, err := carregaUFDados(dadosDir, caminho, pub, apuracaoDemo)
+		if err != nil {
+			log.Printf("aviso: %s ignorado: %v", caminho, err)
+			continue
+		}
+		if _, repetida := resultado[uf]; repetida {
+			log.Printf("aviso: %s repetiu a UF %s; mantida a primeira carga", caminho, uf)
+			continue
+		}
+		resultado[uf] = dados
+	}
+
+	if len(resultado) == 0 {
+		log.Printf("aviso: nenhuma UF carregou dados municipais; rotas municipais desativadas")
+		return nil
+	}
+
+	ufs := make([]string, 0, len(resultado))
+	for uf := range resultado {
+		ufs = append(ufs, uf)
+	}
+	sort.Strings(ufs)
+	log.Printf("dados municipais no ar: %d UFs (%s)", len(ufs), strings.Join(ufs, " "))
+	return resultado
+}
+
+// carregaUFDados monta as respostas de uma UF a partir do arquivo dela. A UF
+// devolvida é a do conteúdo do arquivo, nunca a do caminho.
+func carregaUFDados(dadosDir, caminhoMunicipios string, pub *publico, apuracaoDemo map[string]float64) (*dadosUF, string, error) {
 	conteudoMunicipios, err := os.ReadFile(caminhoMunicipios)
 	if err != nil {
-		log.Printf("aviso: sem dados municipais em %s: %v", caminhoMunicipios, err)
-		return nil
+		return nil, "", fmt.Errorf("leitura: %w", err)
 	}
 
 	var arquivo municipiosArquivo
 	if err := json.Unmarshal(conteudoMunicipios, &arquivo); err != nil {
-		log.Printf("aviso: não foi possível decodificar %s: %v", caminhoMunicipios, err)
-		return nil
+		return nil, "", fmt.Errorf("json inválido: %w", err)
 	}
 
 	// A UF sai do próprio arquivo, nunca do caminho da requisição.
 	uf := arquivo.UF
 	if !ufValida(uf) {
-		log.Printf("aviso: municipios.json declara uf=%q fora da tabela; rotas municipais desativadas", uf)
-		return nil
+		return nil, "", fmt.Errorf("uf=%q fora da tabela", uf)
 	}
 
 	// O nome dos arquivos é montado com a tabela fixa + UF já validada.
@@ -298,26 +378,26 @@ func carregarDadosMunicipais(dadosDir string, pub *publico) map[string]*dadosUF 
 	conteudoMalha, err := os.ReadFile(caminhoMalha)
 	if err != nil {
 		log.Printf("aviso: malha municipal de %s indisponível em %s: %v", uf, caminhoMalha, err)
-		return nil
+		return nil, "", err
 	}
 
 	var malha malhaEntrada
 	if err := json.Unmarshal(conteudoMalha, &malha); err != nil {
 		log.Printf("aviso: não foi possível decodificar %s: %v", caminhoMalha, err)
-		return nil
+		return nil, "", err
 	}
 
 	caminhoSecoes := filepath.Join(dadosDir, fmt.Sprintf("secoes_%s.json", uf))
 	conteudoSecoes, err := os.ReadFile(caminhoSecoes)
 	if err != nil {
 		log.Printf("aviso: seções de %s indisponíveis em %s: %v", uf, caminhoSecoes, err)
-		return nil
+		return nil, "", err
 	}
 
 	var secoes secoesArquivo
 	if err := json.Unmarshal(conteudoSecoes, &secoes); err != nil {
 		log.Printf("aviso: não foi possível decodificar %s: %v", caminhoSecoes, err)
-		return nil
+		return nil, "", err
 	}
 
 	indiceCampos := make(map[string]int, len(secoes.Campos))
@@ -326,8 +406,7 @@ func carregarDadosMunicipais(dadosDir string, pub *publico) map[string]*dadosUF 
 	}
 	for _, nome := range []string{"zona", "cd_tse", "lat", "lon", "v13", "v22", "voutros", "total"} {
 		if _, existe := indiceCampos[nome]; !existe {
-			log.Printf("aviso: secoes_%s.json sem o campo %q; rotas municipais desativadas", uf, nome)
-			return nil
+			return nil, "", fmt.Errorf("secoes_%s.json sem o campo %q", uf, nome)
 		}
 	}
 
@@ -339,7 +418,13 @@ func carregarDadosMunicipais(dadosDir string, pub *publico) map[string]*dadosUF 
 
 	municipios, nomesPorCDTSE := montarMunicipios(arquivo, candidatos, partidos)
 	municipiosGeo := montarMunicipiosGeo(municipios, malha)
-	zonas, zonasGeo, semCoordenada := montarZonas(arquivo, secoes, indiceCampos, candidatos, partidos, nomesPorCDTSE)
+	// Fator de apuração da UF: 100% nos dados reais; no modo demo vem de
+	// APURACAO_DEMO e reduz as seções apuradas de cada zona na mesma proporção.
+	fatorApuracao := 100.0
+	if fator, existe := apuracaoDemo[uf]; existe {
+		fatorApuracao = fator
+	}
+	zonas, zonasGeo, semCoordenada := montarZonas(arquivo, secoes, indiceCampos, candidatos, partidos, nomesPorCDTSE, fatorApuracao)
 	locais := montarLocais(arquivo, secoes, indiceCampos, candidatos, partidos, nomesPorCDTSE)
 
 	respostaMunicipios := municipiosResposta{
@@ -368,15 +453,13 @@ func carregarDadosMunicipais(dadosDir string, pub *publico) map[string]*dadosUF 
 	}
 	log.Printf("dados de locais %s: %d locais agregados em %d municípios", uf, totalLocais, len(locais))
 
-	return map[string]*dadosUF{
-		uf: {
-			Municipios:    respostaMunicipios,
-			MunicipiosGeo: municipiosGeo,
-			Zonas:         zonas,
-			ZonasGeo:      zonasGeo,
-			Locais:        locais,
-		},
-	}
+	return &dadosUF{
+		Municipios:    respostaMunicipios,
+		MunicipiosGeo: municipiosGeo,
+		Zonas:         zonas,
+		ZonasGeo:      zonasGeo,
+		Locais:        locais,
+	}, uf, nil
 }
 
 // partidosPorCodigo casa o código do candidato (municipios.json) com o partido
@@ -530,9 +613,13 @@ type acumuladoZona struct {
 	somaLat       float64
 	somaLon       float64
 	comCoordenada int64
+	// secoesTotal é o número de seções da zona no dump; secoes são as
+	// efetivamente apuradas (iguais ao total nos dados reais).
+	secoesTotal    int64
+	secoesApuradas int64
 }
 
-func montarZonas(arquivo municipiosArquivo, secoes secoesArquivo, indiceCampos map[string]int, candidatos map[string]candidatoMunicipio, partidos map[string]string, nomesPorCDTSE map[int64]string) (zonasResposta, colecaoZonasGeo, int) {
+func montarZonas(arquivo municipiosArquivo, secoes secoesArquivo, indiceCampos map[string]int, candidatos map[string]candidatoMunicipio, partidos map[string]string, nomesPorCDTSE map[int64]string, fatorApuracao float64) (zonasResposta, colecaoZonasGeo, int) {
 	nomesSecoes := make(map[int64]string, len(secoes.Municipios))
 	for chave, nome := range secoes.Municipios {
 		codigo, err := strconv.ParseInt(chave, 10, 64)
@@ -542,6 +629,30 @@ func montarZonas(arquivo municipiosArquivo, secoes secoesArquivo, indiceCampos m
 		nomesSecoes[codigo] = nome
 	}
 
+	// 1ª passada: total de seções por zona, lido do próprio dump (nada de
+	// estimativa). Serve de denominador do pct_apurado da zona.
+	totalPorZona := make(map[[2]int64]int64)
+	for _, secaoBruta := range secoes.Secoes {
+		var partes []json.RawMessage
+		if err := json.Unmarshal(secaoBruta, &partes); err != nil {
+			continue
+		}
+		chave := [2]int64{
+			valorInt64(partes, indiceCampos, "cd_tse"),
+			valorInt64(partes, indiceCampos, "zona"),
+		}
+		totalPorZona[chave]++
+	}
+
+	// Corte da apuração por zona. 100% (dados reais) = todas apuradas; no modo
+	// demo cada zona apura as primeiras k seções da sua ordem no dump, o que
+	// mantém o miolo de concreto visível em TODAS as zonas.
+	apuradasAlvo := make(map[[2]int64]int64, len(totalPorZona))
+	for chave, total := range totalPorZona {
+		apuradasAlvo[chave] = secoesApuradasComFator(total, fatorApuracao)
+	}
+
+	posicaoNaZona := make(map[[2]int64]int64, len(totalPorZona))
 	porZona := make(map[[2]int64]*acumuladoZona)
 	for _, secaoBruta := range secoes.Secoes {
 		var partes []json.RawMessage
@@ -559,12 +670,8 @@ func montarZonas(arquivo municipiosArquivo, secoes secoesArquivo, indiceCampos m
 			porZona[chave] = acumulado
 		}
 
-		acumulado.total += valorInt64(partes, indiceCampos, "total")
-		acumulado.secoes++
-		acumulado.v13 += valorInt64(partes, indiceCampos, "v13")
-		acumulado.v22 += valorInt64(partes, indiceCampos, "v22")
-		acumulado.voutros += valorInt64(partes, indiceCampos, "voutros")
-
+		// O centroide usa TODAS as seções da zona (a posição da zona não muda
+		// com a apuração).
 		lat, temLat := valorCoordenada(partes, indiceCampos, "lat")
 		lon, temLon := valorCoordenada(partes, indiceCampos, "lon")
 		if temLat && temLon {
@@ -572,12 +679,30 @@ func montarZonas(arquivo municipiosArquivo, secoes secoesArquivo, indiceCampos m
 			acumulado.somaLon += lon
 			acumulado.comCoordenada++
 		}
+
+		acumulado.secoesTotal++
+		posicao := posicaoNaZona[chave]
+		posicaoNaZona[chave] = posicao + 1
+		if posicao >= apuradasAlvo[chave] {
+			// Seção ainda não apurada: os votos dela não entram em nenhum
+			// candidato — é exatamente o segmento de concreto da barra.
+			continue
+		}
+
+		acumulado.secoesApuradas++
+		acumulado.secoes++
+		acumulado.total += valorInt64(partes, indiceCampos, "total")
+		acumulado.v13 += valorInt64(partes, indiceCampos, "v13")
+		acumulado.v22 += valorInt64(partes, indiceCampos, "v22")
+		acumulado.voutros += valorInt64(partes, indiceCampos, "voutros")
 	}
 
-	var maiorTotal int64
+	// A altura da barra é proporcional aos votos VÁLIDOS já apurados da zona.
+	var maiorValidos int64
 	for _, acumulado := range porZona {
-		if acumulado.total > maiorTotal {
-			maiorTotal = acumulado.total
+		validos := acumulado.v13 + acumulado.v22 + acumulado.voutros
+		if validos > maiorValidos {
+			maiorValidos = validos
 		}
 	}
 
@@ -610,30 +735,47 @@ func montarZonas(arquivo municipiosArquivo, secoes secoesArquivo, indiceCampos m
 		}
 
 		proporcao := 0.0
-		if maiorTotal > 0 {
-			proporcao = math.Sqrt(float64(acumulado.total) / float64(maiorTotal))
+		if maiorValidos > 0 {
+			proporcao = math.Sqrt(float64(vv) / float64(maiorValidos))
 		}
 
+		barLula, barFlavio, barOutros, barNaoApurado := segmentosBarra(
+			acumulado.v13, acumulado.v22, acumulado.voutros,
+			acumulado.secoesApuradas, acumulado.secoesTotal,
+		)
+
 		zonas = append(zonas, zonaResposta{
-			Zona:         acumulado.zona,
-			CodTSE:       acumulado.codTSE,
-			Municipio:    municipio,
-			Lat:          lat,
-			Lon:          lon,
-			Total:        acumulado.total,
-			VV:           vv,
-			Lider:        nomeLider,
-			LiderCod:     codigoLider,
-			PartidoLider: partidoLider,
-			MargemVotos:  margem,
-			MargemPct:    percentual(margem, vv),
-			Secoes:       acumulado.secoes,
-			// O dump do 1º turno está completo. No 2º turno ao vivo esse campo
-			// vem do TSE, junto com o restante da parcial.
-			PctApurado: 100.0,
-			AlturaM:    math.Round(6000 + 96000*proporcao),
-			RaioM:      math.Round(2200 + 4800*proporcao),
-			LiderPct:   percentual(votosLider, vv),
+			Zona:           acumulado.zona,
+			CodTSE:         acumulado.codTSE,
+			Municipio:      municipio,
+			Lat:            lat,
+			Lon:            lon,
+			Total:          acumulado.total,
+			VV:             vv,
+			Lider:          nomeLider,
+			LiderCod:       codigoLider,
+			PartidoLider:   partidoLider,
+			MargemVotos:    margem,
+			MargemPct:      percentual(margem, vv),
+			Secoes:         acumulado.secoesApuradas,
+			SecoesTotal:    acumulado.secoesTotal,
+			SecoesApuradas: acumulado.secoesApuradas,
+			V13:            acumulado.v13,
+			V22:            acumulado.v22,
+			VOutros:        acumulado.voutros,
+			Validos:        vv,
+			BarLula:        barLula,
+			BarFlavio:      barFlavio,
+			BarOutros:      barOutros,
+			BarNaoApurado:  barNaoApurado,
+			// Percentual de seções apuradas da zona: 100% nos dados oficiais
+			// fechados, menor no modo demo/2º turno ao vivo.
+			PctApurado: percentual(acumulado.secoesApuradas, acumulado.secoesTotal),
+			// Piso de 6 km para zona pequena não desaparecer; o topo é o
+			// peso da zona em votos válidos.
+			AlturaM:  math.Round(6000 + 96000*proporcao),
+			RaioM:    math.Round(2200 + 4800*proporcao),
+			LiderPct: percentual(votosLider, vv),
 		})
 	}
 
@@ -666,18 +808,28 @@ func montarZonas(arquivo municipiosArquivo, secoes secoesArquivo, indiceCampos m
 			Type: "Feature",
 			ID:   strconv.FormatInt(zona.CodTSE, 10) + "-" + strconv.FormatInt(zona.Zona, 10),
 			Properties: propriedadesZonaGeo{
-				Zona:         zona.Zona,
-				CodTSE:       zona.CodTSE,
-				Municipio:    zona.Municipio,
-				Total:        zona.Total,
-				PartidoLider: zona.PartidoLider,
-				Lider:        zona.Lider,
-				LiderPct:     zona.LiderPct,
-				MargemPct:    zona.MargemPct,
-				VV:           zona.VV,
-				Secoes:       zona.Secoes,
-				PctApurado:   zona.PctApurado,
-				AlturaM:      zona.AlturaM,
+				Zona:           zona.Zona,
+				CodTSE:         zona.CodTSE,
+				Municipio:      zona.Municipio,
+				Total:          zona.Total,
+				PartidoLider:   zona.PartidoLider,
+				Lider:          zona.Lider,
+				LiderPct:       zona.LiderPct,
+				MargemPct:      zona.MargemPct,
+				VV:             zona.VV,
+				Secoes:         zona.Secoes,
+				PctApurado:     zona.PctApurado,
+				AlturaM:        zona.AlturaM,
+				V13:            zona.V13,
+				V22:            zona.V22,
+				VOutros:        zona.VOutros,
+				Validos:        zona.Validos,
+				SecoesTotal:    zona.SecoesTotal,
+				SecoesApuradas: zona.SecoesApuradas,
+				BarLula:        zona.BarLula,
+				BarFlavio:      zona.BarFlavio,
+				BarOutros:      zona.BarOutros,
+				BarNaoApurado:  zona.BarNaoApurado,
 			},
 			Geometry: geometriaPoligono{
 				Type:        "Polygon",
@@ -1004,6 +1156,86 @@ func percentual(parte, todo int64) float64 {
 		return 0
 	}
 	return math.Round(float64(parte)/float64(todo)*100*100) / 100
+}
+
+// secoesApuradasComFator aplica o fator de apuração (100 = todas) sobre o
+// total de seções de uma zona. O corte é sempre "para baixo": 78% de 9 seções
+// apura 7, nunca 8 — arredondar para cima inventaria apuração.
+func secoesApuradasComFator(total int64, fator float64) int64 {
+	if total <= 0 {
+		return 0
+	}
+	if fator >= 100 {
+		return total
+	}
+	if fator <= 0 {
+		return 0
+	}
+	apuradas := int64(math.Floor(float64(total) * fator / 100))
+	if apuradas > total {
+		apuradas = total
+	}
+	if apuradas < 0 {
+		apuradas = 0
+	}
+	return apuradas
+}
+
+// segmentosBarra devolve os 4 segmentos da barra de composição da zona, em %
+// dos votos válidos potenciais, na ordem em que são empilhados: Lula
+// (vermelho), Flávio (azul), outros e não apurado (concreto).
+//
+// Os três primeiros são a fatia de cada candidato DENTRO do que já foi
+// apurado, ponderada pelo pct_apurado; o quarto é o resto. A conta é feita em
+// centésimos com o método do maior resto, então a soma fecha exatamente 100 e
+// a área apurada é idêntica ao pct_apurado (nada de 100,01% por arredondar
+// cada fatia isoladamente).
+func segmentosBarra(v13, v22, voutros, secoesApuradas, secoesTotal int64) (lula, flavio, outros, naoApurado float64) {
+	pctApurado := percentual(secoesApuradas, secoesTotal)
+
+	alvo := int64(math.Round(pctApurado * 100))
+	if alvo < 0 {
+		alvo = 0
+	}
+	if alvo > 10000 {
+		alvo = 10000
+	}
+
+	centavos := [3]int64{}
+	validos := v13 + v22 + voutros
+	if validos > 0 && alvo > 0 {
+		exatos := [3]float64{
+			float64(v13) / float64(validos) * pctApurado * 100,
+			float64(v22) / float64(validos) * pctApurado * 100,
+			float64(voutros) / float64(validos) * pctApurado * 100,
+		}
+		fracoes := [3]float64{}
+		resto := alvo
+		for indice := range exatos {
+			centavos[indice] = int64(math.Floor(exatos[indice]))
+			fracoes[indice] = exatos[indice] - math.Floor(exatos[indice])
+			resto -= centavos[indice]
+		}
+		for ; resto > 0; resto-- {
+			melhor := -1
+			for indice := range fracoes {
+				if melhor == -1 || fracoes[indice] > fracoes[melhor]+1e-12 {
+					melhor = indice
+				}
+			}
+			if melhor == -1 {
+				break
+			}
+			centavos[melhor]++
+			fracoes[melhor] = -1
+		}
+	}
+
+	lula = float64(centavos[0]) / 100
+	flavio = float64(centavos[1]) / 100
+	outros = float64(centavos[2]) / 100
+	naoApurado = float64(10000-alvo) / 100
+	return lula, flavio, outros, naoApurado
 }
 
 func valorInt64(partes []json.RawMessage, indice map[string]int, nome string) int64 {

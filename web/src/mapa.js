@@ -57,7 +57,9 @@ const margemLimitada = [
   0,
 ]
 
-export const EXPRESSAO_COR = [
+// Expressão data-driven da cor do líder (PL azul, PT vermelho, outros cinza),
+// com intensidade pela margem em pontos.
+const EXPRESSAO_CANDIDATO = [
   'match',
   ['get', 'partido_lider'],
   'PL',
@@ -94,3 +96,34 @@ export const EXPRESSAO_COR = [
   ],
   '#9aa0a6',
 ]
+
+// Cinza de concreto: estado (ou segmento) cuja apuração ainda não fechou.
+export const COR_CONCRETO = '#b8b3aa'
+
+// Preenchimento dos MUNICÍPIOS: predominância do líder (sem seções apuradas
+// por município no GeoJSON, então a regra do concreto não se aplica aqui).
+export const EXPRESSAO_COR = EXPRESSAO_CANDIDATO
+
+// Preenchimento do ESTADO. Regra do Pedro (REGRA-COR-ESTADO.txt): cor de
+// candidato SÓ quando `secoes_apuradas == secoes_total` e o total é conhecido;
+// com a apuração em andamento a UF fica em concreto. É uma regra de exibição
+// lida do dado oficial, nunca de estimativa.
+export const EXPRESSAO_COR_UF = [
+  'case',
+  [
+    'all',
+    ['>', ['coalesce', ['get', 'secoes_total'], 0], 0],
+    [
+      '==',
+      ['coalesce', ['get', 'secoes_apuradas'], 0],
+      ['coalesce', ['get', 'secoes_total'], 0],
+    ],
+  ],
+  EXPRESSAO_CANDIDATO,
+  COR_CONCRETO,
+]
+
+// Tempo do "acender" quando a UF fecha a apuração: a transição é do MapLibre
+// sobre a própria expressão, então a cor entra em fade em vez de trocar seco.
+export const TRANSICAO_COR_UF = { duration: 900, delay: 0 }
+

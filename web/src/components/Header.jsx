@@ -26,10 +26,16 @@ export default function Header({ estados, erro }) {
 
       <div
         className="header-badge"
-        title="código da eleição no TSE · 1º turno"
-        aria-label="eleição no TSE: código e turno"
+        title={`código da eleição no TSE · ${
+          carregado ? rotuloTurno(estados.turno) : '1º turno'
+        }`}
+        aria-label={`eleição no TSE: código ${carregado ? estados.eleicao : '—'}, ${
+          carregado ? rotuloTurno(estados.turno) : '1º turno'
+        }`}
       >
-        <span className="badge-label">eleição TSE</span>
+        <span className="badge-label" title="código da eleição no TSE">
+          eleição TSE
+        </span>
         <span className="badge-valor">
           {carregado ? estados.eleicao : '—'}
         </span>

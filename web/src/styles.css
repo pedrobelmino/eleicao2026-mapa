@@ -863,6 +863,48 @@ code {
   letter-spacing: 0.01em;
 }
 
+/* Barra de composição da zona: 4 chips na ordem de empilhamento do prisma. */
+.legend-segmentos {
+  display: grid;
+  gap: 2px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 8.5px;
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+.legend-segmentos li {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.legend-segmento-cor {
+  width: 9px;
+  height: 9px;
+  flex: 0 0 auto;
+  border-radius: 2px;
+  border: 1px solid rgba(28, 35, 43, 0.14);
+}
+
+/* Regra do concreto: é regra de exibição, não legenda de cor — por isso o
+   bloco próprio, com respiro e itálico leve. */
+.legend-regra {
+  margin: 7px 0 0;
+  padding: 6px 0 0;
+  border-top: 1px dashed var(--line);
+  font-size: 8.5px;
+  line-height: 1.35;
+  color: var(--muted);
+}
+
+.legend-regra strong {
+  color: var(--ink);
+  font-weight: 700;
+}
+
 /* ---------------------------------------------------------------- map chrome */
 
 .maplibregl-ctrl-group {

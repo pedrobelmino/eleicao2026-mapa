@@ -5,10 +5,14 @@ import {
   CORES_PARTIDO,
   COR_NEUTRA,
   EXPRESSAO_COR,
+  EXPRESSAO_COR_UF,
+  TRANSICAO_COR_UF,
   ZOOM_LOCAL,
   ZOOM_MUNICIPIO,
+  ZOOM_ZONA,
   nivelPorZoom,
 } from '../mapa.js'
+import { instalarControleDeMouse } from '../controle_mouse.js'
 import { numero, percentual, pontos } from '../format.js'
 
 const FONTE = 'ufs'
@@ -19,7 +23,21 @@ const LAYER_SELECTED = 'ufs-selected'
 
 const FONTE_MUNICIPIOS = 'municipios'
 const FONTE_ZONAS = 'zonas'
-const LAYER_ZONAS = 'zonas-prisma'
+// Barra de composição da zona: 4 extrusões empilhadas, na ordem em que sobem
+// (Lula na base, não apurado no topo). Cada uma tem base e altura acumuladas —
+// a soma dos 4 segmentos é 100% dos votos válidos, então o topo da quarta
+// coincide com a altura total da zona.
+const LAYER_ZONAS_LULA = 'zonas-prisma-lula'
+const LAYER_ZONAS_FLAVIO = 'zonas-prisma-flavio'
+const LAYER_ZONAS_OUTROS = 'zonas-prisma-outros'
+const LAYER_ZONAS_NAO_APURADO = 'zonas-prisma-nao-apurado'
+const LAYERS_ZONAS = [
+  LAYER_ZONAS_LULA,
+  LAYER_ZONAS_FLAVIO,
+  LAYER_ZONAS_OUTROS,
+  LAYER_ZONAS_NAO_APURADO,
+]
+
 const LAYER_MUN_FILL = 'municipios-fill'
 const LAYER_MUN_LINE = 'municipios-line'
 const LAYER_MUN_LABELS = 'municipios-labels'
@@ -42,51 +60,14 @@ const ZOOM_ROTULO_MUNICIPIO = 8.4
 // camada cai para pontos puros (o raio continua codificando os votos).
 const LIMITE_LOCAIS_PRISMA = 400
 
-function canaisDaCor(hex) {
-  const valor = Number.parseInt(String(hex).replace('#', ''), 16)
-  if (!Number.isFinite(valor)) return [154, 160, 166]
-  return [(valor >> 16) & 255, (valor >> 8) & 255, valor & 255]
-}
+// Cores dos 4 segmentos empilhados da barra de composição da zona. A ordem é
+// a de empilhamento, de baixo para cima: Lula (vermelho) -> Flávio (azul) ->
+// outros candidatos -> não apurado (concreto).
+const COR_SEGMENTO_LULA = CORES_PARTIDO.PT
+const COR_SEGMENTO_FLAVIO = CORES_PARTIDO.PL
+const COR_SEGMENTO_OUTROS = '#6b7280'
+const COR_SEGMENTO_NAO_APURADO = '#b8b3aa'
 
-const CANAIS_PL = canaisDaCor(CORES_PARTIDO.PL)
-const CANAIS_PT = canaisDaCor(CORES_PARTIDO.PT)
-const CANAIS_NEUTRA = canaisDaCor(COR_NEUTRA)
-
-// A opacidade do prisma não aceita expressão por feature. Colocamos a fração
-// apurada no canal alfa da cor e deixamos a opacidade da camada fazer o fade
-// por zoom; o resultado visual é 0,9 × pct_apurado/100.
-const COR_ZONA = [
-  'rgba',
-  [
-    'case',
-    ['==', ['get', 'partido_lider'], 'PL'],
-    CANAIS_PL[0],
-    ['==', ['get', 'partido_lider'], 'PT'],
-    CANAIS_PT[0],
-    CANAIS_NEUTRA[0],
-  ],
-  [
-    'case',
-    ['==', ['get', 'partido_lider'], 'PL'],
-    CANAIS_PL[1],
-    ['==', ['get', 'partido_lider'], 'PT'],
-    CANAIS_PT[1],
-    CANAIS_NEUTRA[1],
-  ],
-  [
-    'case',
-    ['==', ['get', 'partido_lider'], 'PL'],
-    CANAIS_PL[2],
-    ['==', ['get', 'partido_lider'], 'PT'],
-    CANAIS_PT[2],
-    CANAIS_NEUTRA[2],
-  ],
-  [
-    '/',
-    ['coalesce', ['get', 'pct_apurado'], 100],
-    100,
-  ],
-]
 
 const OPACIDADE_UFS_COM_DETALHE = [
   'interpolate',
@@ -117,19 +98,53 @@ const OPACIDADE_PRISMAS = [
   0,
 ]
 
-const ALTURA_PRISMAS = [
+// Fator de entrada/saída das colunas por zoom: 0 abaixo de 5.0 (a camada ainda
+// não está visível), 1 entre 6.2 e 7.2, 0 em 8.2 (antes dos rótulos de
+// município, para nenhum nome cair atrás de uma coluna).
+//
+// ATENÇÃO (bug de 22/10): esta escala NÃO pode ser embutida em
+// `fill-extrusion-height`/`fill-extrusion-base` — o MapLibre proíbe expressão de
+// `zoom` dentro de propriedade de dado e derrubava o mapa com
+// "layers.zonas-prisma-*/paint/fill-extrusion-height: 'zoom' expression may only
+// be used as input to a top-level expression". O sumiço das colunas por zoom é
+// feito bloqueando a camada (ver aplicarEscalaAlturaPorZoom, que usa setFilter
+// ou minzoom/maxzoom), nunca multiplicando a altura por esta escala.
+const ESCALA_ALTURA = [
   'interpolate',
   ['linear'],
   ['zoom'],
   5.0,
   0,
   6.2,
-  ['coalesce', ['get', 'altura_m'], 0],
+  1,
   7.2,
-  ['coalesce', ['get', 'altura_m'], 0],
+  1,
   8.2,
   0,
 ]
+
+// Altura de UM segmento da barra = altura total da zona (proporcional aos votos
+// válidos, com piso mínimo já calculado no backend) × o percentual do segmento.
+// SEM multiplicar por ESCALA_ALTURA: expressão de `zoom` não é aceita dentro de
+// fill-extrusion-height/base (ver comentário acima).
+function alturaDoSegmento(campo) {
+  return [
+    '*',
+    ['coalesce', ['get', 'altura_m'], 0],
+    ['/', ['coalesce', ['get', campo], 0], 100],
+  ]
+}
+
+// Empilhamento: a base de cada segmento é o topo do anterior. Como os 4
+// segmentos somam 100% dos válidos, o topo do concreto é a altura total.
+const ALTURA_LULA = alturaDoSegmento('bar_lula')
+const BASE_FLAVIO = ALTURA_LULA
+const ALTURA_FLAVIO = ['+', BASE_FLAVIO, alturaDoSegmento('bar_flavio')]
+const BASE_OUTROS = ALTURA_FLAVIO
+const ALTURA_OUTROS = ['+', BASE_OUTROS, alturaDoSegmento('bar_outros')]
+const BASE_NAO_APURADO = ALTURA_OUTROS
+const ALTURA_NAO_APURADO = ['+', BASE_NAO_APURADO, alturaDoSegmento('bar_nao_apurado')]
+
 
 const OPACIDADE_MUNICIPIOS = [
   'interpolate',
@@ -589,7 +604,9 @@ function featureDeDetalhe(evento, zoom) {
   const municipio = features.find(
     (feature) => feature.layer?.id === LAYER_MUN_FILL,
   )
-  const zona = features.find((feature) => feature.layer?.id === LAYER_ZONAS)
+  const zona = features.find((feature) =>
+    LAYERS_ZONAS.includes(feature.layer?.id),
+  )
 
   if (zoom >= 6.6) {
     if (municipio) return municipio
@@ -709,6 +726,39 @@ function atualizarVisibilidadePrisma(mapa, quantidade) {
   )
 }
 
+// Rótulos de município do BASEMAP (CARTO Positron). São símbolos 3D: um prisma
+// na frente CORTA o nome ao meio em vez de escondê-lo inteiro, e era isso que
+// deixava "Sob…", "For…" e "Juaze…" pendurados nas colunas no zoom de estado.
+// Na faixa em que os prismas estão acesos esses rótulos dão lugar ao nosso
+// (LAYER_MUN_LABELS), que só entra em ZOOM_ROTULO_MUNICIPIO, quando a altura
+// das colunas já é zero. Estado/país/água continuam visíveis: são contexto.
+const ROTULO_BASE_MUNICIPIO = /^place_(city|town|villages|hamlet|suburbs|capital)/
+
+// Última decisão aplicada por instância de mapa. Um style swap devolve as
+// camadas do basemap ao padrão, então nesse evento a decisão é refeita à força
+// (forcar: true), mesmo que o valor desejado não tenha mudado.
+const rotulosBaseAplicados = new WeakMap()
+
+function regerirRotulosBase(mapa, { forcar = false } = {}) {
+  if (!mapa || typeof mapa.getStyle !== 'function') return
+
+  const zoom = mapa.getZoom()
+  const temPrismas = Boolean(mapa.getSource(FONTE_ZONAS))
+  const ocultar = temPrismas && zoom >= ZOOM_ZONA && zoom < ZOOM_ROTULO_MUNICIPIO
+  if (!forcar && rotulosBaseAplicados.get(mapa) === ocultar) return
+
+  const estilo = mapa.getStyle()
+  if (!estilo) return
+  rotulosBaseAplicados.set(mapa, ocultar)
+
+  const visibilidade = ocultar ? 'none' : 'visible'
+  for (const camada of estilo.layers || []) {
+    if (!ROTULO_BASE_MUNICIPIO.test(camada.id)) continue
+    if (mapa.getLayoutProperty(camada.id, 'visibility') === visibilidade) continue
+    mapa.setLayoutProperty(camada.id, 'visibility', visibilidade)
+  }
+}
+
 function colecaoVazia() {
   return { type: 'FeatureCollection', features: [] }
 }
@@ -770,7 +820,8 @@ function removerDetalhe(mapa) {
     LAYER_MUN_LABELS,
     LAYER_MUN_LINE,
     LAYER_MUN_FILL,
-    LAYER_ZONAS,
+    // As 4 camadas da barra: nenhuma pode ficar órfã sobre uma fonte removida.
+    ...LAYERS_ZONAS,
   ]) {
     if (mapa.getLayer(camada)) mapa.removeLayer(camada)
   }
@@ -849,23 +900,59 @@ function aplicarDetalhe(
 
   // A ordem importa: prismas abaixo do preenchimento municipal e os rótulos
   // por cima de todas as camadas de detalhe.
-  adicionarCamada(
-    mapa,
+  //
+  // Quatro extrusões empilhadas por zona (barra de composição): a base de cada
+  // uma é o topo da anterior. Nenhuma delas decide "quem ganhou" — a separação
+  // azul/vermelho mostra a fatia de cada candidato e o concreto mostra o que
+  // falta apurar.
+  for (const definicao of [
     {
-      id: LAYER_ZONAS,
-      type: 'fill-extrusion',
-      source: FONTE_ZONAS,
-      minzoom: 4.6,
-      paint: {
-        'fill-extrusion-color': COR_ZONA,
-        'fill-extrusion-height': ALTURA_PRISMAS,
-        'fill-extrusion-base': 0,
-        'fill-extrusion-opacity': OPACIDADE_PRISMAS,
-        'fill-extrusion-vertical-gradient': true,
-      },
+      id: LAYER_ZONAS_LULA,
+      cor: COR_SEGMENTO_LULA,
+      base: 0,
+      altura: ALTURA_LULA,
     },
-    aoPendente,
-  )
+    {
+      id: LAYER_ZONAS_FLAVIO,
+      cor: COR_SEGMENTO_FLAVIO,
+      base: BASE_FLAVIO,
+      altura: ALTURA_FLAVIO,
+    },
+    {
+      id: LAYER_ZONAS_OUTROS,
+      cor: COR_SEGMENTO_OUTROS,
+      base: BASE_OUTROS,
+      altura: ALTURA_OUTROS,
+    },
+    {
+      id: LAYER_ZONAS_NAO_APURADO,
+      cor: COR_SEGMENTO_NAO_APURADO,
+      base: BASE_NAO_APURADO,
+      altura: ALTURA_NAO_APURADO,
+    },
+  ]) {
+    adicionarCamada(
+      mapa,
+      {
+        id: definicao.id,
+        type: 'fill-extrusion',
+        source: FONTE_ZONAS,
+        minzoom: 4.6,
+        // Some antes dos rótulos de município entrarem — era o papel da
+        // ESCALA_ALTURA, que não pode viver dentro do fill-extrusion-*.
+        maxzoom: 8.2,
+        paint: {
+          'fill-extrusion-color': definicao.cor,
+          'fill-extrusion-height': definicao.altura,
+          'fill-extrusion-base': definicao.base,
+          'fill-extrusion-opacity': OPACIDADE_PRISMAS,
+          'fill-extrusion-vertical-gradient': true,
+        },
+      },
+      aoPendente,
+    )
+  }
+
 
   adicionarCamada(
     mapa,
@@ -947,6 +1034,8 @@ function aplicarDetalhe(
 
   aplicarLocais(mapa, locais, aoPendente, detalhe, municipioSelecionado)
   publicarDebug(mapa, locais, detalhe, municipioSelecionado)
+  // Entrou/saiu prisma: decide de novo se os rótulos do basemap aparecem.
+  regerirRotulosBase(mapa, { forcar: true })
 }
 
 // Camadas do nível urna. A lista de locais já vem agregada pelo backend
@@ -1233,9 +1322,10 @@ export default function MapView({
         minZoom: 2.2,
         maxZoom: 14,
         attributionControl: false,
-        dragRotate: true,
+        dragRotate: false,
         touchZoomRotate: true,
-        pitchWithRotate: true,
+        pitchWithRotate: false,
+        touchPitch: false,
       })
     } catch (erro) {
       console.error('Falha ao iniciar o MapLibre:', erro)
@@ -1248,12 +1338,19 @@ export default function MapView({
     // repaint: em GPU de software o canvas pode ficar sem frame após o fit.
     window.__mapa = mapa
 
+    // Controle de mouse do app: botão direito = zoom (arraste vertical),
+    // bearing travado em 0 e menu de contexto suprimido. Fica num módulo
+    // próprio (web/src/controle_mouse.js) para ser provado isolado.
+    const controleDeMouse = instalarControleDeMouse(mapa)
+
     // O basemap pode terminar de carregar depois do load e um style swap apaga
     // as imagens; re-registrar apenas os ids ausentes é idempotente.
     mapa.on('styledata', () => {
       // A própria registrarIconesLocais já decide pelo isStyleLoaded (addImage
       // exige o estilo assentado); aqui não se descarta a chamada por isso.
       registrarIconesLocais(mapa)
+      // Style swap devolve os rótulos do basemap ao padrão: reaplica a decisão.
+      regerirRotulosBase(mapa, { forcar: true })
     })
 
     const compacto = window.matchMedia('(max-width: 820px)').matches
@@ -1262,7 +1359,7 @@ export default function MapView({
       'bottom-right',
     )
     mapa.addControl(
-      new maplibregl.NavigationControl({ showCompass: true }),
+      new maplibregl.NavigationControl({ showCompass: false }),
       'top-right',
     )
 
@@ -1381,7 +1478,10 @@ export default function MapView({
         type: 'fill',
         source: FONTE,
         paint: {
-          'fill-color': EXPRESSAO_COR,
+          // Regra do concreto: só recebe cor de candidato a UF que fechou a
+          // apuração (secoes_apuradas == secoes_total). Enquanto apura, cinza.
+          'fill-color': EXPRESSAO_COR_UF,
+          'fill-color-transition': TRANSICAO_COR_UF,
           'fill-opacity': 0.85,
         },
       })
@@ -1496,7 +1596,7 @@ export default function MapView({
         tooltip.remove()
       })
 
-      mapa.on('mousemove', [LAYER_ZONAS, LAYER_MUN_FILL], (evento) => {
+      mapa.on('mousemove', [...LAYERS_ZONAS, LAYER_MUN_FILL], (evento) => {
         const feature = featureDeDetalhe(evento, mapa.getZoom())
         if (!feature) return
 
@@ -1510,7 +1610,7 @@ export default function MapView({
         tooltip.setLngLat(evento.lngLat).addTo(mapa)
       })
 
-      mapa.on('mouseleave', [LAYER_ZONAS, LAYER_MUN_FILL], () => {
+      mapa.on('mouseleave', [...LAYERS_ZONAS, LAYER_MUN_FILL], () => {
         mapa.getCanvas().style.cursor = ''
         tooltip.remove()
       })
@@ -1569,7 +1669,7 @@ export default function MapView({
       }
     })
 
-    mapa.on('click', LAYER_ZONAS, (evento) => {
+    mapa.on('click', LAYERS_ZONAS, (evento) => {
       // A partir do zoom municipal o preenchimento cobre os prismas e o
       // clique deve abrir o município, não a zona.
       if (mapa.getZoom() >= 6.6) return
@@ -1636,6 +1736,9 @@ export default function MapView({
       onZoomRef.current?.(mapa.getZoom())
     })
 
+    // Os rótulos do basemap saem da faixa dos prismas junto com o zoom.
+    mapa.on('zoom', () => regerirRotulosBase(mapa))
+
     const aoPerderContexto = () => {
       console.error('Contexto WebGL perdido.')
       onMapErrorRef.current?.()
@@ -1659,6 +1762,7 @@ export default function MapView({
       reaplicarDetalheRef.current = null
       mapa.getCanvas().removeEventListener('webglcontextlost', aoPerderContexto)
       tooltip.remove()
+      controleDeMouse.desinstalar()
       mapa.remove()
       mapRef.current = null
       estiloCarregadoRef.current = false

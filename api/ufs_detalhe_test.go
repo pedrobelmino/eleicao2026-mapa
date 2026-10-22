@@ -7,8 +7,45 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"testing"
 )
+
+// appSemMunicipios monta a aplicação com um DADOS_DIR sintético que tem apenas
+// os dados nacionais (publico.json + malha das UFs) e NENHUM municipios_<UF>.json.
+// É o único jeito estável de provar a resposta 404 de "UF sem dados municipais":
+// nos dados reais todas as 27 UFs já têm arquivo municipal, então usar o
+// DADOS_DIR de verdade faria o teste depender do que foi baixado no dia.
+func appSemMunicipios(t *testing.T) *app {
+	t.Helper()
+
+	dir := t.TempDir()
+	// publico.json é obrigatório; os demais são opcionais na carga nacional.
+	for _, nome := range []string{
+		"publico.json",
+		"malha_uf.geojson",
+		"serie_historica_2022.jsonl",
+		"estados_identidade.json",
+	} {
+		conteudo, err := os.ReadFile(filepath.Join("..", "dados", nome))
+		if err != nil {
+			if nome == "publico.json" || nome == "malha_uf.geojson" {
+				t.Fatalf("ler %s dos dados reais: %v", nome, err)
+			}
+			continue
+		}
+		if err := os.WriteFile(filepath.Join(dir, nome), conteudo, 0o644); err != nil {
+			t.Fatalf("copiar %s para o diretório sintético: %v", nome, err)
+		}
+	}
+
+	t.Setenv("DADOS_DIR", dir)
+	aplicacao, err := novaApp(carregarConfig())
+	if err != nil {
+		t.Fatalf("criar aplicação sem dados municipais: %v", err)
+	}
+	return aplicacao
+}
 
 func TestUFMunicipios(t *testing.T) {
 	aplicacao := novaAppDeTeste(t)
@@ -304,7 +341,8 @@ func TestUFRotasNaoEncontradas(t *testing.T) {
 }
 
 func TestUFSemDadosMunicipais(t *testing.T) {
-	aplicacao := novaAppDeTeste(t)
+	// Sem nenhum municipios_<UF>.json no diretório de dados.
+	aplicacao := appSemMunicipios(t)
 
 	requisicao := httptest.NewRequest(http.MethodGet, "/api/uf/SP/municipios", nil)
 	resposta := httptest.NewRecorder()
@@ -543,27 +581,30 @@ func TestUFLocaisSomaSecoes(t *testing.T) {
 }
 
 func TestUFLocaisParametros(t *testing.T) {
-	aplicacao := novaAppDeTeste(t)
+	comDados := novaAppDeTeste(t)
+	// Aplicação sem nenhum municipios_<UF>.json, para o caso "uf sem dados".
+	semDados := appSemMunicipios(t)
 
 	casos := []struct {
 		nome    string
+		aplicacao *app
 		metodo  string
 		caminho string
 		status  int
 		erro    string
 	}{
-		{"sem cd", http.MethodGet, "/api/uf/CE/locais", http.StatusBadRequest, "parâmetro cd obrigatório"},
-		{"cd texto", http.MethodGet, "/api/uf/CE/locais?cd=abc", http.StatusBadRequest, "parâmetro cd obrigatório"},
-		{"cd inexistente", http.MethodGet, "/api/uf/CE/locais?cd=999999", http.StatusNotFound, "sem locais para este município"},
-		{"uf sem dados", http.MethodGet, "/api/uf/SP/locais?cd=1", http.StatusNotFound, "sem dados municipais para esta UF"},
-		{"metodo post", http.MethodPost, "/api/uf/CE/locais?cd=13897", http.StatusMethodNotAllowed, "método não permitido"},
+		{"sem cd", comDados, http.MethodGet, "/api/uf/CE/locais", http.StatusBadRequest, "parâmetro cd obrigatório"},
+		{"cd texto", comDados, http.MethodGet, "/api/uf/CE/locais?cd=abc", http.StatusBadRequest, "parâmetro cd obrigatório"},
+		{"cd inexistente", comDados, http.MethodGet, "/api/uf/CE/locais?cd=999999", http.StatusNotFound, "sem locais para este município"},
+		{"uf sem dados", semDados, http.MethodGet, "/api/uf/SP/locais?cd=1", http.StatusNotFound, "sem dados municipais para esta UF"},
+		{"metodo post", comDados, http.MethodPost, "/api/uf/CE/locais?cd=13897", http.StatusMethodNotAllowed, "método não permitido"},
 	}
 	for _, caso := range casos {
 		caso := caso
 		t.Run(caso.nome, func(t *testing.T) {
 			requisicao := httptest.NewRequest(caso.metodo, caso.caminho, nil)
 			resposta := httptest.NewRecorder()
-			aplicacao.handler().ServeHTTP(resposta, requisicao)
+			caso.aplicacao.handler().ServeHTTP(resposta, requisicao)
 
 			if resposta.Code != caso.status {
 				t.Fatalf("status = %d, quer %d (%s)", resposta.Code, caso.status, resposta.Body.String())

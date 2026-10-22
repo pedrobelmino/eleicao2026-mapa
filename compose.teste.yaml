@@ -4,7 +4,14 @@
 #   docker compose -p eleicao2026-teste -f compose.yaml -f compose.teste.yaml up -d --build
 #
 # `!override` troca a lista de portas herdada do compose.yaml (compose >= 2.24).
+#
+# APURACAO_DEMO: só no teste. Simula apuração parcial (ex.: APURACAO_DEMO=CE=78)
+# para provar o segmento de concreto das barras e o estado em concreto no macro,
+# sem mentir nos dados de produção (que não define esta variável).
 services:
+  api:
+    environment:
+      APURACAO_DEMO: ${APURACAO_DEMO:-}
   web:
     ports: !override
       - "127.0.0.1:8100:80"
