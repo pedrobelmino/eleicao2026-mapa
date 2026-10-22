@@ -21,3 +21,6 @@ web/.tmp-ssr/
 # e a home de /api/home (publico.json). Fica no disco, fora do controle de versão.
 dados/mapa_ufs.json
 
+
+# segredos locais do compose (token do painel privado)
+.env

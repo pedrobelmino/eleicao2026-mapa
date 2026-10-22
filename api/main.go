@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -9,10 +10,12 @@ import (
 	"math"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"runtime/debug"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -21,6 +24,12 @@ type config struct {
 	Turno         string
 	DadosDir      string
 	Serie2022File string
+	// Eleicao2022File: resultado final de 2022 por UF e por município (gerado
+	// por scripts/prepara_2022.py a partir do arquivo do TSE). Alimenta o
+	// replay de 2022 e a comparação "quem virou".
+	Eleicao2022File string
+	// Serie2026File: coletas reais do painel (snapshots com st/ts por UF).
+	Serie2026File string
 	Porta         string
 	TSEBase       string
 	// ApuracaoDemo simula apuração parcial por UF (UF -> % de seções
@@ -33,13 +42,15 @@ type config struct {
 func carregarConfig() config {
 	dadosDir := envOu("DADOS_DIR", "../dados")
 	return config{
-		Eleicao:       envOu("ELEICAO", "6257"),
-		Turno:         envOu("TURNO", "1"),
-		DadosDir:      dadosDir,
-		Serie2022File: envOu("SERIE_2022_FILE", filepath.Join(dadosDir, "serie_historica_2022.jsonl")),
-		Porta:         envOu("PORT", "8080"),
-		TSEBase:       envOu("TSE_BASE", "https://resultados.tse.jus.br/oficial/ele2026"),
-		ApuracaoDemo:  lerApuracaoDemo(os.Getenv("APURACAO_DEMO")),
+		Eleicao:         envOu("ELEICAO", "6257"),
+		Turno:           envOu("TURNO", "1"),
+		DadosDir:        dadosDir,
+		Serie2022File:   envOu("SERIE_2022_FILE", filepath.Join(dadosDir, "serie_historica_2022.jsonl")),
+		Eleicao2022File: envOu("ELEICAO_2022_FILE", filepath.Join(dadosDir, "eleicao_2022.json")),
+		Serie2026File:   envOu("SERIE_2026_FILE", filepath.Join(dadosDir, "serie_presidente_2026.jsonl")),
+		Porta:           envOu("PORT", "8080"),
+		TSEBase:         envOu("TSE_BASE", "https://resultados.tse.jus.br/oficial/ele2026"),
+		ApuracaoDemo:    lerApuracaoDemo(os.Getenv("APURACAO_DEMO")),
 	}
 }
 
@@ -245,6 +256,15 @@ func carregarDados(dadosDir string, apuracaoDemo map[string]float64) (*dados, er
 		ufsPorSigla[uf.UF] = uf
 	}
 
+	// Curadoria do card de estado (figurinhas + destaques). É opcional: se o
+	// arquivo faltar ou estiver inválido, a rota responde {"UF":{}} e o card
+	// cai no layout sem figurinha — nunca com dado inventado.
+	identidade, err := carregarIdentidade(dadosDir)
+	if err != nil {
+		log.Printf("aviso: %v; /api/estados/identidade responde sem figurinhas", err)
+		identidade = nil
+	}
+
 	features := make([]featureSaida, 0, len(malha.Features))
 	for _, feature := range malha.Features {
 		codArea := feature.Properties.CodArea
@@ -284,11 +304,56 @@ func carregarDados(dadosDir string, apuracaoDemo map[string]float64) (*dados, er
 	return &dados{
 		Publico:      &pub,
 		PublicoBruto: json.RawMessage(conteudoPublico),
+		Identidade:   identidade,
 		Malha: colecaoGeoJSON{
 			Type:     "FeatureCollection",
 			Features: features,
 		},
 	}, nil
+}
+
+// identidadeArquivo é a curadoria do card de estado: figurinhas (emoji) e
+// destaques por UF. Só o que o front usa é validado aqui.
+type identidadeArquivo struct {
+	UF map[string]identidadeUF `json:"UF"`
+}
+
+type identidadeUF struct {
+	Nome       string   `json:"nome"`
+	Apelido    string   `json:"apelido"`
+	Figurinhas []string `json:"figurinhas"`
+	Destaques  []string `json:"destaques"`
+	FotoBusca  string   `json:"foto_busca"`
+}
+
+// carregarIdentidade lê dados/estados_identidade.json. O arquivo é OPCIONAL: se
+// faltar ou não for JSON, a carga nacional segue e a rota responde {"UF":{}} —
+// o card de estado aparece sem figurinha, nunca com emoji inventado.
+func carregarIdentidade(dadosDir string) (json.RawMessage, error) {
+	caminho := filepath.Join(dadosDir, "estados_identidade.json")
+	conteudo, err := os.ReadFile(caminho)
+	if err != nil {
+		return nil, fmt.Errorf("ler %s: %w", caminho, err)
+	}
+
+	var arquivo identidadeArquivo
+	if err := json.Unmarshal(conteudo, &arquivo); err != nil {
+		return nil, fmt.Errorf("decodificar %s: %w", caminho, err)
+	}
+	if len(arquivo.UF) == 0 {
+		return nil, fmt.Errorf("%s sem a chave \"UF\"", caminho)
+	}
+
+	// Formato esperado pelo card: 2 a 4 emojis e pelo menos 1 destaque. UF fora
+	// disso vira aviso no log e é servida como veio (o front mostra o que há).
+	for sigla, info := range arquivo.UF {
+		if len(info.Figurinhas) < 2 || len(info.Figurinhas) > 4 || len(info.Destaques) < 1 {
+			log.Printf("aviso: %s: UF %s fora do formato do card (figurinhas=%d, destaques=%d)",
+				caminho, sigla, len(info.Figurinhas), len(info.Destaques))
+		}
+	}
+
+	return json.RawMessage(conteudo), nil
 }
 
 // apuracaoDaUF devolve (seções apuradas, seções totais, pct apurado) da UF.
@@ -344,6 +409,18 @@ type app struct {
 	cfg        config
 	dados      *dados
 	municipais map[string]*dadosUF
+	// Replay e margens são calculados uma vez no boot (série de 2022, coletas
+	// de 2026 e uma passada na base municipal); as rotas só serializam.
+	serie2022     []pontoSerie
+	eleicao2022   *eleicao2022
+	snapshots2026 []snapshot2026
+	margens       *margensResposta
+
+	// Borda: limites de taxa/concorrência, contadores do painel privado e a
+	// contagem anônima de visitas (mesmo banco do painel Python).
+	limit *limitador
+	obs   *observador
+	anon  *anonimo
 }
 
 func novaApp(cfg config) (*app, error) {
@@ -351,20 +428,57 @@ func novaApp(cfg config) (*app, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	municipais := carregarDadosMunicipais(cfg.DadosDir, dadosCarregados.Publico, cfg.ApuracaoDemo)
+	serie, dados2022, snapshots := carregarReplay(cfg)
+
+	limites := limitesDoAmbiente()
+	limitadorDaApp := novoLimitador(limites)
+	limitadorDaApp.limpezaAutomatica(time.Minute, 10*time.Minute)
+
+	// Métrica nunca derruba o app: sem o banco, o painel privado mostra o bloco
+	// anônimo como indisponível e o mapa segue servindo.
+	contagem, err := novoAnonimo()
+	if err != nil {
+		log.Printf("contagem anônima de visitas indisponível: %v", err)
+		contagem = nil
+	}
+
+	log.Printf("limites: %.0f req/s por IP (rajada %.0f), %d simultâneas no total, %d por IP",
+		limites.TaxaPorIP, limites.RajadaPorIP, limites.MaxSimultaneas, limites.MaxPorIP)
+
 	return &app{
-		cfg:        cfg,
-		dados:      dadosCarregados,
-		municipais: carregarDadosMunicipais(cfg.DadosDir, dadosCarregados.Publico, cfg.ApuracaoDemo),
+		cfg:           cfg,
+		dados:         dadosCarregados,
+		municipais:    municipais,
+		serie2022:     serie,
+		eleicao2022:   dados2022,
+		snapshots2026: snapshots,
+		limit:         limitadorDaApp,
+		obs:           novoObservador(),
+		anon:          contagem,
+		margens: montarMargens(
+			dadosCarregados.Publico, municipais, dados2022, cfg.Eleicao, cfg.Turno,
+		),
 	}, nil
 }
 
 func (a *app) handler() http.Handler {
-	return withCORS(withLogging(withHead(withRecovery(http.HandlerFunc(a.rotear)))))
+	var manipulador http.Handler = http.HandlerFunc(a.rotear)
+	manipulador = withValidacao(manipulador)
+	manipulador = withLimite(a.limit, manipulador)
+	manipulador = withCORS(manipulador)
+	manipulador = withHead(manipulador)
+	manipulador = withRecovery(manipulador)
+	manipulador = a.obs.withColeta(manipulador)
+	manipulador = withCabecalhosSeguranca(manipulador)
+	return withLogging(manipulador)
 }
 
 // rotear concentra as rotas para responder 404 e 405 sempre em JSON.
 func (a *app) rotear(w http.ResponseWriter, r *http.Request) {
 	var manipulador http.HandlerFunc
+	var protegida bool // rota privada: exige token antes de qualquer coisa
 	switch r.URL.Path {
 	case "/api/health":
 		manipulador = a.handleHealth
@@ -376,6 +490,28 @@ func (a *app) rotear(w http.ResponseWriter, r *http.Request) {
 		manipulador = a.handleSerie2022
 	case "/api/ufs.geojson":
 		manipulador = a.handleUfsGeoJSON
+	case "/api/estados/identidade":
+		manipulador = a.handleIdentidade
+	case "/api/replay":
+		manipulador = a.handleReplay
+	case "/api/margens":
+		manipulador = a.handleMargens
+	case "/api/visita":
+		// Chamado pelo nginx (mirror) na abertura da página: grava a visita
+		// anônima. Nunca devolve erro para não atrapalhar o carregamento.
+		if a.anon != nil {
+			manipulador = a.anon.handleVisita
+		} else {
+			manipulador = func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusNoContent)
+			}
+		}
+	case "/api/interno/metricas":
+		manipulador = a.handleMetricasJSON
+		protegida = true
+	case "/api/interno/painel":
+		manipulador = a.handleMetricasPainel
+		protegida = true
 	default:
 		var reconhecida bool
 		manipulador, reconhecida = a.rotaUFDados(r.URL.Path)
@@ -386,7 +522,18 @@ func (a *app) rotear(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method != http.MethodGet && r.Method != http.MethodHead {
+		w.Header().Set("Allow", "GET, HEAD")
 		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"erro": "método não permitido"})
+		return
+	}
+
+	// Parâmetro que a rota não usa é 400: nada de valor livre chegando ao handler.
+	if !conferirParametrosDeRota(w, r) {
+		return
+	}
+
+	if protegida {
+		withTokenMetricas(manipulador).ServeHTTP(w, r)
 		return
 	}
 
@@ -614,6 +761,17 @@ func (a *app) handleUfsGeoJSON(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, a.dados.Malha)
 }
 
+// handleIdentidade serve a curadoria do card de estado (figurinhas emoji,
+// apelido e destaques por UF). Sem o arquivo, responde {"UF":{}} com 200: o
+// front fica sem figurinha e o mapa não quebra por causa de enfeite.
+func (a *app) handleIdentidade(w http.ResponseWriter, _ *http.Request) {
+	if len(a.dados.Identidade) == 0 {
+		escreverJSONCru(w, http.StatusOK, []byte("{\"UF\":{}}\n"))
+		return
+	}
+	escreverJSONCru(w, http.StatusOK, a.dados.Identidade)
+}
+
 func writeJSON(w http.ResponseWriter, status int, valor any) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(status)
@@ -717,7 +875,16 @@ func withLogging(next http.Handler) http.Handler {
 		inicio := time.Now()
 		registrador := &registradorStatus{ResponseWriter: w, status: http.StatusOK}
 		next.ServeHTTP(registrador, r)
-		log.Printf("%s %s %d %dms", r.Method, r.URL.RequestURI(), registrador.status, time.Since(inicio).Milliseconds())
+		// Nunca logar o token do painel privado (nem em URL, nem em query).
+		alvo := r.URL.Path
+		if r.URL.RawQuery != "" {
+			if r.URL.Path == "/api/interno/metricas" || r.URL.Path == "/api/interno/painel" {
+				alvo += "?token=[omitido]"
+			} else {
+				alvo += "?" + r.URL.RawQuery
+			}
+		}
+		log.Printf("%s %s %d %dms", r.Method, alvo, registrador.status, time.Since(inicio).Milliseconds())
 	})
 }
 
@@ -748,8 +915,29 @@ func main() {
 		Addr:              "0.0.0.0:" + cfg.Porta,
 		Handler:           aplicacao.handler(),
 		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      20 * time.Second,
+		IdleTimeout:       60 * time.Second,
+		// Cabeçalho grande é sinal de abuso: 16 KB é o dobro do que um navegador manda.
+		MaxHeaderBytes: 16 << 10,
 	}
+
+	// Encerramento limpo: o compose manda SIGTERM no `up`/restart e a contagem
+	// anônima fecha o SQLite sem deixar WAL pela metade.
+	parar := make(chan os.Signal, 1)
+	signal.Notify(parar, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-parar
+		log.Printf("encerrando: esperando as requisições em voo")
+		contexto, cancelar := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancelar()
+		if err := servidor.Shutdown(contexto); err != nil {
+			log.Printf("encerramento forçado: %v", err)
+		}
+		if aplicacao.anon != nil {
+			aplicacao.anon.fechar()
+		}
+	}()
 
 	log.Printf("escutando em %s", servidor.Addr)
 	if err := servidor.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {

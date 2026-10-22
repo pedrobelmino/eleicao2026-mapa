@@ -1,13 +1,31 @@
 services:
   api:
     build: ./api
+    # Roda com o mesmo uid do dono dos dados: o SQLite de visitas é
+    # compartilhado com o painel Python (8099) na máquina, e arquivo criado
+    # como root quebraria a escrita do painel.
+    user: "${UID_PAINEL:-1000}:${GID_PAINEL:-1000}"
     environment:
       ELEICAO: ${ELEICAO:-6257}
       TURNO: ${TURNO:-1}
       DADOS_DIR: /dados
       PORT: "8080"
+      # Contagem anônima: mesmo banco e mesmo sal do painel Python.
+      METRICAS_DIR: /metricas
+      METRICAS_DB: /metricas/visitas.db
+      METRICAS_SAL: /metricas/.salt
+      METRICAS_GEO: /metricas/geo/dbip-city-lite.mmdb
+      # Painel privado: sem token no ambiente, a rota responde 403 (falha fechada).
+      METRICAS_TOKEN: ${METRICAS_TOKEN:-}
+      # Limites do Go (segunda barreira, depois do nginx).
+      RATE_TAXA_POR_IP: ${RATE_TAXA_POR_IP:-40}
+      RATE_RAJADA_POR_IP: ${RATE_RAJADA_POR_IP:-120}
+      LIMITE_SIMULTANEAS: ${LIMITE_SIMULTANEAS:-256}
+      LIMITE_SIMULTANEAS_POR_IP: ${LIMITE_SIMULTANEAS_POR_IP:-24}
+      WEB_HEALTH_URL: http://web/healthz
     volumes:
       - ./dados:/dados:ro
+      - ${METRICAS_HOST_DIR:-/home/pedro/.hermes/painel_publico}:/metricas
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1:8080/api/health"]
