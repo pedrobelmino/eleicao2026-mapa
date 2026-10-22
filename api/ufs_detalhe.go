@@ -142,6 +142,52 @@ type zonasResposta struct {
 	Zonas      []zonaResposta      `json:"zonas"`
 }
 
+type totaisLocaisResposta struct {
+	Total  int64 `json:"total"`
+	VV     int64 `json:"vv"`
+	Secoes int64 `json:"secoes"`
+}
+
+type localSecaoResposta struct {
+	Zona    int64   `json:"zona"`
+	Secao   int64   `json:"secao"`
+	Lat     float64 `json:"lat"`
+	Lon     float64 `json:"lon"`
+	Total   int64   `json:"total"`
+	VV      int64   `json:"vv"`
+	V13     int64   `json:"v13"`
+	V22     int64   `json:"v22"`
+	VOutros int64   `json:"voutros"`
+	Lider   string  `json:"lider"`
+}
+
+type localResposta struct {
+	NrLocal      int64                `json:"nr_local"`
+	Lat          float64              `json:"lat"`
+	Lon          float64              `json:"lon"`
+	Total        int64                `json:"total"`
+	VV           int64                `json:"vv"`
+	V13          int64                `json:"v13"`
+	V22          int64                `json:"v22"`
+	VOutros      int64                `json:"voutros"`
+	Lider        string               `json:"lider"`
+	LiderCod     string               `json:"lider_cod"`
+	PartidoLider string               `json:"partido_lider"`
+	LiderPct     float64              `json:"lider_pct"`
+	MargemVotos  int64                `json:"margem_votos"`
+	MargemPct    float64              `json:"margem_pct"`
+	Secoes       []localSecaoResposta `json:"secoes"`
+}
+
+type locaisMunicipioResposta struct {
+	UF          string               `json:"uf"`
+	CD          int64                `json:"cd"`
+	Municipio   string               `json:"municipio"`
+	TotalLocais int                  `json:"total_locais"`
+	Totais      totaisLocaisResposta `json:"totais"`
+	Locais      []localResposta      `json:"locais"`
+}
+
 type propriedadesMunicipioGeo struct {
 	CodArea      string  `json:"codarea"`
 	CodTSE       int64   `json:"cd_tse"`
@@ -206,6 +252,7 @@ type dadosUF struct {
 	MunicipiosGeo colecaoMunicipiosGeo
 	Zonas         zonasResposta
 	ZonasGeo      colecaoZonasGeo
+	Locais        map[int64]locaisMunicipioResposta
 }
 
 func ufValida(sigla string) bool {
@@ -287,6 +334,7 @@ func carregarDadosMunicipais(dadosDir string, pub *publico) map[string]*dadosUF 
 	municipios, nomesPorCDTSE := montarMunicipios(arquivo, candidatos, partidos)
 	municipiosGeo := montarMunicipiosGeo(municipios, malha)
 	zonas, zonasGeo, semCoordenada := montarZonas(arquivo, secoes, indiceCampos, candidatos, partidos, nomesPorCDTSE)
+	locais := montarLocais(arquivo, secoes, indiceCampos, candidatos, partidos, nomesPorCDTSE)
 
 	respostaMunicipios := municipiosResposta{
 		UF:              arquivo.UF,
@@ -308,12 +356,19 @@ func carregarDadosMunicipais(dadosDir string, pub *publico) map[string]*dadosUF 
 	log.Printf("dados municipais %s: %d municípios, %d zonas (%d sem coordenada)",
 		uf, len(municipios), len(zonas.Zonas), semCoordenada)
 
+	totalLocais := 0
+	for _, municipioLocais := range locais {
+		totalLocais += municipioLocais.TotalLocais
+	}
+	log.Printf("dados de locais %s: %d locais agregados em %d municípios", uf, totalLocais, len(locais))
+
 	return map[string]*dadosUF{
 		uf: {
 			Municipios:    respostaMunicipios,
 			MunicipiosGeo: municipiosGeo,
 			Zonas:         zonas,
 			ZonasGeo:      zonasGeo,
+			Locais:        locais,
 		},
 	}
 }
@@ -631,6 +686,173 @@ func montarZonas(arquivo municipiosArquivo, secoes secoesArquivo, indiceCampos m
 	}, semCoordenada
 }
 
+type acumuladoLocal struct {
+	codTSE        int64
+	nrLocal       int64
+	total         int64
+	v13           int64
+	v22           int64
+	voutros       int64
+	somaLat       float64
+	somaLon       float64
+	comCoordenada int64
+	secoes        []localSecaoResposta
+}
+
+// montarLocais agrega as seções por (cd_tse, nr_local) uma única vez no boot.
+// O resultado é indexado por cd_tse e já contém os totais e a ordenação final.
+func montarLocais(arquivo municipiosArquivo, secoes secoesArquivo, indiceCampos map[string]int, candidatos map[string]candidatoMunicipio, partidos map[string]string, nomesPorCDTSE map[int64]string) map[int64]locaisMunicipioResposta {
+	nomesSecoes := make(map[int64]string, len(secoes.Municipios))
+	for chave, nome := range secoes.Municipios {
+		codigo, err := strconv.ParseInt(chave, 10, 64)
+		if err != nil {
+			continue
+		}
+		nomesSecoes[codigo] = nome
+	}
+
+	porLocal := make(map[[2]int64]*acumuladoLocal)
+	for _, secaoBruta := range secoes.Secoes {
+		var partes []json.RawMessage
+		if err := json.Unmarshal(secaoBruta, &partes); err != nil {
+			continue
+		}
+
+		codTSE := valorInt64(partes, indiceCampos, "cd_tse")
+		nrLocal := valorInt64(partes, indiceCampos, "nr_local")
+		chave := [2]int64{codTSE, nrLocal}
+		acumulado := porLocal[chave]
+		if acumulado == nil {
+			acumulado = &acumuladoLocal{codTSE: codTSE, nrLocal: nrLocal}
+			porLocal[chave] = acumulado
+		}
+
+		total := valorInt64(partes, indiceCampos, "total")
+		v13 := valorInt64(partes, indiceCampos, "v13")
+		v22 := valorInt64(partes, indiceCampos, "v22")
+		voutros := valorInt64(partes, indiceCampos, "voutros")
+
+		acumulado.total += total
+		acumulado.v13 += v13
+		acumulado.v22 += v22
+		acumulado.voutros += voutros
+
+		lat, lon, temCoordenada := coordenadaDaSecao(partes, indiceCampos)
+		if temCoordenada {
+			acumulado.somaLat += lat
+			acumulado.somaLon += lon
+			acumulado.comCoordenada++
+		}
+
+		codigoLider, _ := liderDaZona(v13, v22, voutros)
+		nomeLider := "outros candidatos"
+		if codigoLider != "outros" {
+			nomeLider = nomeCandidatoZona(codigoLider, secoes.Candidatos, candidatos)
+		}
+
+		acumulado.secoes = append(acumulado.secoes, localSecaoResposta{
+			Zona:    valorInt64(partes, indiceCampos, "zona"),
+			Secao:   valorInt64(partes, indiceCampos, "secao"),
+			Lat:     lat,
+			Lon:     lon,
+			Total:   total,
+			VV:      v13 + v22 + voutros,
+			V13:     v13,
+			V22:     v22,
+			VOutros: voutros,
+			Lider:   nomeLider,
+		})
+	}
+
+	resultado := make(map[int64]locaisMunicipioResposta)
+	for _, acumulado := range porLocal {
+		resposta, existe := resultado[acumulado.codTSE]
+		if !existe {
+			municipio := nomesSecoes[acumulado.codTSE]
+			if municipio == "" {
+				municipio = nomesPorCDTSE[acumulado.codTSE]
+			}
+			resposta = locaisMunicipioResposta{
+				UF:        arquivo.UF,
+				CD:        acumulado.codTSE,
+				Municipio: municipio,
+				Locais:    make([]localResposta, 0),
+			}
+		}
+
+		lat, lon := 0.0, 0.0
+		if acumulado.comCoordenada > 0 {
+			lat = acumulado.somaLat / float64(acumulado.comCoordenada)
+			lon = acumulado.somaLon / float64(acumulado.comCoordenada)
+		}
+
+		codigoLider, votosLider := liderDaZona(acumulado.v13, acumulado.v22, acumulado.voutros)
+		nomeLider := "outros candidatos"
+		partidoLider := ""
+		if codigoLider != "outros" {
+			nomeLider = nomeCandidatoZona(codigoLider, secoes.Candidatos, candidatos)
+			partidoLider = partidos[codigoLider]
+		}
+
+		vv := acumulado.v13 + acumulado.v22 + acumulado.voutros
+		margem := votosLider - segundoColocado(acumulado.v13, acumulado.v22, acumulado.voutros)
+
+		resposta.Locais = append(resposta.Locais, localResposta{
+			NrLocal:      acumulado.nrLocal,
+			Lat:          lat,
+			Lon:          lon,
+			Total:        acumulado.total,
+			VV:           vv,
+			V13:          acumulado.v13,
+			V22:          acumulado.v22,
+			VOutros:      acumulado.voutros,
+			Lider:        nomeLider,
+			LiderCod:     codigoLider,
+			PartidoLider: partidoLider,
+			LiderPct:     percentual(votosLider, vv),
+			MargemVotos:  margem,
+			MargemPct:    percentual(margem, vv),
+			Secoes:       acumulado.secoes,
+		})
+		resposta.Totais.Total += acumulado.total
+		resposta.Totais.VV += vv
+		resposta.Totais.Secoes += int64(len(acumulado.secoes))
+		resultado[acumulado.codTSE] = resposta
+	}
+
+	for codigo, resposta := range resultado {
+		sort.SliceStable(resposta.Locais, func(i, j int) bool {
+			if resposta.Locais[i].Total != resposta.Locais[j].Total {
+				return resposta.Locais[i].Total > resposta.Locais[j].Total
+			}
+			return resposta.Locais[i].NrLocal < resposta.Locais[j].NrLocal
+		})
+		for indice := range resposta.Locais {
+			sort.SliceStable(resposta.Locais[indice].Secoes, func(i, j int) bool {
+				if resposta.Locais[indice].Secoes[i].Zona != resposta.Locais[indice].Secoes[j].Zona {
+					return resposta.Locais[indice].Secoes[i].Zona < resposta.Locais[indice].Secoes[j].Zona
+				}
+				return resposta.Locais[indice].Secoes[i].Secao < resposta.Locais[indice].Secoes[j].Secao
+			})
+		}
+		resposta.TotalLocais = len(resposta.Locais)
+		resultado[codigo] = resposta
+	}
+
+	return resultado
+}
+
+// coordenadaDaSecao devolve a coordenada da seção somente quando lat e lon
+// existem e não são o sentinela -1 usado pelo TSE para "sem coordenada".
+func coordenadaDaSecao(partes []json.RawMessage, indice map[string]int) (float64, float64, bool) {
+	lat, temLat := valorCoordenada(partes, indice, "lat")
+	lon, temLon := valorCoordenada(partes, indice, "lon")
+	if !temLat || !temLon || lat == -1 || lon == -1 {
+		return 0, 0, false
+	}
+	return lat, lon, true
+}
+
 func liderDaZona(v13, v22, voutros int64) (string, int64) {
 	codigo := "13"
 	votos := v13
@@ -768,6 +990,41 @@ func (a *app) handleUFZonasGeoJSON(uf string) http.HandlerFunc {
 		}
 		escreverGeoJSON(w, http.StatusOK, dadosDaUF.ZonasGeo)
 	}
+}
+
+func (a *app) handleUFLocais(uf string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		dadosDaUF := a.dadosDaUF(uf)
+		if dadosDaUF == nil {
+			writeJSON(w, http.StatusNotFound, map[string]string{"erro": "sem dados municipais para esta UF"})
+			return
+		}
+
+		cd, valido := codigoMunicipio(r.URL.Query().Get("cd"))
+		if !valido {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"erro": "parâmetro cd obrigatório"})
+			return
+		}
+
+		locais, existe := dadosDaUF.Locais[cd]
+		if !existe || len(locais.Locais) == 0 {
+			writeJSON(w, http.StatusNotFound, map[string]string{"erro": "sem locais para este município"})
+			return
+		}
+		writeJSON(w, http.StatusOK, locais)
+	}
+}
+
+// codigoMunicipio aceita apenas inteiro positivo; vazio e texto viram 400.
+func codigoMunicipio(bruto string) (int64, bool) {
+	if bruto == "" {
+		return 0, false
+	}
+	codigo, err := strconv.ParseInt(bruto, 10, 64)
+	if err != nil || codigo <= 0 {
+		return 0, false
+	}
+	return codigo, true
 }
 
 func escreverGeoJSON(w http.ResponseWriter, status int, valor any) {

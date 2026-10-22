@@ -350,3 +350,199 @@ func TestRotaMunicipiosAntiga(t *testing.T) {
 		t.Fatalf("status = %d, quer 404", resposta.Code)
 	}
 }
+
+type secaoLocalTeste struct {
+	Zona    int64   `json:"zona"`
+	Secao   int64   `json:"secao"`
+	Lat     float64 `json:"lat"`
+	Lon     float64 `json:"lon"`
+	Total   int64   `json:"total"`
+	VV      int64   `json:"vv"`
+	V13     int64   `json:"v13"`
+	V22     int64   `json:"v22"`
+	VOutros int64   `json:"voutros"`
+	Lider   string  `json:"lider"`
+}
+
+type localTeste struct {
+	NrLocal      int64             `json:"nr_local"`
+	Lat          float64           `json:"lat"`
+	Lon          float64           `json:"lon"`
+	Total        int64             `json:"total"`
+	VV           int64             `json:"vv"`
+	V13          int64             `json:"v13"`
+	V22          int64             `json:"v22"`
+	VOutros      int64             `json:"voutros"`
+	Lider        string            `json:"lider"`
+	LiderCod     string            `json:"lider_cod"`
+	PartidoLider string            `json:"partido_lider"`
+	LiderPct     float64           `json:"lider_pct"`
+	MargemVotos  int64             `json:"margem_votos"`
+	MargemPct    float64           `json:"margem_pct"`
+	Secoes       []secaoLocalTeste `json:"secoes"`
+}
+
+type locaisTeste struct {
+	UF          string `json:"uf"`
+	CD          int64  `json:"cd"`
+	Municipio   string `json:"municipio"`
+	TotalLocais int    `json:"total_locais"`
+	Totais      struct {
+		Total  int64 `json:"total"`
+		VV     int64 `json:"vv"`
+		Secoes int64 `json:"secoes"`
+	} `json:"totais"`
+	Locais []localTeste `json:"locais"`
+}
+
+func obterLocaisFortaleza(t *testing.T) locaisTeste {
+	t.Helper()
+	aplicacao := novaAppDeTeste(t)
+
+	requisicao := httptest.NewRequest(http.MethodGet, "/api/uf/CE/locais?cd=13897", nil)
+	resposta := httptest.NewRecorder()
+	aplicacao.handler().ServeHTTP(resposta, requisicao)
+
+	if resposta.Code != http.StatusOK {
+		t.Fatalf("status = %d, quer 200: %s", resposta.Code, resposta.Body.String())
+	}
+
+	var corpo locaisTeste
+	if err := json.Unmarshal(resposta.Body.Bytes(), &corpo); err != nil {
+		t.Fatalf("decodificar resposta: %v", err)
+	}
+	return corpo
+}
+
+func TestUFLocaisFortaleza(t *testing.T) {
+	corpo := obterLocaisFortaleza(t)
+
+	if corpo.UF != "CE" {
+		t.Errorf("uf = %q, quer CE", corpo.UF)
+	}
+	if corpo.CD != 13897 {
+		t.Errorf("cd = %d, quer 13897", corpo.CD)
+	}
+	if corpo.Municipio != "FORTALEZA" {
+		t.Errorf("municipio = %q, quer FORTALEZA", corpo.Municipio)
+	}
+	if corpo.TotalLocais != 196 {
+		t.Errorf("total_locais = %d, quer 196", corpo.TotalLocais)
+	}
+	if len(corpo.Locais) != 196 {
+		t.Errorf("locais = %d, quer 196", len(corpo.Locais))
+	}
+	if corpo.Totais.Secoes != 5335 {
+		t.Errorf("totais.secoes = %d, quer 5335", corpo.Totais.Secoes)
+	}
+	if corpo.Totais.Total != 1561854 {
+		t.Errorf("totais.total = %d, quer 1561854", corpo.Totais.Total)
+	}
+
+	var somaTotal, somaVV, somaSecoes int64
+	for _, local := range corpo.Locais {
+		if local.VV != local.V13+local.V22+local.VOutros {
+			t.Errorf("local %d: vv = %d, quer %d", local.NrLocal, local.VV, local.V13+local.V22+local.VOutros)
+		}
+		if math.IsNaN(local.Lat) || math.IsInf(local.Lat, 0) || math.IsNaN(local.Lon) || math.IsInf(local.Lon, 0) {
+			t.Errorf("local %d: lat/lon não finitos: %v/%v", local.NrLocal, local.Lat, local.Lon)
+		}
+		somaTotal += local.Total
+		somaVV += local.VV
+		somaSecoes += int64(len(local.Secoes))
+	}
+	if somaTotal != corpo.Totais.Total {
+		t.Errorf("soma dos totais dos locais = %d, quer totais.total = %d", somaTotal, corpo.Totais.Total)
+	}
+	if somaVV != corpo.Totais.VV {
+		t.Errorf("soma dos vv dos locais = %d, quer totais.vv = %d", somaVV, corpo.Totais.VV)
+	}
+	if somaSecoes != corpo.Totais.Secoes {
+		t.Errorf("soma das seções dos locais = %d, quer totais.secoes = %d", somaSecoes, corpo.Totais.Secoes)
+	}
+}
+
+func TestUFLocal1112(t *testing.T) {
+	corpo := obterLocaisFortaleza(t)
+
+	var encontrado *localTeste
+	for indice := range corpo.Locais {
+		if corpo.Locais[indice].NrLocal == 1112 {
+			encontrado = &corpo.Locais[indice]
+			break
+		}
+	}
+	if encontrado == nil {
+		t.Fatal("local 1112 não encontrado em Fortaleza")
+	}
+	if encontrado.Total != 19765 {
+		t.Errorf("local 1112: total = %d, quer 19765", encontrado.Total)
+	}
+	if len(encontrado.Secoes) != 61 {
+		t.Errorf("local 1112: seções = %d, quer 61", len(encontrado.Secoes))
+	}
+
+	for indice := 1; indice < len(encontrado.Secoes); indice++ {
+		anterior := encontrado.Secoes[indice-1]
+		atual := encontrado.Secoes[indice]
+		if atual.Zona < anterior.Zona || (atual.Zona == anterior.Zona && atual.Secao < anterior.Secao) {
+			t.Errorf("seções fora de ordem: (%d,%d) antes de (%d,%d)",
+				anterior.Zona, anterior.Secao, atual.Zona, atual.Secao)
+		}
+	}
+}
+
+func TestUFLocaisSomaSecoes(t *testing.T) {
+	corpo := obterLocaisFortaleza(t)
+
+	for _, local := range corpo.Locais {
+		var somaTotal int64
+		for _, secao := range local.Secoes {
+			somaTotal += secao.Total
+			if secao.VV != secao.V13+secao.V22+secao.VOutros {
+				t.Errorf("local %d seção (%d,%d): vv = %d, quer %d",
+					local.NrLocal, secao.Zona, secao.Secao, secao.VV, secao.V13+secao.V22+secao.VOutros)
+			}
+		}
+		if somaTotal != local.Total {
+			t.Errorf("local %d: soma das seções = %d, quer total = %d", local.NrLocal, somaTotal, local.Total)
+		}
+	}
+}
+
+func TestUFLocaisParametros(t *testing.T) {
+	aplicacao := novaAppDeTeste(t)
+
+	casos := []struct {
+		nome    string
+		metodo  string
+		caminho string
+		status  int
+		erro    string
+	}{
+		{"sem cd", http.MethodGet, "/api/uf/CE/locais", http.StatusBadRequest, "parâmetro cd obrigatório"},
+		{"cd texto", http.MethodGet, "/api/uf/CE/locais?cd=abc", http.StatusBadRequest, "parâmetro cd obrigatório"},
+		{"cd inexistente", http.MethodGet, "/api/uf/CE/locais?cd=999999", http.StatusNotFound, "sem locais para este município"},
+		{"uf sem dados", http.MethodGet, "/api/uf/SP/locais?cd=1", http.StatusNotFound, "sem dados municipais para esta UF"},
+		{"metodo post", http.MethodPost, "/api/uf/CE/locais?cd=13897", http.StatusMethodNotAllowed, "método não permitido"},
+	}
+	for _, caso := range casos {
+		caso := caso
+		t.Run(caso.nome, func(t *testing.T) {
+			requisicao := httptest.NewRequest(caso.metodo, caso.caminho, nil)
+			resposta := httptest.NewRecorder()
+			aplicacao.handler().ServeHTTP(resposta, requisicao)
+
+			if resposta.Code != caso.status {
+				t.Fatalf("status = %d, quer %d (%s)", resposta.Code, caso.status, resposta.Body.String())
+			}
+			var corpo map[string]string
+			if err := json.Unmarshal(resposta.Body.Bytes(), &corpo); err != nil {
+				t.Fatalf("decodificar resposta: %v", err)
+			}
+			if corpo["erro"] != caso.erro {
+				t.Errorf("erro = %q, quer %q", corpo["erro"], caso.erro)
+			}
+		})
+	}
+}

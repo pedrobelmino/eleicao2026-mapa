@@ -335,6 +335,8 @@ func (a *app) rotaUFDados(caminho string) (http.HandlerFunc, bool) {
 		return a.handleUFZonas(uf), true
 	case "zonas.geojson":
 		return a.handleUFZonasGeoJSON(uf), true
+	case "locais":
+		return a.handleUFLocais(uf), true
 	default:
 		return nil, false
 	}
