@@ -1,0 +1,174 @@
+[
+  {
+    "cenario": "fortaleza",
+    "viewport": "desktop",
+    "url": "http://127.0.0.1:8110/mapa?uf=CE&m=13897&z=12.2",
+    "print": "_provas/prod_item10/item10_fortaleza_desktop_1440x900.png",
+    "debug": {
+      "featuresUfs": 9,
+      "featuresMunicipios": 24,
+      "featuresZonas": 0,
+      "featuresLocais": 426,
+      "featuresLocaisPontos": 99,
+      "predios": 196,
+      "prediosDesenhados": 213,
+      "prediosConcreto": 0,
+      "modoPredios": "predios",
+      "urnas": 0,
+      "urnasDesenhadas": 0,
+      "urnasColunas": 0,
+      "urnasLinhas": 0,
+      "tempoRenderMs": 316,
+      "clustersVisiveis": 41,
+      "featuresLocaisPrisma": 426,
+      "camadasLocais": 9,
+      "locaisNoMunicipio": 196,
+      "detalheAtivo": true,
+      "municipioSelecionado": "2304400",
+      "nivel": "local",
+      "zoom": 12.2,
+      "pitch": 50,
+      "centro": [
+        -38.52,
+        -3.794
+      ]
+    },
+    "fps": {
+      "quadros": 60,
+      "ms": 1653.7,
+      "fps": 36.3
+    },
+    "erros": [],
+    "falhas": [],
+    "scrollHorizontal": "nao"
+  },
+  {
+    "cenario": "sao_paulo",
+    "viewport": "desktop",
+    "url": "http://127.0.0.1:8110/mapa?uf=SP&m=71072&z=12.2",
+    "print": "_provas/prod_item10/item10_sao_paulo_desktop_1440x900.png",
+    "debug": {
+      "featuresUfs": 13,
+      "featuresMunicipios": 52,
+      "featuresZonas": 0,
+      "featuresLocais": 365,
+      "featuresLocaisPontos": 124,
+      "predios": 161,
+      "prediosDesenhados": 142,
+      "prediosConcreto": 0,
+      "modoPredios": "predios",
+      "urnas": 0,
+      "urnasDesenhadas": 0,
+      "urnasColunas": 0,
+      "urnasLinhas": 0,
+      "tempoRenderMs": 350.2,
+      "clustersVisiveis": 28,
+      "featuresLocaisPrisma": 365,
+      "camadasLocais": 9,
+      "locaisNoMunicipio": 161,
+      "detalheAtivo": true,
+      "municipioSelecionado": "3550308",
+      "nivel": "local",
+      "zoom": 12.2,
+      "pitch": 50,
+      "centro": [
+        -46.596,
+        -23.683
+      ]
+    },
+    "fps": {
+      "quadros": 60,
+      "ms": 2593.3,
+      "fps": 23.1
+    },
+    "erros": [],
+    "falhas": [],
+    "scrollHorizontal": "nao"
+  },
+  {
+    "cenario": "fortaleza",
+    "viewport": "mobile",
+    "url": "http://127.0.0.1:8110/mapa?uf=CE&m=13897&z=12.2",
+    "print": "_provas/prod_item10/item10_fortaleza_mobile_390x844.png",
+    "debug": {
+      "featuresUfs": 4,
+      "featuresMunicipios": 11,
+      "featuresZonas": 0,
+      "featuresLocais": 336,
+      "featuresLocaisPontos": 88,
+      "predios": 196,
+      "prediosDesenhados": 100,
+      "prediosConcreto": 0,
+      "modoPredios": "predios",
+      "urnas": 0,
+      "urnasDesenhadas": 0,
+      "urnasColunas": 0,
+      "urnasLinhas": 0,
+      "tempoRenderMs": 839.3,
+      "clustersVisiveis": 22,
+      "featuresLocaisPrisma": 336,
+      "camadasLocais": 9,
+      "locaisNoMunicipio": 196,
+      "detalheAtivo": true,
+      "municipioSelecionado": "2304400",
+      "nivel": "local",
+      "zoom": 12.2,
+      "pitch": 30,
+      "centro": [
+        -38.52,
+        -3.794
+      ]
+    },
+    "fps": {
+      "quadros": 60,
+      "ms": 974.6,
+      "fps": 61.6
+    },
+    "erros": [],
+    "falhas": [],
+    "scrollHorizontal": "nao"
+  },
+  {
+    "cenario": "sao_paulo",
+    "viewport": "mobile",
+    "url": "http://127.0.0.1:8110/mapa?uf=SP&m=71072&z=12.2",
+    "print": "_provas/prod_item10/item10_sao_paulo_mobile_390x844.png",
+    "debug": {
+      "featuresUfs": 6,
+      "featuresMunicipios": 30,
+      "featuresZonas": 0,
+      "featuresLocais": 186,
+      "featuresLocaisPontos": 65,
+      "predios": 161,
+      "prediosDesenhados": 8,
+      "prediosConcreto": 0,
+      "modoPredios": "predios",
+      "urnas": 0,
+      "urnasDesenhadas": 0,
+      "urnasColunas": 0,
+      "urnasLinhas": 0,
+      "tempoRenderMs": 822.7,
+      "clustersVisiveis": 3,
+      "featuresLocaisPrisma": 186,
+      "camadasLocais": 9,
+      "locaisNoMunicipio": 161,
+      "detalheAtivo": true,
+      "municipioSelecionado": "3550308",
+      "nivel": "local",
+      "zoom": 12.2,
+      "pitch": 30,
+      "centro": [
+        -46.596,
+        -23.683
+      ]
+    },
+    "fps": {
+      "quadros": 60,
+      "ms": 982.5,
+      "fps": 61.1
+    },
+    "erros": [],
+    "falhas": [],
+    "scrollHorizontal": "nao"
+  }
+]
