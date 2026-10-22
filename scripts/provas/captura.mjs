@@ -235,16 +235,33 @@ async function capturarCenario(browser, base, out, prefix, viewport, cenario) {
     if (cenario.clicarLocal) {
       const alvo = await page.evaluate(pontoDeLocal)
       if (!alvo) throw new Error('nenhum ponto de local visível para clicar')
-      await page.mouse.click(alvo.x, alvo.y)
+      // map.project() devolve coordenada do CONTAINER do mapa; o mouse do
+      // Playwright usa coordenada de PÁGINA. O canvas começa abaixo do header
+      // (medido: y=76 no desktop), então o offset é obrigatório — sem ele o
+      // clique caía ~76 px acima do ícone e nenhum cartão abria.
+      const caixaCanvas = await page.evaluate(() => {
+        const canvas = document.querySelector('canvas.maplibregl-canvas')
+        if (!canvas) return null
+        const r = canvas.getBoundingClientRect()
+        return { x: r.x, y: r.y }
+      })
+      const deslocamento = caixaCanvas || { x: 0, y: 0 }
+      await page.mouse.click(
+        Math.round(deslocamento.x + alvo.x),
+        Math.round(deslocamento.y + alvo.y),
+      )
       await page.waitForSelector('.local-card', { state: 'visible', timeout: 15000 })
       await page.waitForTimeout(600)
-      clique = alvo
+      clique = { ...alvo, x: Math.round(deslocamento.x + alvo.x), y: Math.round(deslocamento.y + alvo.y) }
       cartao = await page.evaluate(() => {
         const elemento = document.querySelector('.local-card')
         if (!elemento) return null
         return {
           titulo: elemento.querySelector('.detail-title')?.textContent || '',
           lider: elemento.querySelector('.leader-copy strong')?.textContent || '',
+          liderPct: elemento.querySelector('.leader-pct')?.textContent || '',
+          apurado: elemento.querySelector('.local-apurado-numero')?.textContent || '',
+          apuradoSecoes: elemento.querySelector('.local-apurado-secoes')?.textContent || '',
           secoes: elemento.querySelectorAll('.section-item').length,
           cabecalho: elemento.querySelector('.local-secoes h3')?.textContent || '',
           texto: elemento.innerText.replace(/\s+/g, ' ').slice(0, 260),
@@ -288,7 +305,10 @@ async function capturarCenario(browser, base, out, prefix, viewport, cenario) {
   }
   if (cartao) {
     console.log(
-      `${rotulo} card="${cartao.titulo}" lider="${cartao.lider}" secoes=${cartao.secoes} h3="${cartao.cabecalho}"`,
+      `${rotulo} card="${cartao.titulo}" lider="${cartao.lider}" liderPct="${cartao.liderPct}" secoes=${cartao.secoes} h3="${cartao.cabecalho}"`,
+    )
+    console.log(
+      `${rotulo} card.apurado="${cartao.apurado}" card.apuradoSecoes="${cartao.apuradoSecoes}"`,
     )
     console.log(`${rotulo} card.texto=${cartao.texto}`)
     if (cartao.secoes < 1) {

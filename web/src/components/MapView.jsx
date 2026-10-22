@@ -250,9 +250,11 @@ function criarCanvasIconeLocal(bucket, cor) {
   return canvas
 }
 
-// addImage no load e no styledata, só para os ids que ainda não existem no
-// estilo. O styledata pode trocar o estilo inteiro (basemap), então re-registrar
-// é barato e evita ícone faltando.
+// addImage no load, no styledata e no idle, só para os ids que ainda não
+// existem no estilo. O styledata pode trocar o estilo inteiro (basemap), então
+// re-registrar é barato e evita ícone faltando.
+let avisouFalhaIcone = false
+
 export function registrarIconesLocais(mapa) {
   if (!mapa) return
   if (typeof mapa.isStyleLoaded === 'function' && !mapa.isStyleLoaded()) return
@@ -262,9 +264,28 @@ export function registrarIconesLocais(mapa) {
       const id = `local-${bucket}-${partido}`
       if (typeof mapa.hasImage === 'function' && mapa.hasImage(id)) continue
       try {
-        mapa.addImage(id, criarCanvasIconeLocal(bucket, cor), { pixelRatio: 2 })
-      } catch {
-        // Troca de estilo em andamento: o próximo styledata tenta de novo.
+        // O MapLibre 5.24 NÃO aceita HTMLCanvasElement em addImage: ele valida
+        // width*height*4 e o canvas falha com "mismatched image size. expected:
+        // 0 but got: 16384" — o ícone nunca era registrado e a camada
+        // locais-ponto não desenhava nada. ImageData (mesmas pixels) passa.
+        const canvas = criarCanvasIconeLocal(bucket, cor)
+        const contexto = canvas.getContext('2d')
+        mapa.addImage(
+          id,
+          contexto.getImageData(0, 0, canvas.width, canvas.height),
+          { pixelRatio: 2 },
+        )
+      } catch (erro) {
+        // Troca de estilo em andamento é esperada; qualquer outra falha tem que
+        // aparecer uma vez no console em vez de sumir num catch vazio (foi assim
+        // que o bug do addImage passou despercebido).
+        if (!avisouFalhaIcone) {
+          avisouFalhaIcone = true
+          console.warn(
+            'ícones de local não registrados:',
+            erro?.message || erro,
+          )
+        }
       }
     }
   }
@@ -1584,7 +1605,17 @@ export default function MapView({
       onSelectLocalRef.current?.(nrLocal)
     })
 
-    mapa.on('idle', atualizarDebug)
+    mapa.on('idle', () => {
+      // Os ícones dos locais eram registrados só no load/styledata com a guarda
+      // isStyleLoaded(): no celular o load chegava com o estilo ainda não
+      // assentado e nenhum styledata posterior vinha, então
+      // hasImage('local-100-PT') ficava false e a camada locais-ponto não
+      // desenhava nada (medido: imagens=0 por 10s, ponto=0 em todos os
+      // paddings). O idle chega depois de tiles/glyphs; hasImage torna a
+      // chamada idempotente e barata.
+      registrarIconesLocais(mapa)
+      atualizarDebug()
+    })
     mapa.on('sourcedata', (evento) => {
       if (
         evento.sourceId === FONTE ||
@@ -1807,10 +1838,6 @@ export default function MapView({
 
       const zoomBruto = zoomInicialRef.current
       const zoom = Number(zoomBruto)
-      const centroUf = [
-        (limites[0][0] + limites[1][0]) / 2,
-        (limites[0][1] + limites[1][1]) / 2,
-      ]
       if (
         zoomBruto != null &&
         zoomBruto !== '' &&
@@ -1821,20 +1848,11 @@ export default function MapView({
         mapa.jumpTo({ zoom })
       }
 
-      // No celular o bottom sheet cobre ~72% da tela: o centro do canvas fica
-      // escondido atrás do sheet. Desloca o mapa para o centro da UF cair na
-      // faixa visível acima do painel.
-      if (window.innerWidth <= 820) {
-        const preenchimento = paddingDoMapa()
-        const faixa = window.innerHeight - preenchimento.top - preenchimento.bottom
-        const alvoY = preenchimento.top + Math.max(faixa, 120) / 2
-        const projetado = mapa.project(centroUf)
-        mapa.panBy(
-          [projetado.x - window.innerWidth / 2, projetado.y - alvoY],
-          { duration: 0 },
-        )
-      }
-
+      // No celular o bottom sheet cobre ~72% da tela e quem resolve isso é o
+      // padding assimétrico do fitBounds (paddingDoMapa: bottom = 72%). Não há
+      // panBy manual aqui: jumpTo/easeTo preservam o enquadramento já corrigido,
+      // e o pan extra empurrava o alvo para fora do canvas (medido: ?z=13 abria
+      // em lat -4.224, ~55 km ao sul de Fortaleza, tela sem local nenhum).
       const pitch = window.innerWidth <= 820 ? 30 : 50
       mapa.easeTo({ pitch, bearing: 0, duration: 850 })
     }
@@ -1887,7 +1905,19 @@ export default function MapView({
         maxZoom: 13,
         duration: 0,
       })
-      if (zoom > mapa.getZoom()) mapa.jumpTo({ zoom })
+      // O fitBounds com padding assimétrico (celular: bottom 72%) deixa a
+      // câmera ao SUL do município para a cidade aparecer na faixa acima do
+      // bottom sheet. Ao subir o zoom por deep link (?z=) manter aquele centro
+      // jogava a cidade para fora da tela: medido no celular, ?z=13 abria em
+      // lat -4.224 e desenhava 0 locais dos 196. Com o zoom aplicado, o centro
+      // passa a ser o centro do município, que é o que o deep link pede.
+      if (zoom > mapa.getZoom()) {
+        const centroMunicipio = [
+          (limites[0][0] + limites[1][0]) / 2,
+          (limites[0][1] + limites[1][1]) / 2,
+        ]
+        mapa.jumpTo({ zoom, center: centroMunicipio })
+      }
       mapa.easeTo({
         pitch: window.innerWidth <= 820 ? 30 : 50,
         bearing: 0,
