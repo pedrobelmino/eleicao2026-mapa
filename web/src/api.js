@@ -1,5 +1,5 @@
-// Todas as chamadas usam caminho relativo à base do app (/mapa/ em produção).
-// Em desenvolvimento o proxy do Vite encaminha /mapa/api para a API Go.
+// Todas as chamadas usam caminho relativo à base do app (a raiz em produção).
+// Em desenvolvimento o proxy do Vite encaminha /api para a API Go.
 export const API_BASE = `${import.meta.env.BASE_URL}api`
 
 export async function fetchJSON(path) {

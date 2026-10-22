@@ -13,3 +13,11 @@ _provas/tmp/
 
 # binário gerado por go build local
 api/api
+
+# artefatos de experimento, não usados pelo runtime
+web/.tmp-ssr/
+
+# mapa_ufs.json é sobra do dump antigo: o mapa por UF vem de /api/ufs.geojson
+# e a home de /api/home (publico.json). Fica no disco, fora do controle de versão.
+dados/mapa_ufs.json
+

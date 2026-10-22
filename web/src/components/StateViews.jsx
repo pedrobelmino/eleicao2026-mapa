@@ -26,9 +26,9 @@ export default function StateViews({ tipo, erro, onTentarNovamente }) {
         {erro?.message ? ` · ${erro.message}` : ''}
       </p>
       <p className="state-hint">
-        Os dados vêm de <code>/mapa/api/estados</code> e{' '}
-        <code>/mapa/api/ufs.geojson</code>. Verifique se a API está no ar e
-        tente de novo.
+        Os dados vêm de <code>/api/estados</code> e{' '}
+        <code>/api/ufs.geojson</code>. Verifique se a API está no ar e tente de
+        novo.
       </p>
       <button type="button" className="state-button" onClick={onTentarNovamente}>
         tentar de novo

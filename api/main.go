@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,25 +11,29 @@ import (
 	"os"
 	"path/filepath"
 	"runtime/debug"
+	"strconv"
 	"strings"
 	"time"
 )
 
 type config struct {
-	Eleicao  string
-	Turno    string
-	DadosDir string
-	Porta    string
-	TSEBase  string
+	Eleicao       string
+	Turno         string
+	DadosDir      string
+	Serie2022File string
+	Porta         string
+	TSEBase       string
 }
 
 func carregarConfig() config {
+	dadosDir := envOu("DADOS_DIR", "../dados")
 	return config{
-		Eleicao:  envOu("ELEICAO", "6257"),
-		Turno:    envOu("TURNO", "1"),
-		DadosDir: envOu("DADOS_DIR", "../dados"),
-		Porta:    envOu("PORT", "8080"),
-		TSEBase:  envOu("TSE_BASE", "https://resultados.tse.jus.br/oficial/ele2026"),
+		Eleicao:       envOu("ELEICAO", "6257"),
+		Turno:         envOu("TURNO", "1"),
+		DadosDir:      dadosDir,
+		Serie2022File: envOu("SERIE_2022_FILE", filepath.Join(dadosDir, "serie_historica_2022.jsonl")),
+		Porta:         envOu("PORT", "8080"),
+		TSEBase:       envOu("TSE_BASE", "https://resultados.tse.jus.br/oficial/ele2026"),
 	}
 }
 
@@ -152,8 +157,9 @@ type colecaoGeoJSON struct {
 }
 
 type dados struct {
-	Publico *publico
-	Malha   colecaoGeoJSON
+	Publico      *publico
+	PublicoBruto json.RawMessage
+	Malha        colecaoGeoJSON
 }
 
 func carregarDados(dadosDir string) (*dados, error) {
@@ -218,7 +224,8 @@ func carregarDados(dadosDir string) (*dados, error) {
 	}
 
 	return &dados{
-		Publico: &pub,
+		Publico:      &pub,
+		PublicoBruto: json.RawMessage(conteudoPublico),
 		Malha: colecaoGeoJSON{
 			Type:     "FeatureCollection",
 			Features: features,
@@ -256,13 +263,36 @@ func novaApp(cfg config) (*app, error) {
 }
 
 func (a *app) handler() http.Handler {
-	mux := http.NewServeMux()
-	mux.HandleFunc("GET /api/health", a.handleHealth)
-	mux.HandleFunc("GET /api/estados", a.handleEstados)
-	mux.HandleFunc("GET /api/ufs.geojson", a.handleUfsGeoJSON)
-	mux.HandleFunc("GET /api/municipios.geojson", a.handleMunicipiosGeoJSON)
+	return withCORS(withLogging(withHead(withRecovery(http.HandlerFunc(a.rotear)))))
+}
 
-	return withCORS(withLogging(withRecovery(mux)))
+// rotear concentra as rotas para responder 404 e 405 sempre em JSON.
+func (a *app) rotear(w http.ResponseWriter, r *http.Request) {
+	var manipulador http.HandlerFunc
+	switch r.URL.Path {
+	case "/api/health":
+		manipulador = a.handleHealth
+	case "/api/estados":
+		manipulador = a.handleEstados
+	case "/api/home":
+		manipulador = a.handleHome
+	case "/api/serie2022":
+		manipulador = a.handleSerie2022
+	case "/api/ufs.geojson":
+		manipulador = a.handleUfsGeoJSON
+	case "/api/municipios.geojson":
+		manipulador = a.handleMunicipiosGeoJSON
+	default:
+		writeJSON(w, http.StatusNotFound, map[string]string{"erro": "não encontrado"})
+		return
+	}
+
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"erro": "método não permitido"})
+		return
+	}
+
+	manipulador(w, r)
 }
 
 type healthResposta struct {
@@ -351,6 +381,97 @@ func (a *app) handleEstados(w http.ResponseWriter, _ *http.Request) {
 	})
 }
 
+func (a *app) handleHome(w http.ResponseWriter, _ *http.Request) {
+	eleicao := jsonString(a.cfg.Eleicao)
+	turno := jsonString(a.cfg.Turno)
+
+	resposta := make([]byte, 0, len(a.dados.PublicoBruto)+len(eleicao)+len(turno)+32)
+	resposta = append(resposta, `{"eleicao":`...)
+	resposta = append(resposta, eleicao...)
+	resposta = append(resposta, `,"turno":`...)
+	resposta = append(resposta, turno...)
+	resposta = append(resposta, `,"publico":`...)
+	resposta = append(resposta, a.dados.PublicoBruto...)
+	resposta = append(resposta, '}', '\n')
+
+	escreverJSONCru(w, http.StatusOK, resposta)
+}
+
+const fonteSerie2022 = "TSE - Histórico Totalização Presidente 1º Turno 2022"
+
+// lerSerie2022 devolve apenas objetos JSON válidos, sem repetir o campo "em".
+func lerSerie2022(caminho string) ([]json.RawMessage, error) {
+	conteudo, err := os.ReadFile(caminho)
+	if err != nil {
+		return nil, err
+	}
+
+	pontos := make([]json.RawMessage, 0)
+	vistos := make(map[string]struct{})
+	for _, linha := range bytes.Split(conteudo, []byte{'\n'}) {
+		linha = bytes.TrimSpace(linha)
+		if len(linha) == 0 {
+			continue
+		}
+
+		var objeto map[string]json.RawMessage
+		if err := json.Unmarshal(linha, &objeto); err != nil || objeto == nil {
+			continue
+		}
+
+		if emCru, temEm := objeto["em"]; temEm {
+			var em string
+			if err := json.Unmarshal(emCru, &em); err != nil {
+				em = string(emCru)
+			}
+			if _, repetido := vistos[em]; repetido {
+				continue
+			}
+			vistos[em] = struct{}{}
+		}
+
+		pontos = append(pontos, json.RawMessage(linha))
+	}
+
+	return pontos, nil
+}
+
+func (a *app) handleSerie2022(w http.ResponseWriter, _ *http.Request) {
+	pontos, err := lerSerie2022(a.cfg.Serie2022File)
+	fonte := fonteSerie2022
+	if err != nil {
+		pontos = nil
+		fonte = ""
+	}
+	if pontos == nil {
+		pontos = []json.RawMessage{}
+	}
+
+	resposta := make([]byte, 0, 160)
+	resposta = append(resposta, `{"eleicao":"2022","fonte":`...)
+	resposta = append(resposta, jsonString(fonte)...)
+	resposta = append(resposta, `,"total":`...)
+	resposta = strconv.AppendInt(resposta, int64(len(pontos)), 10)
+	resposta = append(resposta, `,"pontos":[`...)
+	for indice, ponto := range pontos {
+		if indice > 0 {
+			resposta = append(resposta, ',')
+		}
+		resposta = append(resposta, ponto...)
+	}
+	resposta = append(resposta, ']', '}', '\n')
+
+	escreverJSONCru(w, http.StatusOK, resposta)
+}
+
+func jsonString(valor string) []byte {
+	conteudo, err := json.Marshal(valor)
+	if err != nil {
+		return []byte(`""`)
+	}
+	return conteudo
+}
+
 func (a *app) handleUfsGeoJSON(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, a.dados.Malha)
 }
@@ -366,6 +487,15 @@ func writeJSON(w http.ResponseWriter, status int, valor any) {
 	encoder.SetEscapeHTML(false)
 	if err := encoder.Encode(valor); err != nil {
 		log.Printf("erro ao codificar resposta JSON: %v", err)
+	}
+}
+
+// escreverJSONCru grava bytes JSON já montados, preservando o conteúdo original.
+func escreverJSONCru(w http.ResponseWriter, status int, conteudo []byte) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(status)
+	if _, err := w.Write(conteudo); err != nil {
+		log.Printf("erro ao escrever resposta JSON: %v", err)
 	}
 }
 
@@ -389,6 +519,54 @@ func (r *registradorStatus) Write(conteudo []byte) (int, error) {
 		r.WriteHeader(http.StatusOK)
 	}
 	return r.ResponseWriter.Write(conteudo)
+}
+
+// escritorHead descarta o corpo, mas conta os bytes para enviar o mesmo
+// Content-Length que o GET correspondente teria. O cabeçalho só é repassado
+// no fim, quando o tamanho já é conhecido.
+type escritorHead struct {
+	http.ResponseWriter
+	status         int
+	escritos       int
+	escreveuHeader bool
+}
+
+func (e *escritorHead) WriteHeader(status int) {
+	if e.escreveuHeader {
+		return
+	}
+	e.status = status
+	e.escreveuHeader = true
+}
+
+func (e *escritorHead) Write(conteudo []byte) (int, error) {
+	if !e.escreveuHeader {
+		e.WriteHeader(http.StatusOK)
+	}
+	e.escritos += len(conteudo)
+	return len(conteudo), nil
+}
+
+func (e *escritorHead) finalizar() {
+	if !e.escreveuHeader {
+		e.status = http.StatusOK
+	}
+	e.Header().Set("Content-Length", strconv.Itoa(e.escritos))
+	e.ResponseWriter.WriteHeader(e.status)
+}
+
+// withHead trata HEAD como GET, descartando o corpo da resposta.
+func withHead(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodHead {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		escritor := &escritorHead{ResponseWriter: w, status: http.StatusOK}
+		defer escritor.finalizar()
+		next.ServeHTTP(escritor, r)
+	})
 }
 
 func withCORS(next http.Handler) http.Handler {
