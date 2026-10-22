@@ -53,16 +53,16 @@ const TEXTOS = {
     ],
   },
   local: {
-    titulo: 'local de votação (urna)',
+    titulo: 'local de votação — cidade-urna',
     mostraBarra: false,
     mostraSegmentos: false,
     regraConcreto: false,
     itens: [
-      'anel = % apurado',
-      'disco sólido = 100%',
-      'cluster = locais agrupados por proximidade',
-      'cor = partido do líder no local',
-      'toque no local = seções (urnas)',
+      'cada prédio = um local de votação',
+      'altura = votos válidos do local',
+      'cor = partido do candidato que lidera',
+      'topo em concreto = seções ainda não apuradas',
+      'toque no prédio = urnas (seções) do local',
     ],
   },
 }

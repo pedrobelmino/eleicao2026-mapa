@@ -425,7 +425,7 @@ func carregaUFDados(dadosDir, caminhoMunicipios string, pub *publico, apuracaoDe
 		fatorApuracao = fator
 	}
 	zonas, zonasGeo, semCoordenada := montarZonas(arquivo, secoes, indiceCampos, candidatos, partidos, nomesPorCDTSE, fatorApuracao)
-	locais := montarLocais(arquivo, secoes, indiceCampos, candidatos, partidos, nomesPorCDTSE)
+	locais := montarLocais(arquivo, secoes, indiceCampos, candidatos, partidos, nomesPorCDTSE, fatorApuracao)
 
 	respostaMunicipios := municipiosResposta{
 		UF:              arquivo.UF,
@@ -893,7 +893,7 @@ func pctApurado(apuradas, esperadas int) float64 {
 // montarLocais agrega as seções por (cd_tse, nr_local) e depois agrupa os
 // locais que dividem a mesma coordenada dentro do município. Roda uma única vez
 // no boot e já devolve totais e ordenação final.
-func montarLocais(arquivo municipiosArquivo, secoes secoesArquivo, indiceCampos map[string]int, candidatos map[string]candidatoMunicipio, partidos map[string]string, nomesPorCDTSE map[int64]string) map[int64]locaisMunicipioResposta {
+func montarLocais(arquivo municipiosArquivo, secoes secoesArquivo, indiceCampos map[string]int, candidatos map[string]candidatoMunicipio, partidos map[string]string, nomesPorCDTSE map[int64]string, fatorApuracao float64) map[int64]locaisMunicipioResposta {
 	nomesSecoes := make(map[int64]string, len(secoes.Municipios))
 	for chave, nome := range secoes.Municipios {
 		codigo, err := strconv.ParseInt(chave, 10, 64)
@@ -903,6 +903,28 @@ func montarLocais(arquivo municipiosArquivo, secoes secoesArquivo, indiceCampos 
 		nomesSecoes[codigo] = nome
 	}
 
+	// 1ª passada: total de seções por local, lido do próprio dump. É o
+	// denominador do pct_apurado do PRÉDIO (item 10 do roadmap) e nunca uma
+	// estimativa: 100% nos dados oficiais encerrados, menor no modo demo.
+	totalPorLocal := make(map[[2]int64]int64)
+	for _, secaoBruta := range secoes.Secoes {
+		var partes []json.RawMessage
+		if err := json.Unmarshal(secaoBruta, &partes); err != nil {
+			continue
+		}
+		chave := [2]int64{
+			valorInt64(partes, indiceCampos, "cd_tse"),
+			valorInt64(partes, indiceCampos, "nr_local"),
+		}
+		totalPorLocal[chave]++
+	}
+
+	apuradasAlvo := make(map[[2]int64]int64, len(totalPorLocal))
+	for chave, total := range totalPorLocal {
+		apuradasAlvo[chave] = secoesApuradasComFator(total, fatorApuracao)
+	}
+
+	posicaoNoLocal := make(map[[2]int64]int64, len(totalPorLocal))
 	porLocal := make(map[[2]int64]*acumuladoLocal)
 	for _, secaoBruta := range secoes.Secoes {
 		var partes []json.RawMessage
@@ -919,6 +941,26 @@ func montarLocais(arquivo municipiosArquivo, secoes secoesArquivo, indiceCampos 
 			porLocal[chave] = acumulado
 		}
 
+		// O centroide usa TODAS as seções do local (a posição do prédio não
+		// muda com a apuração). Fica ANTES do corte para um local que ainda
+		// não apurou nada não cair na coordenada 0,0 do golfo da Guiné nem se
+		// fundir com outro local sem apuração.
+		lat, lon, temCoordenada := coordenadaDaSecao(partes, indiceCampos)
+		if temCoordenada {
+			acumulado.somaLat += lat
+			acumulado.somaLon += lon
+			acumulado.comCoordenada++
+		}
+
+		// Corte da apuração por local (modo demo): a seção ainda não apurada
+		// não entra em nenhum candidato nem na lista de urnas — é exatamente o
+		// segmento de concreto no topo do prédio.
+		posicao := posicaoNoLocal[chave]
+		posicaoNoLocal[chave] = posicao + 1
+		if posicao >= apuradasAlvo[chave] {
+			continue
+		}
+
 		total := valorInt64(partes, indiceCampos, "total")
 		v13 := valorInt64(partes, indiceCampos, "v13")
 		v22 := valorInt64(partes, indiceCampos, "v22")
@@ -928,13 +970,6 @@ func montarLocais(arquivo municipiosArquivo, secoes secoesArquivo, indiceCampos 
 		acumulado.v13 += v13
 		acumulado.v22 += v22
 		acumulado.voutros += voutros
-
-		lat, lon, temCoordenada := coordenadaDaSecao(partes, indiceCampos)
-		if temCoordenada {
-			acumulado.somaLat += lat
-			acumulado.somaLon += lon
-			acumulado.comCoordenada++
-		}
 
 		codigoLider, _ := liderDaZona(v13, v22, voutros)
 		nomeLider := "outros candidatos"
@@ -953,8 +988,8 @@ func montarLocais(arquivo municipiosArquivo, secoes secoesArquivo, indiceCampos 
 			V22:     v22,
 			VOutros: voutros,
 			Lider:   nomeLider,
-			// Cada seção presente no dump tem resultado publicado; o critério
-			// de pct_apurado é o mesmo do local (ver bloco acima de montarLocais).
+			// Cada seção listada tem resultado publicado; o critério de
+			// pct_apurado é o mesmo do local (ver bloco acima de montarLocais).
 			PctApurado: pctApurado(1, 1),
 		})
 	}
@@ -969,6 +1004,8 @@ func montarLocais(arquivo municipiosArquivo, secoes secoesArquivo, indiceCampos 
 		}
 
 		vv := acumulado.v13 + acumulado.v22 + acumulado.voutros
+		chaveLocal := [2]int64{acumulado.codTSE, acumulado.nrLocal}
+		esperadas := int(totalPorLocal[chaveLocal])
 		local := localResposta{
 			NrLocal:         acumulado.nrLocal,
 			Lat:             lat,
@@ -978,9 +1015,9 @@ func montarLocais(arquivo municipiosArquivo, secoes secoesArquivo, indiceCampos 
 			V13:             acumulado.v13,
 			V22:             acumulado.v22,
 			VOutros:         acumulado.voutros,
-			PctApurado:      pctApurado(len(acumulado.secoes), len(acumulado.secoes)),
+			PctApurado:      pctApurado(len(acumulado.secoes), esperadas),
 			SecoesApuradas:  len(acumulado.secoes),
-			SecoesEsperadas: len(acumulado.secoes),
+			SecoesEsperadas: esperadas,
 			NrLocais:        []int64{acumulado.nrLocal},
 			Secoes:          acumulado.secoes,
 		}
@@ -1079,8 +1116,15 @@ func mesclarLocais(chave [2]float64, membros []localResposta) localResposta {
 		return grupo.NrLocais[i] < grupo.NrLocais[j]
 	})
 	grupo.Agrupado = len(grupo.NrLocais) > 1
-	grupo.SecoesApuradas = len(grupo.Secoes)
-	grupo.SecoesEsperadas = grupo.SecoesApuradas
+	// As seções já vêm cortadas pelo fator de apuração em cada membro: somar os
+	// contadores (em vez de recontar a lista concatenada) mantém o pct_apurado
+	// do grupo correto — recontar daria sempre 100% e apagaria o concreto.
+	grupo.SecoesApuradas = 0
+	grupo.SecoesEsperadas = 0
+	for _, membro := range membros {
+		grupo.SecoesApuradas += membro.SecoesApuradas
+		grupo.SecoesEsperadas += membro.SecoesEsperadas
+	}
 	grupo.PctApurado = pctApurado(grupo.SecoesApuradas, grupo.SecoesEsperadas)
 	return grupo
 }

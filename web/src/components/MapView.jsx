@@ -4,6 +4,7 @@ import {
   CARTO_POSITRON,
   CORES_PARTIDO,
   COR_NEUTRA,
+  COR_CONCRETO,
   EXPRESSAO_COR,
   EXPRESSAO_COR_UF,
   TRANSICAO_COR_UF,
@@ -12,6 +13,12 @@ import {
   ZOOM_ZONA,
   nivelPorZoom,
 } from '../mapa.js'
+import {
+  LIMITE_PREDIOS,
+  construirPredios,
+  construirUrnas,
+  pontosDosLocais,
+} from '../cidade.js'
 import { instalarControleDeMouse } from '../controle_mouse.js'
 import { numero, percentual, pontos } from '../format.js'
 
@@ -45,20 +52,30 @@ const LAYER_MUN_LABELS = 'municipios-labels'
 const FONTE_LOCAIS = 'locais'
 const FONTE_LOCAIS_PONTOS = 'locais-pontos'
 const LAYER_LOCAL_PRISMA = 'locais-prisma'
+// Segmento de concreto no topo do prédio: a fração de seções ainda não
+// apuradas. Só existe no 2º turno ao vivo / modo demo — na apuração encerrada
+// a expressão filtra tudo fora (altura_concreto_m = 0).
+const LAYER_LOCAL_CONCRETO = 'locais-concreto'
 const LAYER_LOCAL_CLUSTER = 'locais-cluster'
 const LAYER_LOCAL_CLUSTER_COUNT = 'locais-cluster-count'
 const LAYER_LOCAL_PONTO = 'locais-ponto'
 const LAYER_LOCAL_HIT = 'locais-hit'
 const LAYER_LOCAL_SELECIONADO = 'locais-selecionado'
 
+// Urnas do local selecionado: blocos sobre a laje do prédio (uma seção = uma
+// urna) e a placa que sustenta a grade.
+const FONTE_URNAS = 'urnas'
+const LAYER_URNA_PLACA = 'urnas-placa'
+const LAYER_URNA_BLOCO = 'urnas-bloco'
+
 // Os rótulos de município só entram quando as colunas 3D já desceram a zero
 // (ver ALTURA_PRISMAS): antes disso o símbolo cai atrás do prisma e aparece
 // cortado. Este é o zoom mínimo seguro.
 const ZOOM_ROTULO_MUNICIPIO = 8.4
 
-// Acima disto o município tem locais demais para desenhar prisma por local; a
-// camada cai para pontos puros (o raio continua codificando os votos).
-const LIMITE_LOCAIS_PRISMA = 400
+// Acima disto o município tem locais demais para desenhar prédio por local; a
+// camada cai para os pontos/ícones 2D (o raio continua codificando os votos).
+// O limite vive em cidade.js (LIMITE_PREDIOS) para a prova poder medi-lo.
 
 // Cores dos 4 segmentos empilhados da barra de composição da zona. A ordem é
 // a de empilhamento, de baixo para cima: Lula (vermelho) -> Flávio (azul) ->
@@ -166,41 +183,21 @@ const OPACIDADE_MUNICIPIOS_LINHA = [
   0.9,
 ]
 
-// A cor do prisma do local conta a fração apurada: começa clara e chega à cor
-// cheia do partido quando a urna está 100% apurada.
-const COR_PRISMA_LOCAL = [
+// Cor do PRÉDIO = partido do candidato que lidera o local (regra do item 10).
+// O que falta apurar não entra na cor: sobe como segmento de concreto no topo
+// (LAYER_LOCAL_CONCRETO), igual à barra de composição da zona.
+const COR_PREDIO = [
   'match',
   ['get', 'partido_lider'],
   'PL',
-  [
-    'interpolate',
-    ['linear'],
-    ['coalesce', ['get', 'pct_apurado'], 100],
-    0,
-    '#c9d9ee',
-    100,
-    CORES_PARTIDO.PL,
-  ],
+  CORES_PARTIDO.PL,
   'PT',
-  [
-    'interpolate',
-    ['linear'],
-    ['coalesce', ['get', 'pct_apurado'], 100],
-    0,
-    '#f3cdd1',
-    100,
-    CORES_PARTIDO.PT,
-  ],
-  [
-    'interpolate',
-    ['linear'],
-    ['coalesce', ['get', 'pct_apurado'], 100],
-    0,
-    '#e6e8ea',
-    100,
-    COR_NEUTRA,
-  ],
+  CORES_PARTIDO.PT,
+  COR_NEUTRA,
 ]
+
+// Cor de cada urna = partido que lidera aquela seção.
+const COR_URNA = COR_PREDIO
 
 const CORES_ICONE = {
   PL: CORES_PARTIDO.PL,
@@ -306,18 +303,10 @@ export function registrarIconesLocais(mapa) {
   }
 }
 
-// A coluna do local nasce do chão entre ZOOM_LOCAL e ZOOM_LOCAL + 0,5 para a
-// troca zona -> local ser suave (nada aparece/some de um frame para o outro).
-const ALTURA_LOCAL = [
-  'interpolate',
-  ['linear'],
-  ['zoom'],
-  ZOOM_LOCAL,
-  0,
-  ZOOM_LOCAL + 0.5,
-  ['get', 'altura_m'],
-]
-
+// O prédio do local nasce do chão logo depois do ZOOM_LOCAL. A altura NÃO pode
+// depender do zoom dentro de fill-extrusion-height (expressão de zoom ali
+// derrubava o mapa — ver REGRA-MOUSE-MAPA.txt): quem controla o aparecimento é
+// o minzoom da camada + esta opacidade.
 const OPACIDADE_LOCAL = [
   'interpolate',
   ['linear'],
@@ -328,111 +317,22 @@ const OPACIDADE_LOCAL = [
   0.92,
 ]
 
-function anelHexagono(lat, lon, raioMetros) {
-  const raioLat = raioMetros / 110540
-  const cosseno = Math.max(Math.abs(Math.cos((lat * Math.PI) / 180)), 1e-9)
-  const raioLon = raioMetros / (111320 * cosseno)
-  const anel = []
-  for (let indice = 0; indice < 6; indice += 1) {
-    const angulo = (2 * Math.PI * indice) / 6
-    anel.push([
-      lon + raioLon * Math.cos(angulo),
-      lat + raioLat * Math.sin(angulo),
-    ])
-  }
-  anel.push(anel[0])
-  return anel
-}
-
-// Converte a lista de locais (já agregada pelo backend) em features com uma
-// coluna hexagonal: raio e altura saem do total de votos do local.
-export function colecaoLocais(locais) {
+// Topo do prédio do local escolhido, na MESMA escala de construirPredios: é a
+// laje onde as urnas (seções) são apoiadas.
+function alturaDoPredio(nrLocal, locais) {
   const lista = Array.isArray(locais) ? locais : []
-  let maior = 0
-  for (const local of lista) {
-    if (Number(local.total) > maior) maior = Number(local.total)
-  }
-
-  const features = lista.map((local) => {
-    const fracao =
-      maior > 0 ? Math.sqrt(Math.max(Number(local.total) || 0, 0) / maior) : 0
-    const raio = Math.round(60 + 240 * fracao)
-    const altura = Math.round(60 + 900 * fracao)
-
-    return {
-      type: 'Feature',
-      id: String(local.nr_local),
-      properties: {
-        nr_local: local.nr_local,
-        total: local.total,
-        vv: local.vv,
-        lider: local.lider,
-        lider_cod: local.lider_cod,
-        partido_lider: local.partido_lider || '',
-        lider_pct: local.lider_pct,
-        margem_votos: local.margem_votos,
-        margem_pct: local.margem_pct,
-        pct_apurado: local.pct_apurado,
-        secoes_apuradas: local.secoes_apuradas,
-        secoes_esperadas: local.secoes_esperadas,
-        agrupado: Boolean(local.agrupado),
-        nr_locais: Array.isArray(local.nr_locais) ? local.nr_locais : [],
-        secao: Array.isArray(local.secoes) ? local.secoes.length : 0,
-        altura_m: altura,
-        raio_m: raio,
-      },
-      geometry: {
-        type: 'Polygon',
-        coordinates: [anelHexagono(Number(local.lat), Number(local.lon), raio)],
-      },
-    }
-  })
-
-  return { type: 'FeatureCollection', features }
+  if (!lista.length) return 0
+  const colecao = construirPredios(lista)
+  const alvo = String(nrLocal)
+  const feature = colecao.features.find(
+    (item) => String(item.properties?.nr_local) === alvo,
+  )
+  return Number(feature?.properties?.altura_total_m) || 0
 }
 
-// Uma feature Point por local agrupado. É esta coleção que alimenta o cluster
-// e os ícones de urna (o polígono acima fica só para o prisma 3D).
-export function colecaoLocaisPontos(locais) {
-  const lista = Array.isArray(locais) ? locais : []
-
-  const features = lista
-    .map((local) => ({
-      type: 'Feature',
-      id: String(local.nr_local),
-      properties: {
-        nr_local: local.nr_local,
-        total: local.total,
-        vv: local.vv,
-        v13: local.v13,
-        v22: local.v22,
-        voutros: local.voutros,
-        lider: local.lider,
-        lider_cod: local.lider_cod,
-        partido_lider: local.partido_lider || '',
-        lider_pct: local.lider_pct,
-        margem_votos: local.margem_votos,
-        margem_pct: local.margem_pct,
-        pct_apurado: local.pct_apurado,
-        secoes_apuradas: local.secoes_apuradas,
-        secoes_esperadas: local.secoes_esperadas,
-        agrupado: Boolean(local.agrupado),
-        nr_locais: Array.isArray(local.nr_locais) ? local.nr_locais : [],
-        secao: Array.isArray(local.secoes) ? local.secoes.length : 0,
-      },
-      geometry: {
-        type: 'Point',
-        coordinates: [Number(local.lon), Number(local.lat)],
-      },
-    }))
-    .filter(
-      (feature) =>
-        Number.isFinite(feature.geometry.coordinates[0]) &&
-        Number.isFinite(feature.geometry.coordinates[1]),
-    )
-
-  return { type: 'FeatureCollection', features }
-}
+// Os pontos 2D vêm de cidade.js (pontosDosLocais): mesma fonte de verdade dos
+// prédios, inclusive a escala de altura. É o que alimenta o cluster, os ícones
+// de urna e o fallback quando o município tem locais demais para 3D.
 
 function limitesDaGeometria(geometria) {
   if (!geometria?.coordinates) return null
@@ -641,6 +541,15 @@ function publicarDebug(mapa, locais, detalhe, municipioSelecionado) {
     featuresZonas: 0,
     featuresLocais: 0,
     featuresLocaisPontos: 0,
+    predios: 0,
+    prediosDesenhados: 0,
+    prediosConcreto: 0,
+    modoPredios: 'pontos',
+    urnas: 0,
+    urnasDesenhadas: 0,
+    urnasColunas: 0,
+    urnasLinhas: 0,
+    tempoRenderMs: 0,
     clustersVisiveis: 0,
     featuresLocaisPrisma: 0,
     camadasLocais: 0,
@@ -672,12 +581,31 @@ function publicarDebug(mapa, locais, detalhe, municipioSelecionado) {
       featuresZonas: numero(() => contarFonte(mapa, FONTE_ZONAS)),
       featuresLocais: numero(() => contarFonte(mapa, FONTE_LOCAIS)),
       featuresLocaisPontos: numero(() => contarFonte(mapa, FONTE_LOCAIS_PONTOS)),
+      // querySourceFeatures conta por tile e duplica prédio na divisa: a
+      // quantidade confiável é a da última coleção construída.
+      predios: metricasRender.get(mapa)?.quantidade || 0,
+      prediosDesenhados: numero(() => contarCamada(mapa, LAYER_LOCAL_PRISMA)),
+      prediosConcreto: numero(() => contarCamada(mapa, LAYER_LOCAL_CONCRETO)),
+      modoPredios: deveDesenharPredios(
+        mapa,
+        Array.isArray(locais) ? locais.length : 0,
+      )
+        ? 'predios'
+        : 'pontos',
+      urnas: numero(() => contarFonte(mapa, FONTE_URNAS)),
+      urnasDesenhadas: numero(() => contarCamada(mapa, LAYER_URNA_BLOCO)),
+      urnasColunas: urnasDebug.get(mapa)?.colunas || 0,
+      urnasLinhas: urnasDebug.get(mapa)?.linhas || 0,
+      tempoRenderMs: metricasRender.get(mapa)?.ms || 0,
       clustersVisiveis: numero(() => contarCamada(mapa, LAYER_LOCAL_CLUSTER)),
       featuresLocaisPrisma: numero(() => contarFonte(mapa, FONTE_LOCAIS)),
       camadasLocais: numero(
         () =>
           [
             LAYER_LOCAL_PRISMA,
+            LAYER_LOCAL_CONCRETO,
+            LAYER_URNA_PLACA,
+            LAYER_URNA_BLOCO,
             LAYER_LOCAL_CLUSTER,
             LAYER_LOCAL_CLUSTER_COUNT,
             LAYER_LOCAL_PONTO,
@@ -707,23 +635,18 @@ function publicarDebug(mapa, locais, detalhe, municipioSelecionado) {
   window.__mapaDebug = debug
 }
 
-// O prisma é o indicador do nível de cidade. No nível de urna ele cobre o
-// ícone de % apurado, então a camada só aparece entre ZOOM_LOCAL e 12 (antes
-// do clusterMaxZoom) e enquanto a quantidade de locais couber no orçamento.
-function atualizarVisibilidadePrisma(mapa, quantidade) {
-  if (!mapa || !mapa.getLayer(LAYER_LOCAL_PRISMA)) return
+// O prédio é o indicador do nível de cidade e fica visível do ZOOM_LOCAL até o
+// maxZoom do mapa; quem controla a entrada/saída por zoom é o par minzoom/
+// maxzoom da camada (nunca altura). Acima do limite de locais do município a
+// camada inteira é escondida e o nível cai para os pontos/ícones 2D.
+function atualizarVisibilidadePredios(mapa, quantidade) {
+  if (!mapa) return
   const total = Number(quantidade) || 0
-  const zoom = mapa.getZoom()
-  const visivel =
-    total > 0 &&
-    total <= LIMITE_LOCAIS_PRISMA &&
-    zoom >= ZOOM_LOCAL &&
-    zoom < 12
-  mapa.setLayoutProperty(
-    LAYER_LOCAL_PRISMA,
-    'visibility',
-    visivel ? 'visible' : 'none',
-  )
+  const visivel = total > 0 && total <= limiteDePredios()
+  for (const camada of [LAYER_LOCAL_PRISMA, LAYER_LOCAL_CONCRETO]) {
+    if (!mapa.getLayer(camada)) continue
+    mapa.setLayoutProperty(camada, 'visibility', visivel ? 'visible' : 'none')
+  }
 }
 
 // Rótulos de município do BASEMAP (CARTO Positron). São símbolos 3D: um prisma
@@ -809,6 +732,155 @@ function adicionarFonte(mapa, id, definicao, aoPendente) {
   }
 }
 
+// Estado mínimo que as funções de camada precisam e que vive fora do React:
+// qual local está selecionado (para a grade de urnas reaparecer no load) e o
+// tempo de render medido da última aplicação de locais.
+const estadoLocal = { selecionado: null }
+const metricasRender = new WeakMap()
+// Último desenho de urnas por mapa (para o __mapaDebug e para a prova).
+const urnasDebug = new WeakMap()
+
+// Limite de prédios por município. O gancho window.__limitePredios existe para
+// a prova conseguir forçar o caminho de fallback 2D (nenhum município real
+// chega perto do limite: Fortaleza é o maior do país com 196 locais).
+function limiteDePredios() {
+  if (typeof window === 'undefined') return LIMITE_PREDIOS
+  const bruto = Number(window.__limitePredios)
+  if (Number.isFinite(bruto) && bruto > 0) return bruto
+  return LIMITE_PREDIOS
+}
+
+// Decide se este município desenha prédio 3D ou cai nos pontos 2D: acima do
+// limite (ou com window.__sem3D ligado por prova) a fonte 3D fica vazia e quem
+// aparece são os ícones/clusters, que já existem.
+function deveDesenharPredios(mapa, quantidade) {
+  const total = Number(quantidade) || 0
+  if (total <= 0) return false
+  if (typeof window !== 'undefined' && window.__sem3D === true) return false
+  return total <= limiteDePredios()
+}
+
+// Tempo entre setData dos prédios e o mapa ficar ocioso (frame desenhado). É a
+// medida usada na prova de desempenho — fica em __mapaDebug.tempoRenderMs.
+function medirTempoDeRender(mapa, inicio, quantidade) {
+  if (!mapa || !inicio) return
+  const registro = { ms: 0, quantidade, iniciadoEm: inicio }
+  metricasRender.set(mapa, registro)
+
+  let concluido = false
+  const fim = () => {
+    if (concluido) return
+    concluido = true
+    if (typeof mapa.off === 'function') mapa.off('idle', fim)
+    registro.ms = Number((performance.now() - inicio).toFixed(1))
+    if (typeof window !== 'undefined' && window.__mapaDebug) {
+      window.__mapaDebug.tempoRenderMs = registro.ms
+    }
+  }
+
+  if (typeof mapa.once === 'function') mapa.once('idle', fim)
+  if (typeof mapa.triggerRepaint === 'function') mapa.triggerRepaint()
+  // Em GPU de software o idle pode demorar: a prova não pode ficar pendurada.
+  setTimeout(fim, 10000)
+}
+
+// Urnas do local selecionado: uma seção = um bloco, em grade sobre a laje do
+// prédio (base = altura do prédio + folga). Sem seleção a fonte fica vazia e as
+// camadas não desenham nada.
+function aplicarUrnas(mapa, localSelecionado, locais, aoPendente) {
+  if (!mapa || !mapa.getStyle || !mapa.getStyle()) {
+    aoPendente?.()
+    return { urnas: 0, colunas: 0, linhas: 0, ladoM: 0 }
+  }
+
+  const lista = Array.isArray(locais) ? locais : []
+  const nr =
+    localSelecionado == null
+      ? NaN
+      : Number(localSelecionado.nr_local ?? localSelecionado)
+  const local = Number.isFinite(nr)
+    ? lista.find((item) => Number(item.nr_local) === nr) || null
+    : null
+
+  let features = []
+  let desenho = { urnas: 0, colunas: 0, linhas: 0, ladoM: 0 }
+  let baseM = 0
+
+  if (local) {
+    // A grade sobe sobre o prédio: mesma escala de altura de construirPredios.
+    baseM = alturaDoPredio(nr, lista) + 6
+    const urnas = construirUrnas(local, { baseM, ladoCelulaM: 45, vaoM: 10 })
+    features = [
+      ...urnas.placa.features.map((feature) => ({
+        ...feature,
+        properties: { ...feature.properties, tipo: 'placa', base_m: baseM },
+      })),
+      ...urnas.colecao.features.map((feature) => ({
+        ...feature,
+        properties: { ...feature.properties, tipo: 'urna' },
+      })),
+    ]
+    desenho = {
+      urnas: urnas.colecao.features.length,
+      colunas: urnas.colunas,
+      linhas: urnas.linhas,
+      ladoM: Number(urnas.ladoM.toFixed(1)),
+      base_m: Number(baseM.toFixed(1)),
+    }
+  }
+
+  const colecao = { type: 'FeatureCollection', features }
+  const fonte = mapa.getSource(FONTE_URNAS)
+  if (fonte) fonte.setData(colecao)
+  else {
+    adicionarFonte(
+      mapa,
+      FONTE_URNAS,
+      { type: 'geojson', data: colecao },
+      aoPendente,
+    )
+  }
+
+  adicionarCamada(
+    mapa,
+    {
+      id: LAYER_URNA_PLACA,
+      type: 'fill-extrusion',
+      source: FONTE_URNAS,
+      minzoom: 10,
+      filter: ['==', ['get', 'tipo'], 'placa'],
+      paint: {
+        'fill-extrusion-color': '#2b3440',
+        'fill-extrusion-height': ['+', ['get', 'base_m'], 3],
+        'fill-extrusion-base': ['get', 'base_m'],
+        'fill-extrusion-opacity': 0.72,
+      },
+    },
+    aoPendente,
+  )
+
+  adicionarCamada(
+    mapa,
+    {
+      id: LAYER_URNA_BLOCO,
+      type: 'fill-extrusion',
+      source: FONTE_URNAS,
+      minzoom: 10,
+      filter: ['==', ['get', 'tipo'], 'urna'],
+      paint: {
+        'fill-extrusion-color': COR_URNA,
+        'fill-extrusion-height': ['+', ['get', 'base_m'], ['get', 'altura_m']],
+        'fill-extrusion-base': ['get', 'base_m'],
+        'fill-extrusion-opacity': 0.97,
+        'fill-extrusion-vertical-gradient': true,
+      },
+    },
+    aoPendente,
+  )
+
+  return desenho
+}
+
 function removerDetalhe(mapa) {
   for (const camada of [
     LAYER_LOCAL_SELECIONADO,
@@ -816,7 +888,11 @@ function removerDetalhe(mapa) {
     LAYER_LOCAL_PONTO,
     LAYER_LOCAL_CLUSTER_COUNT,
     LAYER_LOCAL_CLUSTER,
+    LAYER_LOCAL_CONCRETO,
     LAYER_LOCAL_PRISMA,
+    // Urnas do local: nenhuma camada pode ficar órfã sobre a fonte removida.
+    LAYER_URNA_BLOCO,
+    LAYER_URNA_PLACA,
     LAYER_MUN_LABELS,
     LAYER_MUN_LINE,
     LAYER_MUN_FILL,
@@ -826,6 +902,7 @@ function removerDetalhe(mapa) {
     if (mapa.getLayer(camada)) mapa.removeLayer(camada)
   }
   for (const fonte of [
+    FONTE_URNAS,
     FONTE_LOCAIS_PONTOS,
     FONTE_LOCAIS,
     FONTE_ZONAS,
@@ -1048,8 +1125,13 @@ function aplicarLocais(mapa, locais, aoPendente, detalhe, municipioSelecionado) 
   }
 
   const lista = Array.isArray(locais) ? locais : []
-  const colecaoPoligonos = colecaoLocais(lista)
-  const colecaoPontos = colecaoLocaisPontos(lista)
+  // Prédios 3D (item 10 — CIDADE-URNA) e pontos 2D da mesma lista. A decisão de
+  // desenhar prédio ou só ponto é de atualizarVisibilidadePredios (limite +
+  // WebGL + zoom).
+  const tem3D = deveDesenharPredios(mapa, lista.length)
+  const colecaoPoligonos = tem3D ? construirPredios(lista) : colecaoVazia()
+  const colecaoPontos = pontosDosLocais(lista)
+  const inicioRender = typeof performance !== 'undefined' ? performance.now() : 0
 
   const fonteLocais = mapa.getSource(FONTE_LOCAIS)
   if (fonteLocais) fonteLocais.setData(colecaoPoligonos)
@@ -1089,10 +1171,35 @@ function aplicarLocais(mapa, locais, aoPendente, detalhe, municipioSelecionado) 
       type: 'fill-extrusion',
       source: FONTE_LOCAIS,
       minzoom: ZOOM_LOCAL,
+      maxzoom: 14,
       paint: {
-        'fill-extrusion-color': COR_PRISMA_LOCAL,
-        'fill-extrusion-height': ALTURA_LOCAL,
+        // Cor chapada do partido que lidera: quem conta a apuração parcial é o
+        // segmento de concreto no topo, não um degradê na cor.
+        'fill-extrusion-color': COR_PREDIO,
+        'fill-extrusion-height': ['get', 'altura_cor_m'],
         'fill-extrusion-base': 0,
+        'fill-extrusion-opacity': OPACIDADE_LOCAL,
+        'fill-extrusion-vertical-gradient': true,
+      },
+    },
+    aoPendente,
+  )
+
+  adicionarCamada(
+    mapa,
+    {
+      id: LAYER_LOCAL_CONCRETO,
+      type: 'fill-extrusion',
+      source: FONTE_LOCAIS,
+      minzoom: ZOOM_LOCAL,
+      maxzoom: 14,
+      // Só existe prisma de concreto onde falta apurar — na apuração fechada
+      // (altura_concreto_m = 0) a camada fica vazia e não custa nada.
+      filter: ['>', ['get', 'altura_concreto_m'], 0.5],
+      paint: {
+        'fill-extrusion-color': COR_CONCRETO,
+        'fill-extrusion-height': ['get', 'altura_total_m'],
+        'fill-extrusion-base': ['get', 'altura_concreto_base_m'],
         'fill-extrusion-opacity': OPACIDADE_LOCAL,
         'fill-extrusion-vertical-gradient': true,
       },
@@ -1251,9 +1358,20 @@ function aplicarLocais(mapa, locais, aoPendente, detalhe, municipioSelecionado) 
     }
   }
 
-  // Acima do limite a coluna por local perde utilidade (e custa GPU); a partir
-  // do zoom 12 ela também cobriria o ícone de % apurado do nível de urna.
-  atualizarVisibilidadePrisma(mapa, lista.length)
+  // Acima do limite de locais do município (ou com o 3D desligado) a fonte 3D
+  // fica vazia e as camadas escondidas: quem aparece são os ícones/clusters.
+  atualizarVisibilidadePredios(mapa, lista.length)
+  // Urnas do local selecionado (re)aplicadas junto com os locais: o retry de
+  // load/styledata passa por aqui.
+  const desenhoUrnas = aplicarUrnas(
+    mapa,
+    estadoLocal.selecionado,
+    lista,
+    aoPendente,
+  )
+  urnasDebug.set(mapa, desenhoUrnas)
+  // Tempo de render medido: setData dos prédios -> mapa ocioso.
+  medirTempoDeRender(mapa, inicioRender, colecaoPoligonos.features.length)
   // Publica o debug já com as camadas criadas nesta passagem.
   publicarDebug(mapa, lista, detalhe, municipioSelecionado)
 }
@@ -1293,6 +1411,8 @@ export default function MapView({
   const zoomInicialAplicadoRef = useRef(false)
   const municipioZoomUrlRef = useRef(null)
   const reaplicarDetalheRef = useRef(null)
+  // Último local para o qual a câmera já aproximou (evita re-zoom em loop).
+  const ultimoLocalZoomadoRef = useRef(null)
 
   geojsonRef.current = geojson
   selectedRef.current = selectedUf
@@ -1615,7 +1735,7 @@ export default function MapView({
         tooltip.remove()
       })
 
-      mapa.on('mousemove', [LAYER_LOCAL_HIT, LAYER_LOCAL_PONTO], (evento) => {
+      mapa.on('mousemove', [LAYER_LOCAL_HIT, LAYER_LOCAL_PRISMA, LAYER_LOCAL_PONTO], (evento) => {
         if (mapa.getZoom() < ZOOM_LOCAL) return
         const feature = evento.features?.[0]
         if (!feature) return
@@ -1624,7 +1744,7 @@ export default function MapView({
         tooltip.setLngLat(evento.lngLat).addTo(mapa)
       })
 
-      mapa.on('mouseleave', [LAYER_LOCAL_HIT, LAYER_LOCAL_PONTO], () => {
+      mapa.on('mouseleave', [LAYER_LOCAL_HIT, LAYER_LOCAL_PRISMA, LAYER_LOCAL_PONTO], () => {
         mapa.getCanvas().style.cursor = ''
         tooltip.remove()
       })
@@ -1695,7 +1815,7 @@ export default function MapView({
 
     // Nível urna: o clique/toque abre o local e a lista de seções dele. A
     // agregação é do backend; aqui só se identifica o nr_local.
-    mapa.on('click', LAYER_LOCAL_HIT, (evento) => {
+    mapa.on('click', [LAYER_LOCAL_HIT, LAYER_LOCAL_PRISMA], (evento) => {
       if (mapa.getZoom() < ZOOM_LOCAL) return
       const feature = evento.features?.[0]
       if (!feature) return
@@ -1728,7 +1848,7 @@ export default function MapView({
       }
     })
     mapa.on('moveend', () => {
-      atualizarVisibilidadePrisma(
+      atualizarVisibilidadePredios(
         mapa,
         Array.isArray(locaisRef.current) ? locaisRef.current.length : 0,
       )
@@ -1825,17 +1945,57 @@ export default function MapView({
     }
   }, [detalhe, municipioSelecionado, locais, localSelecionado])
 
-  // Anel em volta do local escolhido.
+  // Anel em volta do local escolhido + as urnas daquele local na laje do
+  // prédio. Ao abrir um local a câmera aproxima (uma vez) para a grade de urnas
+  // caber na tela.
   useEffect(() => {
     const mapa = mapRef.current
-    if (!mapa || !mapa.getLayer(LAYER_LOCAL_SELECIONADO)) return
+    if (!mapa) return
+
     const nrLocal = localSelecionado
       ? Number(localSelecionado.nr_local ?? localSelecionado)
       : -1
-    mapa.setFilter(
-      LAYER_LOCAL_SELECIONADO,
-      ['==', ['get', 'nr_local'], Number.isFinite(nrLocal) ? nrLocal : -1],
+    if (mapa.getLayer(LAYER_LOCAL_SELECIONADO)) {
+      mapa.setFilter(
+        LAYER_LOCAL_SELECIONADO,
+        ['==', ['get', 'nr_local'], Number.isFinite(nrLocal) ? nrLocal : -1],
+      )
+    }
+
+    // O estado fora do React é o que o retry de load/styledata consulta.
+    estadoLocal.selecionado = localSelecionado ?? null
+    const desenho = aplicarUrnas(
+      mapa,
+      localSelecionado,
+      locais,
+      reaplicarDetalheRef.current,
     )
+    urnasDebug.set(mapa, desenho)
+
+    if (!Number.isFinite(nrLocal)) {
+      ultimoLocalZoomadoRef.current = null
+      return
+    }
+    if (ultimoLocalZoomadoRef.current === nrLocal) return
+    ultimoLocalZoomadoRef.current = nrLocal
+
+    const local = (Array.isArray(locais) ? locais : []).find(
+      (item) => Number(item.nr_local) === nrLocal,
+    )
+    const lat = Number(local?.lat)
+    const lon = Number(local?.lon)
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return
+
+    // Nunca aproxima além do que já está: se o usuário já está em zoom de
+    // detalhe, só centraliza. pitch sobe para as urnas aparecerem em 3D.
+    mapa.easeTo({
+      center: [lon, lat],
+      zoom: Math.max(mapa.getZoom(), 12.6),
+      pitch: Math.max(mapa.getPitch(), 50),
+      bearing: 0,
+      padding: paddingDoMapa(),
+      duration: 700,
+    })
   }, [localSelecionado, locais])
 
   // O coroplético de UF só esmaece quando existe UF selecionada e o detalhe

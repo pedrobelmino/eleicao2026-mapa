@@ -1,0 +1,88 @@
+[
+  {
+    "cenario": "fallback_2d",
+    "viewport": "desktop",
+    "url": "http://127.0.0.1:8100/mapa?uf=CE&m=13897&z=12.2",
+    "print": "_provas/item10_fallback_2d_desktop_1440x900.png",
+    "debug": {
+      "featuresUfs": 9,
+      "featuresMunicipios": 24,
+      "featuresZonas": 0,
+      "featuresLocais": 0,
+      "featuresLocaisPontos": 99,
+      "predios": 0,
+      "prediosDesenhados": 0,
+      "prediosConcreto": 0,
+      "modoPredios": "pontos",
+      "urnas": 0,
+      "urnasDesenhadas": 0,
+      "urnasColunas": 0,
+      "urnasLinhas": 0,
+      "tempoRenderMs": 397.8,
+      "clustersVisiveis": 41,
+      "featuresLocaisPrisma": 0,
+      "camadasLocais": 9,
+      "locaisNoMunicipio": 196,
+      "detalheAtivo": true,
+      "municipioSelecionado": "2304400",
+      "nivel": "local",
+      "zoom": 12.2,
+      "pitch": 50,
+      "centro": [
+        -38.52,
+        -3.794
+      ]
+    },
+    "fps": {
+      "quadros": 60,
+      "ms": 1691.7,
+      "fps": 35.5
+    },
+    "erros": [],
+    "falhas": [],
+    "scrollHorizontal": "nao"
+  },
+  {
+    "cenario": "fallback_2d",
+    "viewport": "mobile",
+    "url": "http://127.0.0.1:8100/mapa?uf=CE&m=13897&z=12.2",
+    "print": "_provas/item10_fallback_2d_mobile_390x844.png",
+    "debug": {
+      "featuresUfs": 4,
+      "featuresMunicipios": 11,
+      "featuresZonas": 0,
+      "featuresLocais": 0,
+      "featuresLocaisPontos": 88,
+      "predios": 0,
+      "prediosDesenhados": 0,
+      "prediosConcreto": 0,
+      "modoPredios": "pontos",
+      "urnas": 0,
+      "urnasDesenhadas": 0,
+      "urnasColunas": 0,
+      "urnasLinhas": 0,
+      "tempoRenderMs": 866.2,
+      "clustersVisiveis": 22,
+      "featuresLocaisPrisma": 0,
+      "camadasLocais": 9,
+      "locaisNoMunicipio": 196,
+      "detalheAtivo": true,
+      "municipioSelecionado": "2304400",
+      "nivel": "local",
+      "zoom": 12.2,
+      "pitch": 30,
+      "centro": [
+        -38.52,
+        -3.794
+      ]
+    },
+    "fps": {
+      "quadros": 60,
+      "ms": 1369.8,
+      "fps": 43.8
+    },
+    "erros": [],
+    "falhas": [],
+    "scrollHorizontal": "nao"
+  }
+]

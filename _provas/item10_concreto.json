@@ -1,0 +1,86 @@
+{
+  "api": {
+    "status": 200,
+    "locais": 196,
+    "secoes_esperadas": 5335,
+    "secoes_apuradas": 4061,
+    "pct_global": 76.12,
+    "locais_parciais": 196,
+    "exemplo": {
+      "nr_local": 1074,
+      "pct_apurado": 77.88,
+      "secoes_apuradas": 81,
+      "secoes_esperadas": 104
+    }
+  },
+  "medidas": [
+    {
+      "viewport": "desktop",
+      "print": "_provas/item10_concreto_demo_desktop_1440x900.png",
+      "debug": {
+        "featuresUfs": 9,
+        "featuresMunicipios": 24,
+        "featuresZonas": 0,
+        "featuresLocais": 426,
+        "featuresLocaisPontos": 99,
+        "predios": 196,
+        "prediosDesenhados": 213,
+        "prediosConcreto": 213,
+        "modoPredios": "predios",
+        "urnas": 0,
+        "urnasDesenhadas": 0,
+        "urnasColunas": 0,
+        "urnasLinhas": 0,
+        "tempoRenderMs": 770.4,
+        "clustersVisiveis": 41,
+        "featuresLocaisPrisma": 426,
+        "camadasLocais": 9,
+        "locaisNoMunicipio": 196,
+        "detalheAtivo": true,
+        "municipioSelecionado": "2304400",
+        "nivel": "local",
+        "zoom": 12.2,
+        "pitch": 50,
+        "centro": [
+          -38.52,
+          -3.794
+        ]
+      },
+      "erros": []
+    },
+    {
+      "viewport": "mobile",
+      "print": "_provas/item10_concreto_demo_mobile_390x844.png",
+      "debug": {
+        "featuresUfs": 4,
+        "featuresMunicipios": 11,
+        "featuresZonas": 0,
+        "featuresLocais": 336,
+        "featuresLocaisPontos": 88,
+        "predios": 196,
+        "prediosDesenhados": 100,
+        "prediosConcreto": 100,
+        "modoPredios": "predios",
+        "urnas": 0,
+        "urnasDesenhadas": 0,
+        "urnasColunas": 0,
+        "urnasLinhas": 0,
+        "tempoRenderMs": 876.1,
+        "clustersVisiveis": 22,
+        "featuresLocaisPrisma": 336,
+        "camadasLocais": 9,
+        "locaisNoMunicipio": 196,
+        "detalheAtivo": true,
+        "municipioSelecionado": "2304400",
+        "nivel": "local",
+        "zoom": 12.2,
+        "pitch": 30,
+        "centro": [
+          -38.52,
+          -3.794
+        ]
+      },
+      "erros": []
+    }
+  ]
+}
