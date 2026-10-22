@@ -2,9 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"math"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 )
 
@@ -352,34 +354,40 @@ func TestRotaMunicipiosAntiga(t *testing.T) {
 }
 
 type secaoLocalTeste struct {
-	Zona    int64   `json:"zona"`
-	Secao   int64   `json:"secao"`
-	Lat     float64 `json:"lat"`
-	Lon     float64 `json:"lon"`
-	Total   int64   `json:"total"`
-	VV      int64   `json:"vv"`
-	V13     int64   `json:"v13"`
-	V22     int64   `json:"v22"`
-	VOutros int64   `json:"voutros"`
-	Lider   string  `json:"lider"`
+	Zona       int64   `json:"zona"`
+	Secao      int64   `json:"secao"`
+	Lat        float64 `json:"lat"`
+	Lon        float64 `json:"lon"`
+	Total      int64   `json:"total"`
+	VV         int64   `json:"vv"`
+	V13        int64   `json:"v13"`
+	V22        int64   `json:"v22"`
+	VOutros    int64   `json:"voutros"`
+	Lider      string  `json:"lider"`
+	PctApurado float64 `json:"pct_apurado"`
 }
 
 type localTeste struct {
-	NrLocal      int64             `json:"nr_local"`
-	Lat          float64           `json:"lat"`
-	Lon          float64           `json:"lon"`
-	Total        int64             `json:"total"`
-	VV           int64             `json:"vv"`
-	V13          int64             `json:"v13"`
-	V22          int64             `json:"v22"`
-	VOutros      int64             `json:"voutros"`
-	Lider        string            `json:"lider"`
-	LiderCod     string            `json:"lider_cod"`
-	PartidoLider string            `json:"partido_lider"`
-	LiderPct     float64           `json:"lider_pct"`
-	MargemVotos  int64             `json:"margem_votos"`
-	MargemPct    float64           `json:"margem_pct"`
-	Secoes       []secaoLocalTeste `json:"secoes"`
+	NrLocal         int64             `json:"nr_local"`
+	Lat             float64           `json:"lat"`
+	Lon             float64           `json:"lon"`
+	Total           int64             `json:"total"`
+	VV              int64             `json:"vv"`
+	V13             int64             `json:"v13"`
+	V22             int64             `json:"v22"`
+	VOutros         int64             `json:"voutros"`
+	Lider           string            `json:"lider"`
+	LiderCod        string            `json:"lider_cod"`
+	PartidoLider    string            `json:"partido_lider"`
+	LiderPct        float64           `json:"lider_pct"`
+	MargemVotos     int64             `json:"margem_votos"`
+	MargemPct       float64           `json:"margem_pct"`
+	PctApurado      float64           `json:"pct_apurado"`
+	SecoesApuradas  int               `json:"secoes_apuradas"`
+	SecoesEsperadas int               `json:"secoes_esperadas"`
+	Agrupado        bool              `json:"agrupado"`
+	NrLocais        []int64           `json:"nr_locais"`
+	Secoes          []secaoLocalTeste `json:"secoes"`
 }
 
 type locaisTeste struct {
@@ -395,11 +403,11 @@ type locaisTeste struct {
 	Locais []localTeste `json:"locais"`
 }
 
-func obterLocaisFortaleza(t *testing.T) locaisTeste {
+func obterLocaisMunicipio(t *testing.T, cd int64) locaisTeste {
 	t.Helper()
 	aplicacao := novaAppDeTeste(t)
 
-	requisicao := httptest.NewRequest(http.MethodGet, "/api/uf/CE/locais?cd=13897", nil)
+	requisicao := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/uf/CE/locais?cd=%d", cd), nil)
 	resposta := httptest.NewRecorder()
 	aplicacao.handler().ServeHTTP(resposta, requisicao)
 
@@ -412,6 +420,30 @@ func obterLocaisFortaleza(t *testing.T) locaisTeste {
 		t.Fatalf("decodificar resposta: %v", err)
 	}
 	return corpo
+}
+
+func obterLocaisFortaleza(t *testing.T) locaisTeste {
+	t.Helper()
+	return obterLocaisMunicipio(t, 13897)
+}
+
+// carregarSecoesCETeste lê o dump bruto para comparar o antes (seções) com o
+// depois (locais já agrupados por coordenada).
+func carregarSecoesCETeste(t *testing.T) (secoesArquivo, map[string]int) {
+	t.Helper()
+	conteudo, err := os.ReadFile("../dados/secoes_CE.json")
+	if err != nil {
+		t.Fatalf("ler secoes_CE.json: %v", err)
+	}
+	var arquivo secoesArquivo
+	if err := json.Unmarshal(conteudo, &arquivo); err != nil {
+		t.Fatalf("decodificar secoes_CE.json: %v", err)
+	}
+	indice := make(map[string]int, len(arquivo.Campos))
+	for posicao, nome := range arquivo.Campos {
+		indice[nome] = posicao
+	}
+	return arquivo, indice
 }
 
 func TestUFLocaisFortaleza(t *testing.T) {

@@ -11,20 +11,24 @@ const ESTADO_INICIAL = {
   erro: null,
 }
 
-// A rota /mapa aceita atalhos de prova/drill-down: ?uf=CE&z=6.3. Sem query,
-// tudo continua como antes (Brasil inteiro, sem UF selecionada).
+// A rota /mapa aceita atalhos de prova/drill-down: ?uf=CE&z=6.3 e ?m=<cd_tse>
+// (município já aberto). Sem query, tudo continua como antes (Brasil inteiro,
+// sem UF selecionada).
 function lerAtalhosDaUrl() {
   if (typeof window === 'undefined') {
-    return { ufInicial: null, zoomInicial: null }
+    return { ufInicial: null, municipioInicial: null, zoomInicial: null }
   }
   const parametros = new URLSearchParams(window.location.search)
   const ufBruta = parametros.get('uf')
   const uf = ufBruta ? ufBruta.trim().toUpperCase() : ''
   const zoomBruto = parametros.get('z')
   const zoom = zoomBruto != null && zoomBruto.trim() !== '' ? Number(zoomBruto) : NaN
+  const municipioBruto = parametros.get('m')
+  const municipio = municipioBruto ? municipioBruto.trim() : ''
 
   return {
     ufInicial: /^[A-Z]{2}$/.test(uf) ? uf : null,
+    municipioInicial: /^\d+$/.test(municipio) ? municipio : null,
     zoomInicial: Number.isFinite(zoom) ? zoom : null,
   }
 }
@@ -79,6 +83,7 @@ export default function Mapa() {
           estados={dados.estados}
           geojson={dados.geojson}
           ufInicial={atalhos.ufInicial}
+          municipioInicial={atalhos.municipioInicial}
           zoomInicial={atalhos.zoomInicial}
         />
       ) : null}

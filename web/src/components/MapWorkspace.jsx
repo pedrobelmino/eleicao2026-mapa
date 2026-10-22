@@ -4,6 +4,7 @@ import MapView from './MapView.jsx'
 import NationalScoreboard from './NationalScoreboard.jsx'
 import DetailCard from './DetailCard.jsx'
 import MunicipioCard from './MunicipioCard.jsx'
+import LocalCard from './LocalCard.jsx'
 import Legend, { ResumoLideres } from './Legend.jsx'
 import FallbackView from './FallbackView.jsx'
 import { indexarUFs, resumoLideres } from '../dados.js'
@@ -65,6 +66,7 @@ export default function MapWorkspace({
   estados,
   geojson,
   ufInicial,
+  municipioInicial,
   zoomInicial,
 }) {
   const [webgl] = useState(suportaWebGL)
@@ -86,6 +88,10 @@ export default function MapWorkspace({
   const [detalheCarregando, setDetalheCarregando] = useState(false)
   const [detalheIndisponivel, setDetalheIndisponivel] = useState(false)
   const [erroDetalhe, setErroDetalhe] = useState(null)
+  const [locais, setLocais] = useState(null)
+  const [totalLocais, setTotalLocais] = useState(0)
+  const [locaisCarregando, setLocaisCarregando] = useState(false)
+  const [localSelecionado, setLocalSelecionado] = useState(null)
   const [zoom, setZoom] = useState(() => {
     if (zoomInicial == null || zoomInicial === '') return 3.1
     const inicial = Number(zoomInicial)
@@ -185,7 +191,73 @@ export default function MapWorkspace({
     setUfSelecionada(null)
   }
 
-  const voltarAoEstado = () => setMunicipioSelecionado(null)
+  const voltarAoEstado = () => {
+    setLocalSelecionado(null)
+    setMunicipioSelecionado(null)
+  }
+
+  // cd_tse do município escolhido (a API de locais usa o código do TSE).
+  const cdTse = municipioDetalhe?.cd_tse ?? null
+
+  // Locais de votação do município: agregados no backend, uma UF/município por
+  // vez. Nunca se baixa a lista de locais da UF inteira no front.
+  useEffect(() => {
+    if (!ufSelecionada || !cdTse) {
+      setLocais(null)
+      setTotalLocais(0)
+      setLocalSelecionado(null)
+      return undefined
+    }
+
+    let ativo = true
+    setLocais(null)
+    setTotalLocais(0)
+    setLocalSelecionado(null)
+    setLocaisCarregando(true)
+
+    fetchJSON(`${API_BASE}/uf/${ufSelecionada}/locais?cd=${cdTse}`)
+      .then((resposta) => {
+        if (!ativo) return
+        setLocais(Array.isArray(resposta.locais) ? resposta.locais : [])
+        setTotalLocais(Number(resposta.total_locais) || 0)
+        setLocaisCarregando(false)
+      })
+      .catch(() => {
+        if (!ativo) return
+        setLocais(null)
+        setLocaisCarregando(false)
+      })
+
+    return () => {
+      ativo = false
+    }
+  }, [ufSelecionada, cdTse])
+
+  // Atalho de prova/drill-down: ?m=<cd_tse> abre o município assim que a malha
+  // municipal da UF chega.
+  useEffect(() => {
+    if (!municipioInicial || !detalhe) return
+    const codigo = String(municipioInicial)
+    const lista = detalhe.municipios?.municipios || []
+    const achado = lista.find((item) => String(item.cd_tse) === codigo)
+    if (achado) {
+      setMunicipioSelecionado({
+        nome: achado.nome,
+        codarea: String(achado.cd_ibge),
+        cd_tse: achado.cd_tse,
+      })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [municipioInicial, detalhe])
+
+  const localDetalhe = useMemo(() => {
+    if (localSelecionado == null || !Array.isArray(locais)) return null
+    return (
+      locais.find(
+        (item) => String(item.nr_local) === String(localSelecionado),
+      ) || null
+    )
+  }, [localSelecionado, locais])
 
   const selecionarUf = (uf) => {
     setMunicipioSelecionado(null)
@@ -193,6 +265,7 @@ export default function MapWorkspace({
   }
 
   const selecionarMunicipio = (nome, codarea) => {
+    setLocalSelecionado(null)
     setMunicipioSelecionado({ nome, codarea: String(codarea) })
   }
 
@@ -238,9 +311,12 @@ export default function MapWorkspace({
           onMapError={() => setMapaFalhou(true)}
           detalhe={detalhe}
           municipioSelecionado={municipioSelecionado}
+          locais={locais}
+          localSelecionado={localSelecionado}
           zoomInicial={zoomInicial}
           onZoom={setZoom}
           onSelectMunicipio={selecionarMunicipio}
+          onSelectLocal={setLocalSelecionado}
         />
         <Legend zoom={zoom} />
       </main>
@@ -250,7 +326,15 @@ export default function MapWorkspace({
 
         <div className="panel-divider" aria-hidden="true" />
 
-        {municipioDetalhe ? (
+        {localDetalhe ? (
+          <LocalCard
+            local={localDetalhe}
+            uf={ufSelecionada}
+            municipio={municipioDetalhe?.nome}
+            totalLocais={totalLocais}
+            onVoltar={() => setLocalSelecionado(null)}
+          />
+        ) : municipioDetalhe ? (
           <MunicipioCard
             municipio={municipioDetalhe}
             uf={ufSelecionada}
@@ -294,7 +378,15 @@ export default function MapWorkspace({
           </button>
         </div>
         <div className="sheet-body" ref={sheetBodyRef}>
-          {municipioDetalhe ? (
+          {localDetalhe ? (
+            <LocalCard
+              local={localDetalhe}
+              uf={ufSelecionada}
+              municipio={municipioDetalhe?.nome}
+              totalLocais={totalLocais}
+              onVoltar={() => setLocalSelecionado(null)}
+            />
+          ) : municipioDetalhe ? (
             <MunicipioCard
               municipio={municipioDetalhe}
               uf={ufSelecionada}

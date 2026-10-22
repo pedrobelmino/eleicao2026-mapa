@@ -24,12 +24,21 @@ export default function Header({ estados, erro }) {
         </div>
       </div>
 
-      <div className="header-badge" title="Eleição e turno publicados pela API">
-        <span>{carregado ? estados.eleicao : '—'}</span>
+      <div
+        className="header-badge"
+        title="código da eleição no TSE · 1º turno"
+        aria-label="eleição no TSE: código e turno"
+      >
+        <span className="badge-label">eleição TSE</span>
+        <span className="badge-valor">
+          {carregado ? estados.eleicao : '—'}
+        </span>
         <span className="badge-sep" aria-hidden="true">
           ·
         </span>
-        <span>{carregado ? rotuloTurno(estados.turno) : '—'}</span>
+        <span className="badge-valor">
+          {carregado ? rotuloTurno(estados.turno) : '—'}
+        </span>
       </div>
     </header>
   )

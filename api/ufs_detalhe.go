@@ -149,34 +149,40 @@ type totaisLocaisResposta struct {
 }
 
 type localSecaoResposta struct {
-	Zona    int64   `json:"zona"`
-	Secao   int64   `json:"secao"`
-	Lat     float64 `json:"lat"`
-	Lon     float64 `json:"lon"`
-	Total   int64   `json:"total"`
-	VV      int64   `json:"vv"`
-	V13     int64   `json:"v13"`
-	V22     int64   `json:"v22"`
-	VOutros int64   `json:"voutros"`
-	Lider   string  `json:"lider"`
+	Zona       int64   `json:"zona"`
+	Secao      int64   `json:"secao"`
+	Lat        float64 `json:"lat"`
+	Lon        float64 `json:"lon"`
+	Total      int64   `json:"total"`
+	VV         int64   `json:"vv"`
+	V13        int64   `json:"v13"`
+	V22        int64   `json:"v22"`
+	VOutros    int64   `json:"voutros"`
+	Lider      string  `json:"lider"`
+	PctApurado float64 `json:"pct_apurado"`
 }
 
 type localResposta struct {
-	NrLocal      int64                `json:"nr_local"`
-	Lat          float64              `json:"lat"`
-	Lon          float64              `json:"lon"`
-	Total        int64                `json:"total"`
-	VV           int64                `json:"vv"`
-	V13          int64                `json:"v13"`
-	V22          int64                `json:"v22"`
-	VOutros      int64                `json:"voutros"`
-	Lider        string               `json:"lider"`
-	LiderCod     string               `json:"lider_cod"`
-	PartidoLider string               `json:"partido_lider"`
-	LiderPct     float64              `json:"lider_pct"`
-	MargemVotos  int64                `json:"margem_votos"`
-	MargemPct    float64              `json:"margem_pct"`
-	Secoes       []localSecaoResposta `json:"secoes"`
+	NrLocal         int64                `json:"nr_local"`
+	Lat             float64              `json:"lat"`
+	Lon             float64              `json:"lon"`
+	Total           int64                `json:"total"`
+	VV              int64                `json:"vv"`
+	V13             int64                `json:"v13"`
+	V22             int64                `json:"v22"`
+	VOutros         int64                `json:"voutros"`
+	Lider           string               `json:"lider"`
+	LiderCod        string               `json:"lider_cod"`
+	PartidoLider    string               `json:"partido_lider"`
+	LiderPct        float64              `json:"lider_pct"`
+	MargemVotos     int64                `json:"margem_votos"`
+	MargemPct       float64              `json:"margem_pct"`
+	PctApurado      float64              `json:"pct_apurado"`
+	SecoesApuradas  int                  `json:"secoes_apuradas"`
+	SecoesEsperadas int                  `json:"secoes_esperadas"`
+	Agrupado        bool                 `json:"agrupado"`
+	NrLocais        []int64              `json:"nr_locais"`
+	Secoes          []localSecaoResposta `json:"secoes"`
 }
 
 type locaisMunicipioResposta struct {
@@ -699,8 +705,42 @@ type acumuladoLocal struct {
 	secoes        []localSecaoResposta
 }
 
-// montarLocais agrega as seções por (cd_tse, nr_local) uma única vez no boot.
-// O resultado é indexado por cd_tse e já contém os totais e a ordenação final.
+// Critério único de pct_apurado para locais e seções (mesmo das zonas):
+//
+//	secoes_apuradas  = seções com resultado no dump do TSE;
+//	secoes_esperadas = o MESMO conjunto, porque o cadastro de seções esperadas
+//	                   por local não está no repositório (o dump de votação por
+//	                   seção é a apuração oficial e o 1º turno está encerrado);
+//	pct_apurado      = 100 * apuradas / esperadas.
+//
+// O cálculo é data-driven: no dia da eleição, se o dump chegar parcial, o
+// conjunto de apuradas cai e o percentual cai junto, sem mudar código.
+//
+// Agrupamento por coordenada: locais do mesmo município com lat/lon iguais
+// (arredondadas a 6 casas) viram UM item. Isso evita vários marcadores no mesmo
+// pixel (regra 3 do Pedro). A soma de votos e as seções são preservadas, e
+// líder, partido, lider_pct e margem são recalculados sobre o grupo.
+type grupoLocal struct {
+	membros []localResposta
+}
+
+func chaveCoordenada(lat, lon float64) [2]float64 {
+	return [2]float64{
+		math.Round(lat*1e6) / 1e6,
+		math.Round(lon*1e6) / 1e6,
+	}
+}
+
+func pctApurado(apuradas, esperadas int) float64 {
+	if esperadas <= 0 {
+		return 0
+	}
+	return percentual(int64(apuradas), int64(esperadas))
+}
+
+// montarLocais agrega as seções por (cd_tse, nr_local) e depois agrupa os
+// locais que dividem a mesma coordenada dentro do município. Roda uma única vez
+// no boot e já devolve totais e ordenação final.
 func montarLocais(arquivo municipiosArquivo, secoes secoesArquivo, indiceCampos map[string]int, candidatos map[string]candidatoMunicipio, partidos map[string]string, nomesPorCDTSE map[int64]string) map[int64]locaisMunicipioResposta {
 	nomesSecoes := make(map[int64]string, len(secoes.Municipios))
 	for chave, nome := range secoes.Municipios {
@@ -761,66 +801,77 @@ func montarLocais(arquivo municipiosArquivo, secoes secoesArquivo, indiceCampos 
 			V22:     v22,
 			VOutros: voutros,
 			Lider:   nomeLider,
+			// Cada seção presente no dump tem resultado publicado; o critério
+			// de pct_apurado é o mesmo do local (ver bloco acima de montarLocais).
+			PctApurado: pctApurado(1, 1),
 		})
 	}
 
-	resultado := make(map[int64]locaisMunicipioResposta)
+	// Primeiro nível: um local por (cd_tse, nr_local).
+	porMunicipio := make(map[int64][]localResposta)
 	for _, acumulado := range porLocal {
-		resposta, existe := resultado[acumulado.codTSE]
-		if !existe {
-			municipio := nomesSecoes[acumulado.codTSE]
-			if municipio == "" {
-				municipio = nomesPorCDTSE[acumulado.codTSE]
-			}
-			resposta = locaisMunicipioResposta{
-				UF:        arquivo.UF,
-				CD:        acumulado.codTSE,
-				Municipio: municipio,
-				Locais:    make([]localResposta, 0),
-			}
-		}
-
 		lat, lon := 0.0, 0.0
 		if acumulado.comCoordenada > 0 {
 			lat = acumulado.somaLat / float64(acumulado.comCoordenada)
 			lon = acumulado.somaLon / float64(acumulado.comCoordenada)
 		}
 
-		codigoLider, votosLider := liderDaZona(acumulado.v13, acumulado.v22, acumulado.voutros)
-		nomeLider := "outros candidatos"
-		partidoLider := ""
-		if codigoLider != "outros" {
-			nomeLider = nomeCandidatoZona(codigoLider, secoes.Candidatos, candidatos)
-			partidoLider = partidos[codigoLider]
-		}
-
 		vv := acumulado.v13 + acumulado.v22 + acumulado.voutros
-		margem := votosLider - segundoColocado(acumulado.v13, acumulado.v22, acumulado.voutros)
-
-		resposta.Locais = append(resposta.Locais, localResposta{
-			NrLocal:      acumulado.nrLocal,
-			Lat:          lat,
-			Lon:          lon,
-			Total:        acumulado.total,
-			VV:           vv,
-			V13:          acumulado.v13,
-			V22:          acumulado.v22,
-			VOutros:      acumulado.voutros,
-			Lider:        nomeLider,
-			LiderCod:     codigoLider,
-			PartidoLider: partidoLider,
-			LiderPct:     percentual(votosLider, vv),
-			MargemVotos:  margem,
-			MargemPct:    percentual(margem, vv),
-			Secoes:       acumulado.secoes,
-		})
-		resposta.Totais.Total += acumulado.total
-		resposta.Totais.VV += vv
-		resposta.Totais.Secoes += int64(len(acumulado.secoes))
-		resultado[acumulado.codTSE] = resposta
+		local := localResposta{
+			NrLocal:         acumulado.nrLocal,
+			Lat:             lat,
+			Lon:             lon,
+			Total:           acumulado.total,
+			VV:              vv,
+			V13:             acumulado.v13,
+			V22:             acumulado.v22,
+			VOutros:         acumulado.voutros,
+			PctApurado:      pctApurado(len(acumulado.secoes), len(acumulado.secoes)),
+			SecoesApuradas:  len(acumulado.secoes),
+			SecoesEsperadas: len(acumulado.secoes),
+			NrLocais:        []int64{acumulado.nrLocal},
+			Secoes:          acumulado.secoes,
+		}
+		porMunicipio[acumulado.codTSE] = append(porMunicipio[acumulado.codTSE], local)
 	}
 
-	for codigo, resposta := range resultado {
+	resultado := make(map[int64]locaisMunicipioResposta)
+	for codigo, locais := range porMunicipio {
+		municipio := nomesSecoes[codigo]
+		if municipio == "" {
+			municipio = nomesPorCDTSE[codigo]
+		}
+		resposta := locaisMunicipioResposta{
+			UF:        arquivo.UF,
+			CD:        codigo,
+			Municipio: municipio,
+			Locais:    make([]localResposta, 0, len(locais)),
+		}
+
+		// Segundo nível: agrupa pela coordenada exata (6 casas) dentro do
+		// município. O mapa lê a lista final, já sem marcadores empilhados.
+		grupos := make(map[[2]float64]*grupoLocal, len(locais))
+		ordem := make([][2]float64, 0, len(locais))
+		for _, local := range locais {
+			chave := chaveCoordenada(local.Lat, local.Lon)
+			grupo := grupos[chave]
+			if grupo == nil {
+				grupo = &grupoLocal{}
+				grupos[chave] = grupo
+				ordem = append(ordem, chave)
+			}
+			grupo.membros = append(grupo.membros, local)
+		}
+
+		for _, chave := range ordem {
+			local := mesclarLocais(chave, grupos[chave].membros)
+			preencherLiderLocal(&local, secoes.Candidatos, candidatos, partidos)
+			resposta.Locais = append(resposta.Locais, local)
+			resposta.Totais.Total += local.Total
+			resposta.Totais.VV += local.VV
+			resposta.Totais.Secoes += int64(len(local.Secoes))
+		}
+
 		sort.SliceStable(resposta.Locais, func(i, j int) bool {
 			if resposta.Locais[i].Total != resposta.Locais[j].Total {
 				return resposta.Locais[i].Total > resposta.Locais[j].Total
@@ -840,6 +891,62 @@ func montarLocais(arquivo municipiosArquivo, secoes secoesArquivo, indiceCampos 
 	}
 
 	return resultado
+}
+
+// mesclarLocais soma os votos dos locais que dividem a mesma coordenada,
+// concatena as seções e escolhe como nr_local representante o de maior total
+// (empate: menor nr_local).
+func mesclarLocais(chave [2]float64, membros []localResposta) localResposta {
+	grupo := localResposta{
+		Lat:      chave[0],
+		Lon:      chave[1],
+		NrLocais: make([]int64, 0, len(membros)),
+	}
+	if len(membros) == 0 {
+		return grupo
+	}
+
+	representante := membros[0]
+	for _, membro := range membros {
+		grupo.Total += membro.Total
+		grupo.VV += membro.VV
+		grupo.V13 += membro.V13
+		grupo.V22 += membro.V22
+		grupo.VOutros += membro.VOutros
+		grupo.Secoes = append(grupo.Secoes, membro.Secoes...)
+		grupo.NrLocais = append(grupo.NrLocais, membro.NrLocal)
+
+		if membro.Total > representante.Total ||
+			(membro.Total == representante.Total && membro.NrLocal < representante.NrLocal) {
+			representante = membro
+		}
+	}
+
+	grupo.NrLocal = representante.NrLocal
+	sort.Slice(grupo.NrLocais, func(i, j int) bool {
+		return grupo.NrLocais[i] < grupo.NrLocais[j]
+	})
+	grupo.Agrupado = len(grupo.NrLocais) > 1
+	grupo.SecoesApuradas = len(grupo.Secoes)
+	grupo.SecoesEsperadas = grupo.SecoesApuradas
+	grupo.PctApurado = pctApurado(grupo.SecoesApuradas, grupo.SecoesEsperadas)
+	return grupo
+}
+
+// preencherLiderLocal recalcula líder, partido, percentual e margem a partir
+// dos votos já somados (é o que faz o grupo refletir a soma, não um dos locais).
+func preencherLiderLocal(local *localResposta, nomesSecoes map[string]string, candidatos map[string]candidatoMunicipio, partidos map[string]string) {
+	codigoLider, votosLider := liderDaZona(local.V13, local.V22, local.VOutros)
+	local.LiderCod = codigoLider
+	local.Lider = "outros candidatos"
+	local.PartidoLider = ""
+	if codigoLider != "outros" {
+		local.Lider = nomeCandidatoZona(codigoLider, nomesSecoes, candidatos)
+		local.PartidoLider = partidos[codigoLider]
+	}
+	local.LiderPct = percentual(votosLider, local.VV)
+	local.MargemVotos = votosLider - segundoColocado(local.V13, local.V22, local.VOutros)
+	local.MargemPct = percentual(local.MargemVotos, local.VV)
 }
 
 // coordenadaDaSecao devolve a coordenada da seção somente quando lat e lon

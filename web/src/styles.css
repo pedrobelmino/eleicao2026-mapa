@@ -1704,3 +1704,198 @@ code {
     font-size: 10px;
   }
 }
+
+/* ------------------------------------------------- nível urna / rótulos */
+
+/* Selo do topo: "eleição TSE" é o rótulo; o número é o código do TSE. */
+.header-badge .badge-label {
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.header-badge .badge-valor {
+  font-weight: 800;
+  color: var(--ink);
+}
+
+/* Legenda: um nível por vez, com a lista do que cada canal visual significa. */
+.legend-itens {
+  display: grid;
+  gap: 3px;
+  margin: 7px 0 0;
+  padding: 6px 0 0;
+  border-top: 1px solid var(--line);
+  list-style: none;
+  font-size: 8.5px;
+  line-height: 1.35;
+  color: var(--ink);
+}
+
+.legend-itens li::before {
+  content: "•";
+  margin-right: 5px;
+  color: var(--muted);
+}
+
+.legend-fonte {
+  border-top: 1px solid var(--line);
+}
+
+.legend[data-nivel="local"] .legend-title {
+  color: var(--pt);
+}
+
+/* Cartão do local de votação */
+.local-municipio {
+  margin: 2px 0 0;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+
+.local-secoes h3 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: baseline;
+}
+
+.local-total {
+  font-size: 8.5px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.section-list {
+  max-height: 260px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.section-item .rank {
+  min-width: 26px;
+  font-size: 9.5px;
+}
+
+.section-item .candidate-pct {
+  font-size: 12px;
+}
+
+@media (max-width: 820px) {
+  .header-badge .badge-label {
+    font-size: 7px;
+    letter-spacing: 0.06em;
+  }
+
+  .legend-itens {
+    font-size: 7.5px;
+  }
+
+  .section-list {
+    max-height: 200px;
+  }
+}
+
+/* Destaque do % apurado no cartão do local (urna). */
+.local-grupo {
+  margin-top: 10px;
+  padding: 7px 9px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 10px;
+  background: rgba(255, 253, 248, 0.62);
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.leader-copy .leader-margem {
+  margin-top: 2px;
+  font-size: 9.5px;
+  font-weight: 650;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.local-apurado {
+  margin-top: 12px;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--card-soft);
+}
+
+.local-apurado-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.local-apurado-label {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.local-apurado-numero {
+  font-size: 23px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: var(--party-color);
+  font-variant-numeric: tabular-nums;
+}
+
+.local-apurado-bar {
+  height: 8px;
+  margin-top: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--line);
+}
+
+.local-apurado-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--party-color);
+  transition: width 300ms ease;
+}
+
+.local-apurado-secoes {
+  margin-top: 5px;
+  font-size: 9.5px;
+  line-height: 1.4;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.section-item {
+  grid-template-columns: 58px minmax(0, 1fr) auto;
+}
+
+.section-item .rank {
+  min-width: 0;
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+@media (max-width: 820px) {
+  .local-apurado-numero {
+    font-size: 21px;
+  }
+
+  .section-item {
+    grid-template-columns: 50px minmax(0, 1fr) auto;
+    gap: 7px;
+  }
+}

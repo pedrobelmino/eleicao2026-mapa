@@ -33,7 +33,90 @@ const CENARIOS = [
     espera: 'featuresMunicipios',
     descricao: 'preenchimento municipal',
   },
+  {
+    // Nível urna: ?m=<cd_tse> abre Fortaleza, ?z=11 passa do ZOOM_LOCAL (9.2)
+    // e a camada de pontos/prismas dos locais de votação entra em cena.
+    nome: 'local',
+    municipio: '13897',
+    zoom: '11',
+    espera: 'camadasLocais',
+    descricao: 'pontos dos locais de votação',
+  },
+  {
+    // Abaixo do clusterMaxZoom (12) os locais próximos viram bolhas com o
+    // número de locais agrupados.
+    nome: 'local_cluster',
+    municipio: '13897',
+    zoom: '10.2',
+    espera: 'camadasLocais',
+    descricao: 'clusters de locais de votação',
+  },
+  {
+    // Acima do clusterMaxZoom todos os locais aparecem como ícones de urna.
+    nome: 'local_zoom',
+    municipio: '13897',
+    zoom: '13',
+    espera: 'camadasLocais',
+    descricao: 'ícones de urna no zoom de detalhe',
+  },
+  {
+    // O mesmo nível, com o detalhe aberto: clique real num ponto de local.
+    nome: 'local_detalhe',
+    municipio: '13897',
+    zoom: '11',
+    espera: 'camadasLocais',
+    clicarLocal: true,
+    descricao: 'detalhe do local (seções/urnas)',
+  },
 ]
+
+function urlDoCenario(base, cenario, zoom) {
+  const municipio = cenario.municipio ? `&m=${cenario.municipio}` : ''
+  return `${base}/mapa?uf=CE${municipio}&z=${zoom}`
+}
+
+// Escolhe um local de votação desenhado na parte visível do mapa e devolve as
+// coordenadas de tela para o clique real (no celular o bottom sheet cobre 72%
+// da tela, então o ponto tem que estar na faixa de cima).
+function pontoDeLocal() {
+  const mapa = window.__mapa
+  if (!mapa) return null
+  const largura = window.innerWidth
+  const altura = window.innerHeight
+  const mobile = largura <= 820
+  const yMaximo = mobile ? Math.round(altura * 0.24) : altura - 80
+
+  const escolher = (camada) => {
+    let melhor = null
+    let features = []
+    try {
+      features = mapa.queryRenderedFeatures({ layers: [camada] })
+    } catch {
+      return null
+    }
+    for (const feature of features) {
+      const coordenadas = feature.geometry?.coordinates
+      if (!coordenadas) continue
+      const ponto = mapa.project(coordenadas)
+      if (ponto.x < 24 || ponto.x > largura - 24) continue
+      if (ponto.y < 70 || ponto.y > yMaximo) continue
+      const total = Number(feature.properties?.total) || 0
+      if (!melhor || total > melhor.total) {
+        melhor = {
+          x: Math.round(ponto.x),
+          y: Math.round(ponto.y),
+          total,
+          nr_local: feature.properties?.nr_local,
+        }
+      }
+    }
+    return melhor
+  }
+
+  // O hit é o alvo preferido (raio maior); se a colocação do símbolo não
+  // renderizou nada nele, o ícone do ponto ainda serve para o clique real.
+  return escolher('locais-hit') || escolher('locais-ponto')
+}
 
 function lerArgumentos(argv) {
   const opcoes = {
@@ -79,6 +162,8 @@ async function capturarCenario(browser, base, out, prefix, viewport, cenario) {
   const requisicoesFalhas = []
   let scrollHorizontal = false
   let debug = null
+  let clique = null
+  let cartao = null
   let falha = null
 
   page.on('console', (mensagem) => {
@@ -102,7 +187,7 @@ async function capturarCenario(browser, base, out, prefix, viewport, cenario) {
     viewport.nome === 'mobile' && cenario.zoomMobile
       ? cenario.zoomMobile
       : cenario.zoom
-  const url = `${base}/mapa?uf=CE&z=${zoomCenario}`
+  const url = urlDoCenario(base, cenario, zoomCenario)
   const arquivo = `${prefix}_${cenario.nome}_${viewport.nome}_${viewport.largura}x${viewport.altura}.png`
   const destino = path.join(out, arquivo)
 
@@ -146,6 +231,28 @@ async function capturarCenario(browser, base, out, prefix, viewport, cenario) {
     await page.waitForTimeout(1200)
 
     debug = await page.evaluate(() => window.__mapaDebug || null)
+
+    if (cenario.clicarLocal) {
+      const alvo = await page.evaluate(pontoDeLocal)
+      if (!alvo) throw new Error('nenhum ponto de local visível para clicar')
+      await page.mouse.click(alvo.x, alvo.y)
+      await page.waitForSelector('.local-card', { state: 'visible', timeout: 15000 })
+      await page.waitForTimeout(600)
+      clique = alvo
+      cartao = await page.evaluate(() => {
+        const elemento = document.querySelector('.local-card')
+        if (!elemento) return null
+        return {
+          titulo: elemento.querySelector('.detail-title')?.textContent || '',
+          lider: elemento.querySelector('.leader-copy strong')?.textContent || '',
+          secoes: elemento.querySelectorAll('.section-item').length,
+          cabecalho: elemento.querySelector('.local-secoes h3')?.textContent || '',
+          texto: elemento.innerText.replace(/\s+/g, ' ').slice(0, 260),
+        }
+      })
+      debug = await page.evaluate(() => window.__mapaDebug || null)
+    }
+
     scrollHorizontal = await page.evaluate(
       () => document.documentElement.scrollWidth > window.innerWidth,
     )
@@ -169,8 +276,26 @@ async function capturarCenario(browser, base, out, prefix, viewport, cenario) {
     `${rotulo} __mapaDebug=${debug ? JSON.stringify(debug) : 'null'} (${cenario.descricao})`,
   )
   console.log(
+    `${rotulo} camadasLocais=${debug?.camadasLocais ?? '—'} clustersVisiveis=${debug?.clustersVisiveis ?? '—'} featuresLocaisPontos=${debug?.featuresLocaisPontos ?? '—'} featuresLocaisPrisma=${debug?.featuresLocaisPrisma ?? '—'}`,
+  )
+  console.log(
     `${rotulo} scrollHorizontal=${scrollHorizontal ? 'SIM' : 'nao'}`,
   )
+  if (clique) {
+    console.log(
+      `${rotulo} clique=(${clique.x},${clique.y}) nr_local=${clique.nr_local} votos=${clique.total}`,
+    )
+  }
+  if (cartao) {
+    console.log(
+      `${rotulo} card="${cartao.titulo}" lider="${cartao.lider}" secoes=${cartao.secoes} h3="${cartao.cabecalho}"`,
+    )
+    console.log(`${rotulo} card.texto=${cartao.texto}`)
+    if (cartao.secoes < 1) {
+      console.log(`${rotulo} FALHA=card do local sem seções`)
+      falha = falha || 'card do local sem seções'
+    }
+  }
   imprimirLista(rotulo, 'console.errors', errosConsole, 'nenhum')
   imprimirLista(rotulo, 'requests>=400', requisicoesComErro, 'nenhum')
   imprimirLista(rotulo, 'requests falhas', requisicoesFalhas, 'nenhuma')
