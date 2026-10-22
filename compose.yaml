@@ -1,0 +1,32 @@
+services:
+  api:
+    build: ./api
+    environment:
+      ELEICAO: ${ELEICAO:-6257}
+      TURNO: ${TURNO:-1}
+      DADOS_DIR: /dados
+      PORT: "8080"
+    volumes:
+      - ./dados:/dados:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1:8080/api/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+
+  web:
+    build: ./web
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8110:80"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s

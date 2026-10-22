@@ -1,0 +1,15 @@
+# build/runtime
+web/node_modules/
+web/dist/
+api/bin/
+*.log
+
+# provas locais grandes (prints ficam versionados só os finais)
+_provas/tmp/
+
+# docker
+.dockerignore
+!web/.dockerignore
+
+# binário gerado por go build local
+api/api

@@ -24,4 +24,15 @@ Dados públicos do TSE. Nenhum dado de eleitor. Visitas do painel são anônimas
 ## Estado
 
 Fase 1 concluída no painel Python: dados de município e seção do Ceará fechando com o TSE
-(184 municípios, 23.765 seções, diferença 0 votos). App Go+React em construção.
+(184 municípios, 23.765 seções, diferença 0 votos).
+
+Fase 2 (22/10/2026): app Go+React no ar em `docker compose` — API na 8080 interna, front na
+`127.0.0.1:8110`, publicado em https://eleicao2026.belmino.dev/mapa/ pelo proxy do painel Python
+(8099). Mapa MapLibre com coroplético por UF, zoom/pan/pinch, hover e cartão por estado.
+Provas em `_provas/` (desktop 1440x900 e mobile 390x844, local e público).
+
+```bash
+docker compose up -d --build          # sobe api + web (127.0.0.1:8110)
+cd api && go test ./...               # 3 testes da API
+cd web && npm run build               # build do front (base /mapa/)
+```
