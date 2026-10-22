@@ -1845,7 +1845,20 @@ export default function MapView({
         !zoomInicialAplicadoRef.current
       ) {
         zoomInicialAplicadoRef.current = true
-        mapa.jumpTo({ zoom })
+        // Ao SUBIR o zoom por deep link (?z=) o centro do fitBounds fica ao
+        // sul quando o padding é assimétrico (celular: bottom 72%), então o
+        // ponto enquadrado sai da tela. Nesse caso recentraliza na bbox da UF;
+        // ao DESCER o zoom o centro do fitBounds continua correto e é mantido.
+        const zoomAtual = mapa.getZoom()
+        if (zoom > zoomAtual + 0.01) {
+          const centroUf = [
+            (limites[0][0] + limites[1][0]) / 2,
+            (limites[0][1] + limites[1][1]) / 2,
+          ]
+          mapa.jumpTo({ zoom, center: centroUf })
+        } else if (zoom < zoomAtual - 0.01) {
+          mapa.jumpTo({ zoom })
+        }
       }
 
       // No celular o bottom sheet cobre ~72% da tela e quem resolve isso é o
@@ -1907,16 +1920,22 @@ export default function MapView({
       })
       // O fitBounds com padding assimétrico (celular: bottom 72%) deixa a
       // câmera ao SUL do município para a cidade aparecer na faixa acima do
-      // bottom sheet. Ao subir o zoom por deep link (?z=) manter aquele centro
+      // bottom sheet. Ao SUBIR o zoom por deep link (?z=) manter aquele centro
       // jogava a cidade para fora da tela: medido no celular, ?z=13 abria em
       // lat -4.224 e desenhava 0 locais dos 196. Com o zoom aplicado, o centro
       // passa a ser o centro do município, que é o que o deep link pede.
-      if (zoom > mapa.getZoom()) {
+      // Ao DESCER o zoom, o centro calculado pelo fitBounds continua correto,
+      // então só o zoom muda; a tolerância de 0.01 evita um salto inútil
+      // quando o fitBounds já terminou no zoom pedido.
+      const zoomAtual = mapa.getZoom()
+      if (zoom > zoomAtual + 0.01) {
         const centroMunicipio = [
           (limites[0][0] + limites[1][0]) / 2,
           (limites[0][1] + limites[1][1]) / 2,
         ]
         mapa.jumpTo({ zoom, center: centroMunicipio })
+      } else if (zoom < zoomAtual - 0.01) {
+        mapa.jumpTo({ zoom })
       }
       mapa.easeTo({
         pitch: window.innerWidth <= 820 ? 30 : 50,

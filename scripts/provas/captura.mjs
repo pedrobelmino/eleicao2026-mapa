@@ -63,7 +63,7 @@ const CENARIOS = [
     // O mesmo nível, com o detalhe aberto: clique real num ponto de local.
     nome: 'local_detalhe',
     municipio: '13897',
-    zoom: '11',
+    zoom: '13',
     espera: 'camadasLocais',
     clicarLocal: true,
     descricao: 'detalhe do local (seções/urnas)',
@@ -78,7 +78,7 @@ function urlDoCenario(base, cenario, zoom) {
 // Escolhe um local de votação desenhado na parte visível do mapa e devolve as
 // coordenadas de tela para o clique real (no celular o bottom sheet cobre 72%
 // da tela, então o ponto tem que estar na faixa de cima).
-function pontoDeLocal() {
+async function pontoDeLocal() {
   const mapa = window.__mapa
   if (!mapa) return null
   const largura = window.innerWidth
@@ -115,7 +115,63 @@ function pontoDeLocal() {
 
   // O hit é o alvo preferido (raio maior); se a colocação do símbolo não
   // renderizou nada nele, o ícone do ponto ainda serve para o clique real.
-  return escolher('locais-hit') || escolher('locais-ponto')
+  const naFaixa = escolher('locais-hit') || escolher('locais-ponto')
+  if (naFaixa) return naFaixa
+
+  // Fallback (celular): nenhum local caiu na faixa visível acima do bottom
+  // sheet. Escolhe o local com mais votos entre os features renderizados,
+  // centraliza a câmera nele sem mudar o zoom e espera o mapa ficar idle.
+  // Só depois de o reposicionamento assentar devolve a coordenada de tela,
+  // para o clique real do Playwright cair no ícone.
+  let alvo = null
+  for (const camada of ['locais-hit', 'locais-ponto']) {
+    let features = []
+    try {
+      features = mapa.queryRenderedFeatures({ layers: [camada] })
+    } catch {
+      continue
+    }
+    for (const feature of features) {
+      const coordenadas = feature.geometry?.coordinates
+      if (!coordenadas) continue
+      const total = Number(feature.properties?.total) || 0
+      if (!alvo || total > alvo.total) {
+        alvo = {
+          coordenadas,
+          total,
+          nr_local: feature.properties?.nr_local,
+        }
+      }
+    }
+  }
+  if (!alvo) return null
+
+  mapa.easeTo({
+    center: alvo.coordenadas,
+    zoom: mapa.getZoom(),
+    duration: 0,
+  })
+  await new Promise((resolver) => {
+    let concluido = false
+    const fim = () => {
+      if (concluido) return
+      concluido = true
+      mapa.off('idle', fim)
+      resolver()
+    }
+    mapa.once('idle', fim)
+    mapa.triggerRepaint()
+    // Em GPU de software o idle pode demorar; não deixa a prova pendurada.
+    setTimeout(fim, 6000)
+  })
+
+  const ponto = mapa.project(alvo.coordenadas)
+  return {
+    x: Math.round(ponto.x),
+    y: Math.round(ponto.y),
+    total: alvo.total,
+    nr_local: alvo.nr_local,
+  }
 }
 
 function lerArgumentos(argv) {
@@ -159,6 +215,7 @@ async function capturarCenario(browser, base, out, prefix, viewport, cenario) {
 
   const errosConsole = []
   const requisicoesComErro = []
+  const requisicoesCanceladas = []
   const requisicoesFalhas = []
   let scrollHorizontal = false
   let debug = null
@@ -178,9 +235,25 @@ async function capturarCenario(browser, base, out, prefix, viewport, cenario) {
     }
   })
   page.on('requestfailed', (requisicao) => {
-    requisicoesFalhas.push(
-      `${requisicao.url()} (${requisicao.failure()?.errorText || 'falhou'})`,
-    )
+    const url = requisicao.url()
+    const erro = requisicao.failure()?.errorText || 'falhou'
+    const item = `${url} (${erro})`
+    let host = ''
+    try {
+      host = new URL(url).hostname
+    } catch {
+      // URL relativa/inválida não é tile externo do CARTO.
+    }
+    const tileCarto =
+      host === 'basemaps.cartocdn.com' ||
+      host.endsWith('.basemaps.cartocdn.com')
+    // O MapLibre aborta tiles do CARTO ao mover a câmera: é cancelamento
+    // esperado, não defeito do app. Só os demais requestfailed reprovam.
+    if (erro === 'net::ERR_ABORTED' && tileCarto) {
+      requisicoesCanceladas.push(item)
+    } else {
+      requisicoesFalhas.push(item)
+    }
   })
 
   const zoomCenario =
@@ -250,7 +323,18 @@ async function capturarCenario(browser, base, out, prefix, viewport, cenario) {
         Math.round(deslocamento.x + alvo.x),
         Math.round(deslocamento.y + alvo.y),
       )
-      await page.waitForSelector('.local-card', { state: 'visible', timeout: 15000 })
+      try {
+        await page.waitForSelector('.local-card', {
+          state: 'visible',
+          timeout: 15000,
+        })
+      } catch {
+        throw new Error(
+          `o cartão .local-card não apareceu após o clique real no local ` +
+            `nr_local=${alvo.nr_local} em (${Math.round(deslocamento.x + alvo.x)},` +
+            `${Math.round(deslocamento.y + alvo.y)})`,
+        )
+      }
       await page.waitForTimeout(600)
       clique = { ...alvo, x: Math.round(deslocamento.x + alvo.x), y: Math.round(deslocamento.y + alvo.y) }
       cartao = await page.evaluate(() => {
@@ -318,6 +402,7 @@ async function capturarCenario(browser, base, out, prefix, viewport, cenario) {
   }
   imprimirLista(rotulo, 'console.errors', errosConsole, 'nenhum')
   imprimirLista(rotulo, 'requests>=400', requisicoesComErro, 'nenhum')
+  imprimirLista(rotulo, 'requests canceladas', requisicoesCanceladas, 'nenhuma')
   imprimirLista(rotulo, 'requests falhas', requisicoesFalhas, 'nenhuma')
   if (falha) console.log(`${rotulo} FALHA=${falha}`)
   console.log('')
@@ -326,6 +411,7 @@ async function capturarCenario(browser, base, out, prefix, viewport, cenario) {
     Boolean(falha) ||
     errosConsole.length > 0 ||
     requisicoesComErro.length > 0 ||
+    requisicoesFalhas.length > 0 ||
     scrollHorizontal
 
   return falhou
@@ -365,10 +451,14 @@ async function principal() {
   }
 
   if (falhou) {
-    console.error('PROVA FALHOU: veja console.errors, requests>=400 ou scroll horizontal acima.')
+    console.error(
+      'PROVA FALHOU: veja console.errors, requests>=400, requests falhas ou scroll horizontal acima.',
+    )
     process.exitCode = 1
   } else {
-    console.log('PROVA OK: nenhum erro de console, request >= 400 ou scroll horizontal.')
+    console.log(
+      'PROVA OK: nenhum erro de console, request >= 400, request falha ou scroll horizontal.',
+    )
   }
 }
 

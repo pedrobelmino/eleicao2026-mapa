@@ -354,12 +354,6 @@ export default function MapWorkspace({
         </p>
       </aside>
 
-      <div
-        className={`sheet-scrim mobile-only${selecionada ? ' is-open' : ''}`}
-        onClick={fechar}
-        aria-hidden="true"
-      />
-
       <section
         className={`bottom-sheet mobile-only${selecionada ? ' is-open' : ''}`}
         aria-label="Detalhes da seleção no mapa"

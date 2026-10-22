@@ -1237,21 +1237,6 @@ code {
   display: none;
 }
 
-.sheet-scrim {
-  position: absolute;
-  inset: 0;
-  z-index: 35;
-  background: rgba(17, 23, 30, 0.24);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 260ms ease;
-}
-
-.sheet-scrim.is-open {
-  opacity: 1;
-  pointer-events: auto;
-}
-
 .bottom-sheet {
   position: absolute;
   right: 0;
