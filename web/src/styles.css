@@ -2727,6 +2727,95 @@ img.avatar {
   color: var(--muted);
 }
 
+/* Seletor de série: apuração 2026 (padrão) e o arquivo de 2022. */
+.replay-fontes {
+  display: flex;
+  min-width: 0;
+  gap: 4px;
+}
+
+.replay-fonte {
+  padding: 3px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--muted);
+  font-size: 9.5px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.replay-fonte.is-ativo {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--card);
+}
+
+/* O número que manda na barra: % apurado, grande, subindo com o play. */
+.replay-apurado {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.replay-apurado strong {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.replay-apurado span {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.replay-placar {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 6px;
+}
+
+/* Uma coluna elástica para o nome e duas fixas à direita: nada de overflow
+   horizontal em 390 px, mesmo com nome comprido. */
+.replay-placar-linha {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.replay-placar-nome {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.replay-placar-linha b {
+  font-weight: 650;
+}
+
+.replay-placar-linha i {
+  min-width: 46px;
+  font-style: normal;
+  text-align: right;
+  color: var(--muted);
+}
+
+.replay-placar-linha.is-lider i {
+  color: var(--ink);
+}
+
 .replay-sair,
 .margens-sair {
   flex: 0 0 auto;
@@ -2819,6 +2908,55 @@ img.avatar {
 
 .replay-erro {
   color: var(--pt);
+}
+
+/* Rodapé da barra: velocidade à esquerda, atalho para o 100% à direita. */
+.replay-rodape {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.replay-velocidades {
+  display: flex;
+  gap: 3px;
+}
+
+.replay-velocidade {
+  padding: 3px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--muted);
+  font-size: 9.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.replay-velocidade.is-ativo {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+.replay-final {
+  flex: 0 0 auto;
+  padding: 4px 9px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--ink);
+  font-size: 9.5px;
+  font-weight: 650;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.replay-final:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 
 /* Card "De onde está ganhando": margem em pontos e votos + decisivos. */
@@ -3008,11 +3146,43 @@ img.avatar {
     bottom: auto;
     left: 8px;
     width: auto;
+    max-height: calc(100dvh - 200px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
     padding: 8px 10px 9px;
+  }
+
+  .replay-apurado strong {
+    font-size: 26px;
+  }
+
+  .replay-numeros {
+    gap: 12px;
   }
 
   .replay-numero strong {
     font-size: 17px;
+  }
+
+  /* "497.897 seções" é o número mais largo da barra: encolhe e corta antes de
+     empurrar a linha para fora da tela. */
+  .replay-numero--secoes {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .replay-numero--secoes strong {
+    font-size: 15px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .replay-placar-linha {
+    gap: 6px;
+  }
+
+  .replay-placar-linha i {
+    min-width: 40px;
   }
 
   .sheet-margens .sheet-body--margens {

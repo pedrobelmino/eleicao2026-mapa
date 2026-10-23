@@ -421,6 +421,10 @@ type app struct {
 	eleicao2022   *eleicao2022
 	snapshots2026 []snapshot2026
 	margens       *margensResposta
+	// Replay da apuração por seção: custa a leitura do dump por seção (27
+	// arquivos), então é montado na primeira requisição e servido do cache.
+	apuracaoMu   sync.Mutex
+	apuracaoResp *apuracaoReplayResposta
 
 	// Borda: limites de taxa/concorrência, contadores do painel privado e a
 	// contagem anônima de visitas (mesmo banco do painel Python).

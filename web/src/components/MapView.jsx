@@ -1340,9 +1340,17 @@ function aplicarDetalhe(
       layout: {
         'text-field': ['get', 'nome'],
         'text-font': ['Montserrat SemiBold'],
+        // [23/10/2026] `text-allow-overlap: false` NÃO impede o mesmo nome duas
+        // vezes: a colisão do MapLibre é entre símbolos distintos e por tile, não
+        // deduplica o MESMO texto vindo de tiles vizinhos. Medido no print de drill
+        // (São Paulo, z10.5): "SÃO PAULO" desenhado 2×. Agora o nome é ancorado no
+        // CENTROIDE do município (o polígono é recortado em várias tiles, o centro
+        // não: só a tile que contém o centro coloca o texto) e o overlap é liberado
+        // para o nome nunca desaparecer na colisão.
+        'text-anchor': 'center',
+        'text-allow-overlap': true,
+        'text-ignore-placement': true,
         'text-size': ['interpolate', ['linear'], ['zoom'], 7.2, 9, 9, 11.5, 12, 14],
-        'text-allow-overlap': false,
-        'text-ignore-placement': false,
         'text-padding': 6,
         // Municípios com mais votos têm prioridade na colocação; quem não couber
         // sai inteiro, nunca pela metade.

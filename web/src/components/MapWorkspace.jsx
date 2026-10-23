@@ -15,6 +15,69 @@ import { indexarUFs, resumoLideres } from '../dados.js'
 import { API_BASE, fetchJSON } from '../api.js'
 import { percentual } from '../format.js'
 
+// Tempo por passo na velocidade 1x. 8x e 60x dividem esse intervalo.
+const INTERVALO_BASE_MS = 700
+const INTERVALO_MIN_MS = 12
+
+// A série do replay chega em dois formatos e vira UM: uma lista de passos com
+//   { i, t, pct, secoes, total, uf, placar: [{ nome, votos, pct }] }
+//   - 2026 (dump do TSE por seção): `passos`, com votos por código de candidato;
+//   - 2022 (série nacional oficial): `frames`, com os candidatos já no frame.
+// O percentual do placar é recalculado sobre os votos VÁLIDOS do próprio passo:
+// é o que faz a porcentagem do placar subir junto com a apuração.
+function normalizarPassos(replay) {
+  if (!replay) return []
+  const candidatos = Array.isArray(replay.candidatos) ? replay.candidatos : []
+
+  const comPercentual = (itens, validos) =>
+    itens.map((item) => ({
+      ...item,
+      pct: validos > 0 ? (100 * item.votos) / validos : 0,
+    }))
+
+  if (Array.isArray(replay.passos) && replay.passos.length > 0) {
+    return replay.passos.map((passo, indice) => {
+      const votos = passo.votos || {}
+      const itens = candidatos.map((candidato) => ({
+        nome: candidato.nome,
+        partido: candidato.partido || '',
+        votos: Number(votos[candidato.codigo]) || 0,
+      }))
+      // Votos válidos do passo = os dois candidatos da base + os demais.
+      const validos =
+        itens.reduce((soma, item) => soma + item.votos, 0) + (Number(votos.outros) || 0)
+      return {
+        i: indice,
+        t: passo.t || '',
+        pct: Number(passo.pct_apurado) || 0,
+        secoes: Number(passo.secoes_apuradas) || 0,
+        total: Number(passo.secoes_total) || 0,
+        uf: passo.uf || {},
+        placar: comPercentual(itens, validos),
+      }
+    })
+  }
+
+  const frames = Array.isArray(replay.frames) ? replay.frames : []
+  return frames.map((frame, indice) => {
+    const itens = (frame.candidatos || []).map((candidato) => ({
+      nome: candidato.nome,
+      partido: candidato.partido || '',
+      votos: Number(candidato.votos) || 0,
+    }))
+    const validos = itens.reduce((soma, item) => soma + item.votos, 0)
+    return {
+      i: indice,
+      t: frame.em || '',
+      pct: Number(frame.pct_apurado) || 0,
+      secoes: Number(frame.secoes_apuradas) || 0,
+      total: Number(frame.secoes_total) || 0,
+      uf: frame.ufs || {},
+      placar: comPercentual(itens, validos),
+    }
+  })
+}
+
 function suportaWebGL() {
   try {
     // maplibregl.supported() existia em versões anteriores do MapLibre.
@@ -124,13 +187,19 @@ export default function MapWorkspace({
   const indiceInicial =
     replayInicial == null || replayInicial === '' ? NaN : Number(replayInicial)
   const [replayAberto, setReplayAberto] = useState(Number.isFinite(indiceInicial))
-  const [replay, setReplay] = useState(null)
+  // Duas séries, mesmo desenho: `apuracao` (2026, passo a passo por seção) é o
+  // padrão; `2022` é o arquivo histórico do TSE, com relógio real. Cada uma
+  // fica em cache depois de baixada — trocar de fonte não refaz o download.
+  const [fonte, setFonte] = useState('apuracao')
+  const [replays, setReplays] = useState({})
   const [replayCarregando, setReplayCarregando] = useState(false)
   const [replayErro, setReplayErro] = useState(null)
   const [indiceReplay, setIndiceReplay] = useState(
     Number.isFinite(indiceInicial) && indiceInicial > 0 ? Math.round(indiceInicial) - 1 : 0,
   )
   const [tocando, setTocando] = useState(false)
+  const [velocidade, setVelocidade] = useState(1)
+  const replay = replays[fonte] || null
 
   const [margensAberto, setMargensAberto] = useState(Boolean(margemInicial))
   const [margens, setMargens] = useState(null)
@@ -138,20 +207,22 @@ export default function MapWorkspace({
   const [margensErro, setMargensErro] = useState(null)
 
   useEffect(() => {
-    if (!replayAberto || replay || replayCarregando) return undefined
+    if (!replayAberto || replays[fonte]) return undefined
     let ativo = true
     setReplayCarregando(true)
     setReplayErro(null)
-    fetchJSON(`${API_BASE}/replay?modo=2022`)
+    // Sem `modo`: a série de apuração de 2026, por passo. `modo=2022` é o
+    // arquivo histórico do TSE (frames com relógio real).
+    const url = fonte === '2022' ? `${API_BASE}/replay?modo=2022` : `${API_BASE}/replay`
+    fetchJSON(url)
       .then((resposta) => {
         if (!ativo) return
+        setReplayCarregando(false)
         if (!resposta?.disponivel) {
-          setReplayErro(resposta?.nota || 'série histórica indisponível')
-          setReplayCarregando(false)
+          setReplayErro(resposta?.nota || 'série indisponível')
           return
         }
-        setReplay(resposta)
-        setReplayCarregando(false)
+        setReplays((anteriores) => ({ ...anteriores, [fonte]: resposta }))
       })
       .catch(() => {
         if (!ativo) return
@@ -161,7 +232,7 @@ export default function MapWorkspace({
     return () => {
       ativo = false
     }
-  }, [replayAberto, replay, replayCarregando])
+  }, [replayAberto, fonte, replays])
 
   useEffect(() => {
     if (!margensAberto || margens || margensCarregando) return undefined
@@ -189,11 +260,16 @@ export default function MapWorkspace({
     }
   }, [margensAberto, margens, margensCarregando])
 
-  // Play do replay: um frame a cada 260 ms; para no último (o arquivo fechado).
+  // A série dos dois formatos vira uma lista só de passos (ver normalizarPassos).
+  const passos = useMemo(() => normalizarPassos(replay), [replay])
+
+  // Play: um passo a cada 700 ms em 1x, intervalo dividido pela velocidade
+  // (8x, 60x). Para no último passo — que é o arquivo fechado, 100% apurado.
   useEffect(() => {
     if (!tocando) return undefined
-    const total = replay?.frames?.length || 0
+    const total = passos.length
     if (total === 0) return undefined
+    const intervalo = Math.max(INTERVALO_MIN_MS, INTERVALO_BASE_MS / velocidade)
     const relogio = setInterval(() => {
       setIndiceReplay((atual) => {
         if (atual >= total - 1) {
@@ -202,16 +278,38 @@ export default function MapWorkspace({
         }
         return atual + 1
       })
-    }, 260)
+    }, intervalo)
     return () => clearInterval(relogio)
-  }, [tocando, replay])
+  }, [tocando, passos.length, velocidade])
 
+  // Trocar de fonte troca o tamanho da série: o índice não pode passar do fim.
+  useEffect(() => {
+    if (passos.length === 0) return
+    setIndiceReplay((atual) => (atual > passos.length - 1 ? passos.length - 1 : atual))
+  }, [passos.length])
+
+  // O que o mapa pinta (MapView lê `frame.ufs` e `base`): as seções apuradas
+  // de cada UF no passo corrente e o total de seções por UF.
   const frameReplay = useMemo(() => {
-    const frames = replay?.frames || []
-    if (!replayAberto || frames.length === 0) return null
-    const posicao = Math.min(Math.max(indiceReplay, 0), frames.length - 1)
-    return { frame: frames[posicao], base: replay.ufs_base || {} }
-  }, [replayAberto, replay, indiceReplay])
+    if (!replayAberto || passos.length === 0) return null
+    const posicao = Math.min(Math.max(indiceReplay, 0), passos.length - 1)
+    const passo = passos[posicao]
+    return {
+      frame: { i: passo.i, t: passo.t, pct_apurado: passo.pct, ufs: passo.uf },
+      base: replay?.ufs_base || {},
+    }
+  }, [replayAberto, passos, indiceReplay, replay])
+
+  const trocarFonte = (nova) => {
+    setTocando(false)
+    setIndiceReplay(0)
+    setFonte(nova)
+  }
+
+  const irAoFinal = () => {
+    setTocando(false)
+    setIndiceReplay(Math.max(passos.length - 1, 0))
+  }
 
   const alternarReplay = () => {
     setReplayAberto((aberto) => {
@@ -496,7 +594,7 @@ export default function MapWorkspace({
             aria-pressed={replayAberto}
             data-prova="modo-replay"
           >
-            replay 2022
+            replay
           </button>
           <button
             type="button"
@@ -511,12 +609,21 @@ export default function MapWorkspace({
         {replayAberto ? (
           <ReplayBar
             replay={replay}
+            passos={passos}
             indice={indiceReplay}
             tocando={tocando}
+            velocidade={velocidade}
+            fonte={fonte}
             carregando={replayCarregando}
             erro={replayErro}
-            onIndice={setIndiceReplay}
+            onIndice={(novo) => {
+              setTocando(false)
+              setIndiceReplay(novo)
+            }}
             onPlayPause={() => setTocando((valor) => !valor)}
+            onVelocidade={setVelocidade}
+            onFonte={trocarFonte}
+            onFinal={irAoFinal}
             onFechar={alternarReplay}
           />
         ) : null}

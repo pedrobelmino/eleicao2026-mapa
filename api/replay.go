@@ -151,6 +151,9 @@ type replayResposta struct {
 const (
 	modoReplay2022 = "2022"
 	modoReplay2026 = "2026"
+	// modoApuracao é o replay por passo do dump por seção (o padrão de
+	// GET /api/replay).
+	modoApuracao = "apuracao"
 	// Limite de frames: a série de 2022 tem milhares de pontos e o mapa não
 	// precisa de todos eles para animar. A amostragem é uniforme e sempre
 	// inclui o primeiro e o último ponto reais.
@@ -463,8 +466,12 @@ func liderDoBloco(bloco blocoSnapshot) (string, string, float64, int64) {
 
 func (a *app) handleReplay(w http.ResponseWriter, r *http.Request) {
 	modo := strings.ToLower(strings.TrimSpace(r.URL.Query().Get("modo")))
-	if modo == "" {
-		modo = modoReplay2022
+	// Sem modo, GET /api/replay devolve a série de apuração de 2026 por passo
+	// (dump do TSE por seção). `modo=2022` e `modo=2026` continuam sendo os
+	// replays de frames, para as provas antigas e para o histórico.
+	if modo == "" || modo == modoApuracao {
+		a.handleApuracaoReplay(w)
+		return
 	}
 
 	switch modo {
@@ -474,7 +481,7 @@ func (a *app) handleReplay(w http.ResponseWriter, r *http.Request) {
 		a.replay2026(w)
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]string{
-			"erro": "modo inválido: use 2022 ou 2026",
+			"erro": "modo inválido: use apuracao, 2022 ou 2026",
 		})
 	}
 }
