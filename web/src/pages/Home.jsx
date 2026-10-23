@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { API_BASE, fetchJSON } from '../api.js'
+import { definirMeta } from '../meta.js'
 import '../home.css'
 import Selos from '../components/home/Selos.jsx'
 import CabecalhoApuracao from '../components/home/CabecalhoApuracao.jsx'
@@ -18,6 +19,15 @@ const CANAL_YOUTUBE = 'https://www.youtube.com/@belmino.c.f'
 export default function Home() {
   const [estado, setEstado] = useState({ fase: 'loading', dados: null })
   const [tentativa, setTentativa] = useState(0)
+
+  // Nível 2 tem título e descrição próprios (a raiz é a landing).
+  useEffect(() => {
+    definirMeta({
+      titulo: 'Eleição 2026 — Presidente · apuração em tempo real',
+      descricao:
+        'Apuração da eleição presidencial de 2026 em tempo real, direto dos dados oficiais do TSE: placar nacional, por região, por estado e linha do tempo.',
+    })
+  }, [])
 
   useEffect(() => {
     let ativo = true

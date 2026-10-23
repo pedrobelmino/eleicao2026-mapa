@@ -5,6 +5,7 @@ import StateViews from '../components/StateViews.jsx'
 import { API_BASE, fetchJSON } from '../api.js'
 import Rodape from '../components/Rodape.jsx'
 import { rotuloTurno } from '../format.js'
+import { definirMeta } from '../meta.js'
 
 const ESTADO_INICIAL = {
   fase: 'loading',
@@ -50,6 +51,14 @@ export default function Mapa() {
   const [atalhos] = useState(lerAtalhosDaUrl)
   const [dados, setDados] = useState(ESTADO_INICIAL)
   const [tentativa, setTentativa] = useState(0)
+
+  useEffect(() => {
+    definirMeta({
+      titulo: 'Mapa da apuração 2026 — estado, município e local de votação',
+      descricao:
+        'Mapa interativo da apuração presidencial de 2026: zoom do Brasil até o município e o local de votação, com os números oficiais do TSE.',
+    })
+  }, [])
 
   useEffect(() => {
     let ativo = true

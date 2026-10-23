@@ -123,18 +123,23 @@ async function medirAvatares(pagina) {
 }
 
 async function recortar(pagina, seletor, arquivo) {
-  const alvo = pagina.locator(seletor).first()
-  if ((await alvo.count()) === 0) return null
-  // No celular o placar pode estar dentro de um bottom sheet fechado: elemento
-  // invisível não vira print (e esperar por ele travaria a prova).
-  try {
-    if (!(await alvo.isVisible())) return null
-    await alvo.screenshot({ path: arquivo, timeout: 8000, animations: 'disabled' })
-    return arquivo
-  } catch (erro) {
-    console.log(`  aviso: recorte ${seletor} falhou: ${erro.message.split('\n')[0]}`)
-    return null
+  // No celular o mesmo componente é montado duas vezes: no aside do desktop
+  // (display:none) e no sheet de detalhe. `.first()` pegava o invisível e a
+  // prova do card saía vazia — então procura o primeiro que está na tela.
+  const alvos = pagina.locator(seletor)
+  const total = await alvos.count()
+  for (let i = 0; i < total; i += 1) {
+    const alvo = alvos.nth(i)
+    try {
+      if (!(await alvo.isVisible())) continue
+      await alvo.scrollIntoViewIfNeeded({ timeout: 4000 }).catch(() => {})
+      await alvo.screenshot({ path: arquivo, timeout: 8000, animations: 'disabled' })
+      return arquivo
+    } catch (erro) {
+      console.log(`  aviso: recorte ${seletor} falhou: ${erro.message.split('\n')[0]}`)
+    }
   }
+  return null
 }
 
 async function principal() {
@@ -182,6 +187,17 @@ async function principal() {
 
       const marca = opcoes.fallback ? 'fallback' : 'identidade'
       const base = path.join(opcoes.out, `${marca}_${uf}_${vp.nome}`)
+
+      // No celular o sheet de detalhe nasce em peek e o peek esconde o corpo
+      // (`.sheet-detalhe.is-peek .sheet-body { display: none }`). Sem expandir,
+      // o card do estado — e a seção .identidade junto — nem existe na tela.
+      if (vp.largura < 820) {
+        const alca = pagina.locator('.sheet-detalhe .sheet-header-toque')
+        if (await alca.count()) {
+          await alca.click()
+          await dormir(900)
+        }
+      }
 
       // 1) Card do estado (com as figurinhas/destaques e o avatar do líder).
       const noCard = await medirAvatares(pagina)
