@@ -13,6 +13,7 @@ import ReplayBar from './ReplayBar.jsx'
 import MargensCard from './MargensCard.jsx'
 import { indexarUFs, resumoLideres } from '../dados.js'
 import { API_BASE, fetchJSON } from '../api.js'
+import { percentual } from '../format.js'
 
 function suportaWebGL() {
   try {
@@ -90,6 +91,9 @@ export default function MapWorkspace({
       : null,
   )
   const [municipioSelecionado, setMunicipioSelecionado] = useState(null)
+  // O sheet de detalhe no celular nasce recolhido (peek) e só expande por
+  // toque no cabeçalho ou arraste da alça.
+  const [detalheExpandido, setDetalheExpandido] = useState(false)
   const [detalhe, setDetalhe] = useState(null)
   const [detalheCarregando, setDetalheCarregando] = useState(false)
   const [detalheIndisponivel, setDetalheIndisponivel] = useState(false)
@@ -110,6 +114,7 @@ export default function MapWorkspace({
   const painelRef = useRef(null)
   const sheetBodyRef = useRef(null)
   const cacheDetalheRef = useRef(new Map())
+  const detalheArrasteRef = useRef(null)
 
   // ---------------------------------------------------------------------
   // REPLAY e MARGENS. Os dois são modos de leitura do mesmo mapa: o replay
@@ -373,6 +378,50 @@ export default function MapWorkspace({
     )
   }, [localSelecionado, locais])
 
+  // Trocar de estado, município ou local sempre devolve o sheet ao peek.
+  useEffect(() => {
+    setDetalheExpandido(false)
+  }, [
+    ufSelecionada,
+    municipioSelecionado?.codarea,
+    localSelecionado?.nr_local,
+    localSelecionado,
+  ])
+
+  // Um painel por vez no celular: ao selecionar estado/município/local, a
+  // gaveta do placar fecha e sai de cena (a barra fina do topo já dá o
+  // resumo nacional). Sem isso ela ficaria aberta e invisível, e o toque na
+  // aba voltaria a empilhar dois painéis.
+  useEffect(() => {
+    if (selecionada) setGavetaAberta(false)
+  }, [selecionada])
+
+  const alvoLider = localDetalhe || municipioDetalhe || selecionada
+  const linhaLider = alvoLider
+    ? `${alvoLider.partido_lider || '—'} · ${alvoLider.lider || '—'} ${percentual(alvoLider.lider_pct)}`
+    : '—'
+
+  const aoPressionarAlca = (evento) => {
+    detalheArrasteRef.current = { inicioY: evento.clientY, delta: 0 }
+    evento.currentTarget.setPointerCapture?.(evento.pointerId)
+  }
+
+  const aoMoverAlca = (evento) => {
+    if (!detalheArrasteRef.current) return
+    detalheArrasteRef.current.delta = evento.clientY - detalheArrasteRef.current.inicioY
+  }
+
+  const aoSoltarAlca = (evento) => {
+    const arraste = detalheArrasteRef.current
+    if (!arraste) return
+    detalheArrasteRef.current = null
+    if (arraste.delta < -24) setDetalheExpandido(true)
+    else if (arraste.delta > 24) setDetalheExpandido(false)
+    if (evento.currentTarget.hasPointerCapture?.(evento.pointerId)) {
+      evento.currentTarget.releasePointerCapture(evento.pointerId)
+    }
+  }
+
   const selecionarUf = (uf) => {
     setMunicipioSelecionado(null)
     setUfSelecionada(uf)
@@ -416,7 +465,11 @@ export default function MapWorkspace({
   )
 
   return (
-    <div className={`workspace${selecionada ? ' tem-selecao' : ''}`}>
+    <div
+      className={`workspace${selecionada ? ' tem-selecao' : ''}${
+        margensAberto ? ' margens-abertas' : ''
+      }`}
+    >
       <main className="map-stage">
         <MapView
           geojson={geojson}
@@ -519,26 +572,46 @@ export default function MapWorkspace({
       />
 
       <section
-        className={`bottom-sheet sheet-detalhe mobile-only${selecionada ? ' is-open' : ''}`}
+        className={`bottom-sheet sheet-detalhe mobile-only${
+          selecionada ? (detalheExpandido ? ' is-open' : ' is-peek') : ''
+        }`}
         aria-label="Detalhes da seleção no mapa"
         aria-hidden={!selecionada}
       >
-        <div className="sheet-grip" aria-hidden="true" />
+        <div
+          className="sheet-grip"
+          aria-hidden="true"
+          onPointerDown={aoPressionarAlca}
+          onPointerMove={aoMoverAlca}
+          onPointerUp={aoSoltarAlca}
+          onPointerCancel={aoSoltarAlca}
+        />
         <div className="sheet-header">
-          <div className="sheet-header-texto">
-            <span className="sheet-header-kicker">
-              {localDetalhe
-                ? 'local de votação'
-                : municipioDetalhe
-                  ? 'município'
-                  : 'estado selecionado'}
+          <button
+            type="button"
+            className="sheet-header-toque"
+            onClick={() => setDetalheExpandido((valor) => !valor)}
+            aria-expanded={detalheExpandido}
+          >
+            <span className="sheet-header-texto">
+              <span className="sheet-header-kicker">
+                {localDetalhe
+                  ? 'local de votação'
+                  : municipioDetalhe
+                    ? 'município'
+                    : 'estado selecionado'}
+              </span>
+              <strong className="sheet-header-titulo">
+                {localDetalhe
+                  ? `Local ${localDetalhe.nr_local ?? '—'}`
+                  : municipioDetalhe?.nome || selecionada?.nome || 'seleção'}
+              </strong>
+              <span className="sheet-header-lider">{linhaLider}</span>
             </span>
-            <strong className="sheet-header-titulo">
-              {localDetalhe
-                ? `Local ${localDetalhe.nr_local ?? '—'}`
-                : municipioDetalhe?.nome || selecionada?.nome || 'seleção'}
-            </strong>
-          </div>
+            <span className="sheet-header-chevron" aria-hidden="true">
+              ⌃
+            </span>
+          </button>
           <button
             type="button"
             className="sheet-close"

@@ -2182,8 +2182,17 @@ img.avatar {
 
 @media (max-width: 820px) {
   :root {
-    /* Altura do "peek" da gaveta: kicker + título + líder + chevron. */
-    --peek-h: 70px;
+    /* UM PAINEL POR VEZ (celular):
+       - sem seleção: barra fina do topo + a ABA da gaveta (--aba-gaveta). O
+         card do placar nacional só existe depois de puxar a aba;
+       - com seleção: o sheet de detalhe é o único painel de baixo e a gaveta
+         sai de cena (ver .tem-selecao, mais abaixo). */
+    --aba-gaveta: 40px;
+    /* Altura do cabeçalho-resumo da gaveta ABERTA (kicker + título + líder +
+       chevron de 44 px). */
+    --resumo-h: 70px;
+    /* Altura do sheet de detalhe recolhido (alça + cabeçalho). */
+    --detalhe-peek-h: 84px;
   }
 
   /* ---------------------------------------------------- barra do placar */
@@ -2248,24 +2257,32 @@ img.avatar {
     top: calc(46px + 8px);
   }
 
-  /* Atribuição (e qualquer controle inferior) acima da gaveta fechada. */
+  /* Atribuição (e qualquer controle inferior) acima da aba da gaveta. */
   .maplibregl-ctrl-bottom-right {
-    bottom: calc(var(--peek-h) + 10px + env(safe-area-inset-bottom, 0px));
+    bottom: calc(var(--aba-gaveta) + 10px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Com estado selecionado o painel de baixo é o sheet de detalhe: a
+     atribuição sobe acima dele em vez de ficar escondida atrás. */
+  .workspace.tem-selecao .maplibregl-ctrl-bottom-right {
+    bottom: calc(
+      var(--detalhe-peek-h) + 10px + env(safe-area-inset-bottom, 0px)
+    );
   }
 
   /* ------------------------------------------------------- gaveta do placar */
 
-  /* A gaveta do placar fica SEMPRE visível: quando um estado está selecionado
-     o sheet de detalhe sobe acima dela (z menor), e a gaveta aberta passa por
-     cima do detalhe. Sem isso, o resumo de 70 px ficava atrás do sheet e não
-     havia como abrir o placar no celular. */
+  /* A gaveta tem dois estados e nunca fica por cima do sheet de detalhe:
+     fechada é uma ABA de 40 px (só a alça + "placar nacional") e aberta é o
+     card do placar que o usuário puxou. Quando há estado selecionado ela sai
+     de cena — o resumo nacional já está na barra do topo. */
   .placar-gaveta {
     z-index: 42;
   }
 
   .placar-gaveta.is-peek {
-    height: calc(var(--peek-h) + env(safe-area-inset-bottom, 0px));
-    max-height: calc(var(--peek-h) + env(safe-area-inset-bottom, 0px));
+    height: calc(var(--aba-gaveta) + env(safe-area-inset-bottom, 0px));
+    max-height: calc(var(--aba-gaveta) + env(safe-area-inset-bottom, 0px));
     transform: translateY(0);
     visibility: visible;
     transition:
@@ -2273,8 +2290,30 @@ img.avatar {
       visibility 0s linear 0s;
   }
 
+  /* Fechada: sem alça decorativa (a linha inteira é o botão) e sem corpo. */
+  .placar-gaveta.is-peek .sheet-grip {
+    display: none;
+  }
+
   .placar-gaveta.is-peek .sheet-body {
     display: none;
+  }
+
+  .placar-gaveta.is-peek .sheet-resumo {
+    min-height: var(--aba-gaveta);
+    padding: 0 10px 0 14px;
+  }
+
+  .placar-gaveta.is-peek .sheet-resumo-kicker {
+    font-size: 9.5px;
+    letter-spacing: 0.09em;
+  }
+
+  /* Chevron menor na aba: 28 px dentro dos 40 px de altura. */
+  .placar-gaveta.is-peek .sheet-resumo-chevron {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
   }
 
   .placar-gaveta.is-open {
@@ -2283,6 +2322,19 @@ img.avatar {
     max-height: calc(100% - 120px);
     transform: translateY(0);
     visibility: visible;
+  }
+
+  /* UM PAINEL POR VEZ: com estado/município/local selecionado, ou com o card
+     de margens aberto, a gaveta desce e desaparece. Especificidade maior que
+     .placar-gaveta.is-peek/.is-open de propósito. */
+  .workspace.tem-selecao .placar-gaveta,
+  .workspace.margens-abertas .placar-gaveta {
+    transform: translateY(115%);
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+      transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      visibility 0s linear 260ms;
   }
 
   .sheet-resumo {
@@ -2400,27 +2452,51 @@ img.avatar {
     font-variant-numeric: tabular-nums;
   }
 
-  /* ------------------------------------------------- detalhe sobre a gaveta */
+  /* ------------------------------------------------- único painel de baixo */
 
-  /* O detalhe cresce ACIMA da faixa do placar (70 px), nunca por cima dela: o
-     placar nacional continua na tela e continua tocável enquanto se olha uma
-     UF, município ou local. */
+  /* Com estado/município/local selecionado o sheet de detalhe é o ÚNICO
+     painel de baixo: encosta no rodapé (bottom: 0) porque a aba da gaveta sai
+     de cena. O resumo nacional continua na barra fina do topo, que nenhum
+     sheet cobre. */
   .sheet-detalhe {
     z-index: 38;
-    bottom: calc(var(--peek-h) + env(safe-area-inset-bottom, 0px));
-    /* Porcentagem = altura do .workspace (é o bloco que contém os sheets),
-       não dvh: com dvh a conta usava a viewport inteira e o sheet crescia
-       por cima da barra do placar e do chip da legenda. 48% deixa o mapa com
-       a maior parte da tela (o corpo do sheet rola por dentro), que é o que
-       o item 4 pede: barra + peek finos, mapa com o resto. */
-    max-height: 48%;
+    bottom: 0;
     padding-bottom: 0;
+  }
+
+  .sheet-detalhe.is-peek {
+    transform: translateY(0);
+    visibility: visible;
+    max-height: calc(var(--detalhe-peek-h) + env(safe-area-inset-bottom, 0px));
+  }
+
+  .sheet-detalhe.is-peek .sheet-body {
+    display: none;
+  }
+
+  .sheet-detalhe.is-open {
+    max-height: 40%;
   }
 
   .sheet-header {
     align-items: center;
+    gap: 6px;
+    padding: 4px 8px 6px 14px;
+  }
+
+  .sheet-header-toque {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 44px;
+    align-items: center;
     gap: 8px;
-    padding: 6px 12px 8px 14px;
+    min-height: 44px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
   }
 
   .sheet-header-texto {
@@ -2444,6 +2520,33 @@ img.avatar {
     letter-spacing: -0.01em;
     white-space: nowrap;
     text-overflow: ellipsis;
+  }
+
+  .sheet-header-lider {
+    font-size: 9.5px;
+    color: var(--muted);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .sheet-header-chevron {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    background: var(--card-soft);
+    font-size: 13px;
+    line-height: 1;
+    color: var(--ink);
+    transition: transform 200ms ease;
+  }
+
+  .sheet-detalhe.is-open .sheet-header-chevron {
+    transform: rotate(180deg);
   }
 
   .sheet-close {

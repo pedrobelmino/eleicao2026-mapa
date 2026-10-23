@@ -1,9 +1,11 @@
 // Gaveta do placar (só no celular): o painel do desktop cabe numa bottom-sheet.
 //
-// Fechada fica no estado `is-peek` — ~70 px com kicker, título, linha do líder e
-// o chevron de 44 px (alvo de toque). Aberta (`is-open`) mostra o placar do
-// painel + as quatro métricas que o desktop tem na lateral: margem, válidos,
-// participação e seções apuradas.
+// FECHADA é só uma ABA de 40 px com a alça e o rótulo "placar nacional" — sem
+// resumo de líder nem percentual: essa informação já está na barra fina do
+// topo, e repetir aqui era o que fazia aparecer dois painéis informativos
+// empilhados na tela do celular. O card do placar só existe quando o usuário
+// puxa a aba (`is-open`): aí vêm o placar do painel + as quatro métricas que o
+// desktop tem na lateral (margem, válidos, participação e seções apuradas).
 import NationalScoreboard from './NationalScoreboard.jsx'
 import { numero, percentual, pontos } from '../format.js'
 import { dueloNacional } from '../placar.js'
@@ -26,6 +28,7 @@ export default function PlacarGaveta({ estados, aberta = false, onToggle }) {
     <section
       className={`bottom-sheet placar-gaveta mobile-only ${aberta ? 'is-open' : 'is-peek'}`}
       aria-label="Placar nacional e métricas da apuração"
+      data-prova="gaveta-placar"
     >
       <div className="sheet-grip" aria-hidden="true" />
 
@@ -35,34 +38,43 @@ export default function PlacarGaveta({ estados, aberta = false, onToggle }) {
         onClick={onToggle}
         aria-expanded={aberta}
         aria-controls="gaveta-placar-corpo"
+        data-prova="gaveta-alca"
       >
         <span className="sheet-resumo-texto">
           <span className="sheet-resumo-kicker">
-            placar nacional
-            {duelo.pctApurado != null
-              ? ` · ${percentual(duelo.pctApurado, 1)} apurado`
-              : ''}
+            {aberta
+              ? `placar nacional${
+                  duelo.pctApurado != null
+                    ? ` · ${percentual(duelo.pctApurado, 1)} apurado`
+                    : ''
+                }`
+              : 'placar nacional'}
           </span>
-          <span className="sheet-resumo-titulo">
-            {lider ? (
-              <>
-                <b
-                  className="sheet-resumo-partido"
-                  style={{ color: lider.cor || undefined }}
-                >
-                  {lider.partido}
-                </b>{' '}
-                {lider.nome} {percentual(lider.pct)}
-              </>
-            ) : (
-              'sem dados nacionais'
-            )}
-          </span>
-          <span className="sheet-resumo-lider">
-            {duelo.margemVotos != null
-              ? `margem de ${numero(duelo.margemVotos)} votos (${pontos(duelo.margemPontos)} pt)`
-              : 'aguardando apuração'}
-          </span>
+          {/* Fechada não repete nada: o resumo do líder é o da barra do topo. */}
+          {aberta ? (
+            <>
+              <span className="sheet-resumo-titulo">
+                {lider ? (
+                  <>
+                    <b
+                      className="sheet-resumo-partido"
+                      style={{ color: lider.cor || undefined }}
+                    >
+                      {lider.partido}
+                    </b>{' '}
+                    {lider.nome} {percentual(lider.pct)}
+                  </>
+                ) : (
+                  'sem dados nacionais'
+                )}
+              </span>
+              <span className="sheet-resumo-lider">
+                {duelo.margemVotos != null
+                  ? `margem de ${numero(duelo.margemVotos)} votos (${pontos(duelo.margemPontos)} pt)`
+                  : 'aguardando apuração'}
+              </span>
+            </>
+          ) : null}
         </span>
         <span className="sheet-resumo-chevron" aria-hidden="true">
           ⌃

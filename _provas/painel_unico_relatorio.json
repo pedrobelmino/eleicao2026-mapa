@@ -1,0 +1,1052 @@
+{
+  "base": "http://127.0.0.1:8100",
+  "quando": "2026-10-23T02:33:13.105Z",
+  "telas": {
+    "390x844": {
+      "sem_selecao_fechada": {
+        "url": "/mapa?z=4",
+        "viewport": {
+          "w": 390,
+          "h": 844
+        },
+        "barra": {
+          "x": 0,
+          "y": 54,
+          "w": 390,
+          "h": 46,
+          "display": "grid",
+          "visibility": "visible",
+          "opacity": "1",
+          "pointerEvents": "auto",
+          "classe": "placar-barra"
+        },
+        "gaveta": {
+          "x": 0,
+          "y": 692,
+          "w": 390,
+          "h": 40,
+          "display": "flex",
+          "visibility": "visible",
+          "opacity": "1",
+          "pointerEvents": "auto",
+          "classe": "bottom-sheet placar-gaveta mobile-only is-peek"
+        },
+        "gavetaVisivel": true,
+        "gavetaResumo": "placar nacional⌃",
+        "sheet": {
+          "x": 0,
+          "y": 737,
+          "w": 390,
+          "h": 96,
+          "display": "flex",
+          "visibility": "hidden",
+          "opacity": "1",
+          "pointerEvents": "auto",
+          "classe": "bottom-sheet sheet-detalhe mobile-only"
+        },
+        "sheetVisivel": false,
+        "sheetClasse": "bottom-sheet sheet-detalhe mobile-only",
+        "paineis": [
+          {
+            "nome": "barra-placar",
+            "h": 46,
+            "y": 54
+          },
+          {
+            "nome": "gaveta-placar",
+            "h": 40,
+            "y": 692
+          }
+        ],
+        "paineisSomaPx": 86,
+        "paineisAa": "barra-placar=46px + gaveta-placar=40px",
+        "palco": {
+          "x": 0,
+          "y": 54,
+          "w": 390,
+          "h": 678,
+          "display": "block",
+          "visibility": "visible",
+          "opacity": "1",
+          "pointerEvents": "auto",
+          "classe": "map-stage"
+        },
+        "mapaLivrePx": 592,
+        "mapaLivrePct": 87.3,
+        "mapaLivreDaTelaPct": 70.1,
+        "repetiuPlacarNacionalNoSheet": null,
+        "textoSheetInicio": "estado selecionadoseleção—⌃×",
+        "textoGavetaInicio": "placar nacional⌃Placar nacional100% apuradoFLAVIO BOLSONAROPL47,03%56.104.503 votosLULAPT45,16%53.879.538 votosmargem2.224.965 votos1,87 ponto · 1,87% dos válid",
+        "prismas": {
+          "lula": null,
+          "flavio": null,
+          "outros": null,
+          "nao-apurado": null
+        },
+        "prismasTotal": 0,
+        "zoom": 2.53
+      },
+      "sem_selecao_gaveta": {
+        "url": "/mapa?z=4",
+        "viewport": {
+          "w": 390,
+          "h": 844
+        },
+        "barra": {
+          "x": 0,
+          "y": 54,
+          "w": 390,
+          "h": 46,
+          "display": "grid",
+          "visibility": "visible",
+          "opacity": "1",
+          "pointerEvents": "auto",
+          "classe": "placar-barra"
+        },
+        "gaveta": {
+          "x": 0,
+          "y": 288,
+          "w": 390,
+          "h": 444,
+          "display": "flex",
+          "visibility": "visible",
+          "opacity": "1",
+          "pointerEvents": "auto",
+          "classe": "bottom-sheet placar-gaveta mobile-only is-open"
+        },
+        "gavetaVisivel": true,
+        "gavetaResumo": "placar nacional · 100% apuradoPL FLAVIO BOLSONARO 47,03%margem de 2.224.965 votos (1,87 pt)⌃",
+        "sheet": {
+          "x": 0,
+          "y": 737,
+          "w": 390,
+          "h": 96,
+          "display": "flex",
+          "visibility": "hidden",
+          "opacity": "1",
+          "pointerEvents": "auto",
+          "classe": "bottom-sheet sheet-detalhe mobile-only"
+        },
+        "sheetVisivel": false,
+        "sheetClasse": "bottom-sheet sheet-detalhe mobile-only",
+        "paineis": [
+          {
+            "nome": "barra-placar",
+            "h": 46,
+            "y": 54
+          },
+          {
+            "nome": "gaveta-placar",
+            "h": 444,
+            "y": 288
+          }
+        ],
+        "paineisSomaPx": 490,
+        "paineisAa": "barra-placar=46px + gaveta-placar=444px",
+        "palco": {
+          "x": 0,
+          "y": 54,
+          "w": 390,
+          "h": 678,
+          "display": "block",
+          "visibility": "visible",
+          "opacity": "1",
+          "pointerEvents": "auto",
+          "classe": "map-stage"
+        },
+        "mapaLivrePx": 188,
+        "mapaLivrePct": 27.7,
+        "mapaLivreDaTelaPct": 22.3,
+        "repetiuPlacarNacionalNoSheet": null,
+        "textoSheetInicio": "estado selecionadoseleção—⌃×",
+        "textoGavetaInicio": "placar nacional · 100% apuradoPL FLAVIO BOLSONARO 47,03%margem de 2.224.965 votos (1,87 pt)⌃Placar nacional100% apuradoFLAVIO BOLSONAROPL47,03%56.104.503 votosL",
+        "prismas": {
+          "lula": null,
+          "flavio": null,
+          "outros": null,
+          "nao-apurado": null
+        },
+        "prismasTotal": 0,
+        "zoom": 2.53
+      },
+      "com_selecao_peek": {
+        "url": "/mapa?uf=CE&z=5.8",
+        "viewport": {
+          "w": 390,
+          "h": 844
+        },
+        "barra": {
+          "x": 0,
+          "y": 54,
+          "w": 390,
+          "h": 46,
+          "display": "grid",
+          "visibility": "visible",
+          "opacity": "1",
+          "pointerEvents": "auto",
+          "classe": "placar-barra"
+        },
+        "gaveta": {
+          "x": 0,
+          "y": 738,
+          "w": 390,
+          "h": 40,
+          "display": "flex",
+          "visibility": "hidden",
+          "opacity": "1",
+          "pointerEvents": "none",
+          "classe": "bottom-sheet placar-gaveta mobile-only is-peek"
+        },
+        "gavetaVisivel": false,
+        "gavetaResumo": "placar nacional⌃",
+        "sheet": {
+          "x": 0,
+          "y": 657,
+          "w": 390,
+          "h": 74,
+          "display": "flex",
+          "visibility": "visible",
+          "opacity": "1",
+          "pointerEvents": "auto",
+          "classe": "bottom-sheet sheet-detalhe mobile-only is-peek"
+        },
+        "sheetVisivel": true,
+        "sheetClasse": "bottom-sheet sheet-detalhe mobile-only is-peek",
+        "paineis": [
+          {
+            "nome": "barra-placar",
+            "h": 46,
+            "y": 54
+          },
+          {
+            "nome": "sheet-detalhe",
+            "h": 74,
+            "y": 657
+          }
+        ],
+        "paineisSomaPx": 120,
+        "paineisAa": "barra-placar=46px + sheet-detalhe=74px",
+        "palco": {
+          "x": 0,
+          "y": 54,
+          "w": 390,
+          "h": 678,
+          "display": "block",
+          "visibility": "visible",
+          "opacity": "1",
+          "pointerEvents": "auto",
+          "classe": "map-stage"
+        },
+        "mapaLivrePx": 558,
+        "mapaLivrePct": 82.3,
+        "mapaLivreDaTelaPct": 66.1,
+        "repetiuPlacarNacionalNoSheet": null,
+        "textoSheetInicio": "estado selecionadoCearáPT · LULA 63,29%⌃×CENordesteCearáTerra do sol e do humorfigurinhas em emoji · sem pacote animado licenciado🏖️🎶🌵Praias: Jericoacoara, C",
+        "textoGavetaInicio": "placar nacional⌃Placar nacional100% apuradoFLAVIO BOLSONAROPL47,03%56.104.503 votosLULAPT45,16%53.879.538 votosmargem2.224.965 votos1,87 ponto · 1,87% dos válid",
+        "prismas": {
+          "lula": 205,
+          "flavio": 205,
+          "outros": 205,
+          "nao-apurado": 205
+        },
+        "prismasTotal": 820,
+        "zoom": 5.8
+      },
+      "com_selecao_aberta": {
+        "url": "/mapa?uf=CE&z=5.8",
+        "viewport": {
+          "w": 390,
+          "h": 844
+        },
+        "barra": {
+          "x": 0,
+          "y": 54,
+          "w": 390,
+          "h": 46,
+          "display": "grid",
+          "visibility": "visible",
+          "opacity": "1",
+          "pointerEvents": "auto",
+          "classe": "placar-barra"
+        },
+        "gaveta": {
+          "x": 0,
+          "y": 738,
+          "w": 390,
+          "h": 40,
+          "display": "flex",
+          "visibility": "hidden",
+          "opacity": "1",
+          "pointerEvents": "none",
+          "classe": "bottom-sheet placar-gaveta mobile-only is-peek"
+        },
+        "gavetaVisivel": false,
+        "gavetaResumo": "placar nacional⌃",
+        "sheet": {
+          "x": 0,
+          "y": 461,
+          "w": 390,
+          "h": 271,
+          "display": "flex",
+          "visibility": "visible",
+          "opacity": "1",
+          "pointerEvents": "auto",
+          "classe": "bottom-sheet sheet-detalhe mobile-only is-open"
+        },
+        "sheetVisivel": true,
+        "sheetClasse": "bottom-sheet sheet-detalhe mobile-only is-open",
+        "paineis": [
+          {
+            "nome": "barra-placar",
+            "h": 46,
+            "y": 54
+          },
+          {
+            "nome": "sheet-detalhe",
+            "h": 271,
+            "y": 461
+          }
+        ],
+        "paineisSomaPx": 317,
+        "paineisAa": "barra-placar=46px + sheet-detalhe=271px",
+        "palco": {
+          "x": 0,
+          "y": 54,
+          "w": 390,
+          "h": 678,
+          "display": "block",
+          "visibility": "visible",
+          "opacity": "1",
+          "pointerEvents": "auto",
+          "classe": "map-stage"
+        },
+        "mapaLivrePx": 361,
+        "mapaLivrePct": 53.2,
+        "mapaLivreDaTelaPct": 42.8,
+        "repetiuPlacarNacionalNoSheet": null,
+        "textoSheetInicio": "estado selecionadoCearáPT · LULA 63,29%⌃×CENordesteCearáTerra do sol e do humorfigurinhas em emoji · sem pacote animado licenciado🏖️🎶🌵Praias: Jericoacoara, C",
+        "textoGavetaInicio": "placar nacional⌃Placar nacional100% apuradoFLAVIO BOLSONAROPL47,03%56.104.503 votosLULAPT45,16%53.879.538 votosmargem2.224.965 votos1,87 ponto · 1,87% dos válid",
+        "prismas": {
+          "lula": 205,
+          "flavio": 205,
+          "outros": 205,
+          "nao-apurado": 205
+        },
+        "prismasTotal": 820,
+        "zoom": 5.8
+      },
+      "console": {
+        "total": 4,
+        "errosDoApp": [],
+        "avisos": []
+      }
+    },
+    "390x700": {
+      "sem_selecao_fechada": {
+        "url": "/mapa?z=4",
+        "viewport": {
+          "w": 390,
+          "h": 700
+        },
+        "barra": {
+          "x": 0,
+          "y": 54,
+          "w": 390,
+          "h": 46,
+          "display": "grid",
+          "visibility": "visible",
+          "opacity": "1",
+          "pointerEvents": "auto",
+          "classe": "placar-barra"
+        },
+        "gaveta": {
+          "x": 0,
+          "y": 548,
+          "w": 390,
+          "h": 40,
+          "display": "flex",
+          "visibility": "visible",
+          "opacity": "1",
+          "pointerEvents": "auto",
+          "classe": "bottom-sheet placar-gaveta mobile-only is-peek"
+        },
+        "gavetaVisivel": true,
+        "gavetaResumo": "placar nacional⌃",
+        "sheet": {
+          "x": 0,
+          "y": 593,
+          "w": 390,
+          "h": 96,
+          "display": "flex",
+          "visibility": "hidden",
+          "opacity": "1",
+          "pointerEvents": "auto",
+          "classe": "bottom-sheet sheet-detalhe mobile-only"
+        },
+        "sheetVisivel": false,
+        "sheetClasse": "bottom-sheet sheet-detalhe mobile-only",
+        "paineis": [
+          {
+            "nome": "barra-placar",
+            "h": 46,
+            "y": 54
+          },
+          {
+            "nome": "gaveta-placar",
+            "h": 40,
+            "y": 548
+          }
+        ],
+        "paineisSomaPx": 86,
+        "paineisAa": "barra-placar=46px + gaveta-placar=40px",
+        "palco": {
+          "x": 0,
+          "y": 54,
+          "w": 390,
+          "h": 534,
+          "display": "block",
+          "visibility": "visible",
+          "opacity": "1",
+          "pointerEvents": "auto",
+          "classe": "map-stage"
+        },
+        "mapaLivrePx": 448,
+        "mapaLivrePct": 83.9,
+        "mapaLivreDaTelaPct": 64,
+        "repetiuPlacarNacionalNoSheet": null,
+        "textoSheetInicio": "estado selecionadoseleção—⌃×",
+        "textoGavetaInicio": "placar nacional⌃Placar nacional100% apuradoFLAVIO BOLSONAROPL47,03%56.104.503 votosLULAPT45,16%53.879.538 votosmargem2.224.965 votos1,87 ponto · 1,87% dos válid",
+        "prismas": {
+          "lula": null,
+          "flavio": null,
+          "outros": null,
+          "nao-apurado": null
+        },
+        "prismasTotal": 0,
+        "zoom": 2.53
+      },
+      "sem_selecao_gaveta": {
+        "url": "/mapa?z=4",
+        "viewport": {
+          "w": 390,
+          "h": 700
+        },
+        "barra": {
+          "x": 0,
+          "y": 54,
+          "w": 390,
+          "h": 46,
+          "display": "grid",
+          "visibility": "visible",
+          "opacity": "1",
+          "pointerEvents": "auto",
+          "classe": "placar-barra"
+        },
+        "gaveta": {
+          "x": 0,
+          "y": 174,
+          "w": 390,
+          "h": 414,
+          "display": "flex",
+          "visibility": "visible",
+          "opacity": "1",
+          "pointerEvents": "auto",
+          "classe": "bottom-sheet placar-gaveta mobile-only is-open"
+        },
+        "gavetaVisivel": true,
+        "gavetaResumo": "placar nacional · 100% apuradoPL FLAVIO BOLSONARO 47,03%margem de 2.224.965 votos (1,87 pt)⌃",
+        "sheet": {
+          "x": 0,
+          "y": 593,
+          "w": 390,
+          "h": 96,
+          "display": "flex",
+          "visibility": "hidden",
+          "opacity": "1",
+          "pointerEvents": "auto",
+          "classe": "bottom-sheet sheet-detalhe mobile-only"
+        },
+        "sheetVisivel": false,
+        "sheetClasse": "bottom-sheet sheet-detalhe mobile-only",
+        "paineis": [
+          {
+            "nome": "barra-placar",
+            "h": 46,
+            "y": 54
+          },
+          {
+            "nome": "gaveta-placar",
+            "h": 414,
+            "y": 174
+          }
+        ],
+        "paineisSomaPx": 460,
+        "paineisAa": "barra-placar=46px + gaveta-placar=414px",
+        "palco": {
+          "x": 0,
+          "y": 54,
+          "w": 390,
+          "h": 534,
+          "display": "block",
+          "visibility": "visible",
+          "opacity": "1",
+          "pointerEvents": "auto",
+          "classe": "map-stage"
+        },
+        "mapaLivrePx": 74,
+        "mapaLivrePct": 13.9,
+        "mapaLivreDaTelaPct": 10.6,
+        "repetiuPlacarNacionalNoSheet": null,
+        "textoSheetInicio": "estado selecionadoseleção—⌃×",
+        "textoGavetaInicio": "placar nacional · 100% apuradoPL FLAVIO BOLSONARO 47,03%margem de 2.224.965 votos (1,87 pt)⌃Placar nacional100% apuradoFLAVIO BOLSONAROPL47,03%56.104.503 votosL",
+        "prismas": {
+          "lula": null,
+          "flavio": null,
+          "outros": null,
+          "nao-apurado": null
+        },
+        "prismasTotal": 0,
+        "zoom": 2.53
+      },
+      "com_selecao_peek": {
+        "url": "/mapa?uf=CE&z=5.8",
+        "viewport": {
+          "w": 390,
+          "h": 700
+        },
+        "barra": {
+          "x": 0,
+          "y": 54,
+          "w": 390,
+          "h": 46,
+          "display": "grid",
+          "visibility": "visible",
+          "opacity": "1",
+          "pointerEvents": "auto",
+          "classe": "placar-barra"
+        },
+        "gaveta": {
+          "x": 0,
+          "y": 594,
+          "w": 390,
+          "h": 40,
+          "display": "flex",
+          "visibility": "hidden",
+          "opacity": "1",
+          "pointerEvents": "none",
+          "classe": "bottom-sheet placar-gaveta mobile-only is-peek"
+        },
+        "gavetaVisivel": false,
+        "gavetaResumo": "placar nacional⌃",
+        "sheet": {
+          "x": 0,
+          "y": 513,
+          "w": 390,
+          "h": 74,
+          "display": "flex",
+          "visibility": "visible",
+          "opacity": "1",
+          "pointerEvents": "auto",
+          "classe": "bottom-sheet sheet-detalhe mobile-only is-peek"
+        },
+        "sheetVisivel": true,
+        "sheetClasse": "bottom-sheet sheet-detalhe mobile-only is-peek",
+        "paineis": [
+          {
+            "nome": "barra-placar",
+            "h": 46,
+            "y": 54
+          },
+          {
+            "nome": "sheet-detalhe",
+            "h": 74,
+            "y": 513
+          }
+        ],
+        "paineisSomaPx": 120,
+        "paineisAa": "barra-placar=46px + sheet-detalhe=74px",
+        "palco": {
+          "x": 0,
+          "y": 54,
+          "w": 390,
+          "h": 534,
+          "display": "block",
+          "visibility": "visible",
+          "opacity": "1",
+          "pointerEvents": "auto",
+          "classe": "map-stage"
+        },
+        "mapaLivrePx": 414,
+        "mapaLivrePct": 77.5,
+        "mapaLivreDaTelaPct": 59.1,
+        "repetiuPlacarNacionalNoSheet": null,
+        "textoSheetInicio": "estado selecionadoCearáPT · LULA 63,29%⌃×CENordesteCearáTerra do sol e do humorfigurinhas em emoji · sem pacote animado licenciado🏖️🎶🌵Praias: Jericoacoara, C",
+        "textoGavetaInicio": "placar nacional⌃Placar nacional100% apuradoFLAVIO BOLSONAROPL47,03%56.104.503 votosLULAPT45,16%53.879.538 votosmargem2.224.965 votos1,87 ponto · 1,87% dos válid",
+        "prismas": {
+          "lula": 205,
+          "flavio": 205,
+          "outros": 205,
+          "nao-apurado": 205
+        },
+        "prismasTotal": 820,
+        "zoom": 5.8
+      },
+      "com_selecao_aberta": {
+        "url": "/mapa?uf=CE&z=5.8",
+        "viewport": {
+          "w": 390,
+          "h": 700
+        },
+        "barra": {
+          "x": 0,
+          "y": 54,
+          "w": 390,
+          "h": 46,
+          "display": "grid",
+          "visibility": "visible",
+          "opacity": "1",
+          "pointerEvents": "auto",
+          "classe": "placar-barra"
+        },
+        "gaveta": {
+          "x": 0,
+          "y": 594,
+          "w": 390,
+          "h": 40,
+          "display": "flex",
+          "visibility": "hidden",
+          "opacity": "1",
+          "pointerEvents": "none",
+          "classe": "bottom-sheet placar-gaveta mobile-only is-peek"
+        },
+        "gavetaVisivel": false,
+        "gavetaResumo": "placar nacional⌃",
+        "sheet": {
+          "x": 0,
+          "y": 374,
+          "w": 390,
+          "h": 213,
+          "display": "flex",
+          "visibility": "visible",
+          "opacity": "1",
+          "pointerEvents": "auto",
+          "classe": "bottom-sheet sheet-detalhe mobile-only is-open"
+        },
+        "sheetVisivel": true,
+        "sheetClasse": "bottom-sheet sheet-detalhe mobile-only is-open",
+        "paineis": [
+          {
+            "nome": "barra-placar",
+            "h": 46,
+            "y": 54
+          },
+          {
+            "nome": "sheet-detalhe",
+            "h": 213,
+            "y": 374
+          }
+        ],
+        "paineisSomaPx": 259,
+        "paineisAa": "barra-placar=46px + sheet-detalhe=213px",
+        "palco": {
+          "x": 0,
+          "y": 54,
+          "w": 390,
+          "h": 534,
+          "display": "block",
+          "visibility": "visible",
+          "opacity": "1",
+          "pointerEvents": "auto",
+          "classe": "map-stage"
+        },
+        "mapaLivrePx": 275,
+        "mapaLivrePct": 51.5,
+        "mapaLivreDaTelaPct": 39.3,
+        "repetiuPlacarNacionalNoSheet": null,
+        "textoSheetInicio": "estado selecionadoCearáPT · LULA 63,29%⌃×CENordesteCearáTerra do sol e do humorfigurinhas em emoji · sem pacote animado licenciado🏖️🎶🌵Praias: Jericoacoara, C",
+        "textoGavetaInicio": "placar nacional⌃Placar nacional100% apuradoFLAVIO BOLSONAROPL47,03%56.104.503 votosLULAPT45,16%53.879.538 votosmargem2.224.965 votos1,87 ponto · 1,87% dos válid",
+        "prismas": {
+          "lula": 205,
+          "flavio": 205,
+          "outros": 205,
+          "nao-apurado": 205
+        },
+        "prismasTotal": 820,
+        "zoom": 5.8
+      },
+      "console": {
+        "total": 0,
+        "errosDoApp": [],
+        "avisos": []
+      }
+    },
+    "desktop": {
+      "sem_selecao": {
+        "url": "/mapa?z=4.4",
+        "viewport": {
+          "w": 1440,
+          "h": 900
+        },
+        "palco": {
+          "x": 0,
+          "y": 76,
+          "w": 1060,
+          "h": 708,
+          "display": "block",
+          "visibility": "visible"
+        },
+        "painel": {
+          "x": 1060,
+          "y": 76,
+          "w": 380,
+          "h": 708,
+          "display": "flex",
+          "visibility": "visible"
+        },
+        "placarNoPainel": true,
+        "linhasDoPlacar": 2,
+        "detalheCard": null,
+        "titulo": null,
+        "barraMobile": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "display": "none",
+          "visibility": "visible"
+        },
+        "gavetaMobile": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "display": "none",
+          "visibility": "hidden"
+        },
+        "sheetMobile": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "display": "none",
+          "visibility": "hidden"
+        },
+        "scrollLateral": false
+      },
+      "com_selecao": {
+        "url": "/mapa?uf=CE&z=6.3",
+        "viewport": {
+          "w": 1440,
+          "h": 900
+        },
+        "palco": {
+          "x": 0,
+          "y": 76,
+          "w": 1060,
+          "h": 708,
+          "display": "block",
+          "visibility": "visible"
+        },
+        "painel": {
+          "x": 1060,
+          "y": 76,
+          "w": 380,
+          "h": 708,
+          "display": "flex",
+          "visibility": "visible"
+        },
+        "placarNoPainel": true,
+        "linhasDoPlacar": 2,
+        "detalheCard": {
+          "x": 1081,
+          "y": 303,
+          "w": 339,
+          "h": 697,
+          "display": "block",
+          "visibility": "visible"
+        },
+        "titulo": "Ceará",
+        "barraMobile": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "display": "none",
+          "visibility": "visible"
+        },
+        "gavetaMobile": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "display": "none",
+          "visibility": "hidden"
+        },
+        "sheetMobile": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "display": "none",
+          "visibility": "hidden"
+        },
+        "scrollLateral": false
+      },
+      "console": {
+        "total": 0,
+        "errosDoApp": [],
+        "avisos": []
+      }
+    }
+  },
+  "resumo": {
+    "390x844": {
+      "sem_selecao_fechada": {
+        "paineis": "barra-placar=46px + gaveta-placar=40px",
+        "paineisSomaPx": 86,
+        "mapaLivrePx": 592,
+        "mapaLivrePct": 87.3,
+        "mapaLivreDaTelaPct": 70.1,
+        "gavetaVisivel": true,
+        "sheetVisivel": false,
+        "gavetaResumo": "placar nacional⌃",
+        "repetiuNoSheet": null,
+        "zonas": 0,
+        "zonasPorCamada": {
+          "lula": null,
+          "flavio": null,
+          "outros": null,
+          "nao-apurado": null
+        }
+      },
+      "sem_selecao_gaveta": {
+        "paineis": "barra-placar=46px + gaveta-placar=444px",
+        "paineisSomaPx": 490,
+        "mapaLivrePx": 188,
+        "mapaLivrePct": 27.7,
+        "mapaLivreDaTelaPct": 22.3,
+        "gavetaVisivel": true,
+        "sheetVisivel": false,
+        "gavetaResumo": "placar nacional · 100% apuradoPL FLAVIO BOLSONARO 47,03%margem de 2.224.965 votos (1,87 pt)⌃",
+        "repetiuNoSheet": null,
+        "zonas": 0,
+        "zonasPorCamada": {
+          "lula": null,
+          "flavio": null,
+          "outros": null,
+          "nao-apurado": null
+        }
+      },
+      "com_selecao_peek": {
+        "paineis": "barra-placar=46px + sheet-detalhe=74px",
+        "paineisSomaPx": 120,
+        "mapaLivrePx": 558,
+        "mapaLivrePct": 82.3,
+        "mapaLivreDaTelaPct": 66.1,
+        "gavetaVisivel": false,
+        "sheetVisivel": true,
+        "gavetaResumo": "placar nacional⌃",
+        "repetiuNoSheet": null,
+        "zonas": 820,
+        "zonasPorCamada": {
+          "lula": 205,
+          "flavio": 205,
+          "outros": 205,
+          "nao-apurado": 205
+        }
+      },
+      "com_selecao_aberta": {
+        "paineis": "barra-placar=46px + sheet-detalhe=271px",
+        "paineisSomaPx": 317,
+        "mapaLivrePx": 361,
+        "mapaLivrePct": 53.2,
+        "mapaLivreDaTelaPct": 42.8,
+        "gavetaVisivel": false,
+        "sheetVisivel": true,
+        "gavetaResumo": "placar nacional⌃",
+        "repetiuNoSheet": null,
+        "zonas": 820,
+        "zonasPorCamada": {
+          "lula": 205,
+          "flavio": 205,
+          "outros": 205,
+          "nao-apurado": 205
+        }
+      },
+      "console": {
+        "total": 4,
+        "errosDoApp": [],
+        "avisos": []
+      }
+    },
+    "390x700": {
+      "sem_selecao_fechada": {
+        "paineis": "barra-placar=46px + gaveta-placar=40px",
+        "paineisSomaPx": 86,
+        "mapaLivrePx": 448,
+        "mapaLivrePct": 83.9,
+        "mapaLivreDaTelaPct": 64,
+        "gavetaVisivel": true,
+        "sheetVisivel": false,
+        "gavetaResumo": "placar nacional⌃",
+        "repetiuNoSheet": null,
+        "zonas": 0,
+        "zonasPorCamada": {
+          "lula": null,
+          "flavio": null,
+          "outros": null,
+          "nao-apurado": null
+        }
+      },
+      "sem_selecao_gaveta": {
+        "paineis": "barra-placar=46px + gaveta-placar=414px",
+        "paineisSomaPx": 460,
+        "mapaLivrePx": 74,
+        "mapaLivrePct": 13.9,
+        "mapaLivreDaTelaPct": 10.6,
+        "gavetaVisivel": true,
+        "sheetVisivel": false,
+        "gavetaResumo": "placar nacional · 100% apuradoPL FLAVIO BOLSONARO 47,03%margem de 2.224.965 votos (1,87 pt)⌃",
+        "repetiuNoSheet": null,
+        "zonas": 0,
+        "zonasPorCamada": {
+          "lula": null,
+          "flavio": null,
+          "outros": null,
+          "nao-apurado": null
+        }
+      },
+      "com_selecao_peek": {
+        "paineis": "barra-placar=46px + sheet-detalhe=74px",
+        "paineisSomaPx": 120,
+        "mapaLivrePx": 414,
+        "mapaLivrePct": 77.5,
+        "mapaLivreDaTelaPct": 59.1,
+        "gavetaVisivel": false,
+        "sheetVisivel": true,
+        "gavetaResumo": "placar nacional⌃",
+        "repetiuNoSheet": null,
+        "zonas": 820,
+        "zonasPorCamada": {
+          "lula": 205,
+          "flavio": 205,
+          "outros": 205,
+          "nao-apurado": 205
+        }
+      },
+      "com_selecao_aberta": {
+        "paineis": "barra-placar=46px + sheet-detalhe=213px",
+        "paineisSomaPx": 259,
+        "mapaLivrePx": 275,
+        "mapaLivrePct": 51.5,
+        "mapaLivreDaTelaPct": 39.3,
+        "gavetaVisivel": false,
+        "sheetVisivel": true,
+        "gavetaResumo": "placar nacional⌃",
+        "repetiuNoSheet": null,
+        "zonas": 820,
+        "zonasPorCamada": {
+          "lula": 205,
+          "flavio": 205,
+          "outros": 205,
+          "nao-apurado": 205
+        }
+      },
+      "console": {
+        "total": 0,
+        "errosDoApp": [],
+        "avisos": []
+      }
+    },
+    "desktop": {
+      "sem_selecao": {
+        "painel": {
+          "x": 1060,
+          "y": 76,
+          "w": 380,
+          "h": 708,
+          "display": "flex",
+          "visibility": "visible"
+        },
+        "palco": {
+          "x": 0,
+          "y": 76,
+          "w": 1060,
+          "h": 708,
+          "display": "block",
+          "visibility": "visible"
+        },
+        "placarNoPainel": true,
+        "linhasDoPlacar": 2,
+        "barraMobile": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "display": "none",
+          "visibility": "visible"
+        },
+        "gavetaMobile": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "display": "none",
+          "visibility": "hidden"
+        },
+        "sheetMobile": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "display": "none",
+          "visibility": "hidden"
+        },
+        "detalheCard": null,
+        "scrollLateral": false
+      },
+      "com_selecao": {
+        "painel": {
+          "x": 1060,
+          "y": 76,
+          "w": 380,
+          "h": 708,
+          "display": "flex",
+          "visibility": "visible"
+        },
+        "palco": {
+          "x": 0,
+          "y": 76,
+          "w": 1060,
+          "h": 708,
+          "display": "block",
+          "visibility": "visible"
+        },
+        "titulo": "Ceará",
+        "placarNoPainel": true,
+        "gavetaMobile": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "display": "none",
+          "visibility": "hidden"
+        },
+        "sheetMobile": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "display": "none",
+          "visibility": "hidden"
+        },
+        "scrollLateral": false
+      },
+      "console": {
+        "total": 0,
+        "errosDoApp": [],
+        "avisos": []
+      }
+    }
+  }
+}
