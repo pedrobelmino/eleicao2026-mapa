@@ -15,10 +15,24 @@ import {
   COR_CONCRETO,
   CORES_PARTIDO,
   NIVEIS_ZOOM_TEXTO,
+  PONTOS_CORTE_MARGEM,
   ZOOM_BARRA_ZONA_FIM,
   nivelPorZoom,
   ROTULO_NIVEL,
 } from '../mapa.js'
+
+// Cor de cada ponto de corte da escala divergente do calor por município. É a
+// MESMA rampa de EXPRESSAO_CALOR_MUNICIPIO (mapa.js) nas mesmas paradas — a
+// legenda não inventa um degradê: mostra os cortes onde a cor muda.
+const CORES_CORTE_MARGEM = [
+  '#7a0a1c',
+  '#c04a5e',
+  '#e9a3ac',
+  '#efe9dc',
+  '#a8c1e2',
+  '#4a7cbe',
+  '#0b2b5e',
+]
 
 // Nome curto do nível para o chip (o título completo fica no corpo da legenda,
 // que no celular nasce recolhido).
@@ -100,7 +114,7 @@ export function chaveDoZoom(zoom) {
   return nivel === 'estado' ? 'macro' : nivel
 }
 
-export default function Legend({ zoom }) {
+export default function Legend({ zoom, modoMargem }) {
   const chave = chaveDoZoom(zoom)
   // Sem fallback, uma chave nova derrubava o componente inteiro (e o mapa com
   // ele). A legenda agora nunca fica sem texto.
@@ -178,6 +192,26 @@ export default function Legend({ zoom }) {
               </li>
             ))}
           </ul>
+        ) : null}
+
+        {modoMargem ? (
+          <div className="legend-margem" data-prova="legenda-margem">
+            <div className="legend-title">calor da vantagem por município</div>
+            <div className="legend-cortes" aria-hidden="true">
+              {PONTOS_CORTE_MARGEM.map((corte, indice) => (
+                <span key={corte} className="legend-corte">
+                  <i style={{ background: CORES_CORTE_MARGEM[indice] }} />
+                  {corte > 0 ? `+${corte}` : corte}
+                </span>
+              ))}
+            </div>
+            <p className="legend-note legend-margem-nota">
+              pontos de margem: negativo = vantagem PT, positivo = vantagem PL
+            </p>
+            <p className="legend-note legend-margem-nota">
+              contorno tracejado = virou o partido do líder em relação a 2022
+            </p>
+          </div>
         ) : null}
 
         <div className="legend-parties" aria-hidden="true">

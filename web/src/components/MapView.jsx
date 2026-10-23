@@ -9,6 +9,9 @@ import {
   EXPRESSAO_COR_UF,
   EXPRESSAO_COR_UF_REPLAY,
   EXPRESSAO_COR_MARGEM,
+  EXPRESSAO_CALOR_MUNICIPIO,
+  COR_VIRA_2022,
+  TRACEJADO_VIRA_2022,
   TRANSICAO_COR_UF,
   ZOOM_BARRA_ZONA,
   ZOOM_BARRA_ZONA_FIM,
@@ -84,6 +87,11 @@ const LAYERS_ZONAS_BARRA_FINA = [
 const LAYER_MUN_FILL = 'municipios-fill'
 const LAYER_MUN_LINE = 'municipios-line'
 const LAYER_MUN_LABELS = 'municipios-labels'
+// Item 6 — "de onde está ganhando" no município: o calor da vantagem e o
+// tracejado de quem virou em relação a 2022. As duas nascem invisíveis e só
+// aparecem com o botão MARGEM ligado.
+const LAYER_MUN_MARGEM = 'municipios-margem'
+const LAYER_MUN_VIRA = 'municipios-vira'
 
 const FONTE_LOCAIS = 'locais'
 const FONTE_LOCAIS_PONTOS = 'locais-pontos'
@@ -524,7 +532,21 @@ function preencherTooltipZona(elemento, propriedades) {
   elemento.append(titulo, lider, margem, votos)
 }
 
-function preencherTooltipMunicipio(elemento, propriedades) {
+function textoDaComparacao(margem) {
+  if (!margem) return null
+  const delta = margem.delta_pp_2022
+  const temDelta = delta != null && Number.isFinite(Number(delta))
+  const sinal = temDelta && Number(delta) > 0 ? '+' : ''
+  const variacao = temDelta ? `${sinal}${pontos(delta)} pts desde 2022` : 'sem par em 2022'
+  if (margem.virou_2022 === true) return `virou em relação a 2022 · ${variacao}`
+  if (margem.virou_2022 === false) return `mesmo partido do líder em 2022 · ${variacao}`
+  return variacao
+}
+
+// `margem` vem de /api/uf/{UF}/margens (por codarea) quando o modo MARGEM está
+// ligado: aí o tooltip passa a mostrar a margem ABSOLUTA (votos) e a RELATIVA
+// (pontos), que é o que o calor está pintando — e a comparação com 2022.
+function preencherTooltipMunicipio(elemento, propriedades, margem) {
   elemento.replaceChildren()
 
   const titulo = document.createElement('strong')
@@ -533,18 +555,26 @@ function preencherTooltipMunicipio(elemento, propriedades) {
   const lider = document.createElement('span')
   lider.textContent = `${propriedades.lider} (${propriedades.partido_lider || '—'})`
 
-  const margem = document.createElement('span')
-  margem.className = 'uf-tooltip-margem'
-  margem.textContent = `margem ${pontos(propriedades.margem_pct)} pts · ${percentual(
-    propriedades.lider_pct,
-  )}`
+  const margemEl = document.createElement('span')
+  margemEl.className = 'uf-tooltip-margem'
+  margemEl.textContent = margem
+    ? `margem ${numero(margem.margem_votos)} votos · ${pontos(margem.margem_pct)} pts`
+    : `margem ${pontos(propriedades.margem_pct)} pts · ${percentual(propriedades.lider_pct)}`
 
   const votos = document.createElement('span')
   votos.textContent = `${numero(propriedades.vv)} válidos · ${numero(
     propriedades.total,
   )} votos`
 
-  elemento.append(titulo, lider, margem, votos)
+  elemento.append(titulo, lider, margemEl, votos)
+
+  const comparacao = textoDaComparacao(margem)
+  if (comparacao) {
+    const linha = document.createElement('span')
+    linha.className = 'uf-tooltip-margem uf-tooltip-vira'
+    linha.textContent = comparacao
+    elemento.append(linha)
+  }
 }
 
 function preencherTooltipLocal(elemento, propriedades) {
@@ -824,10 +854,11 @@ function colecaoVazia() {
 const camadasComAviso = new Set()
 const fontesComAviso = new Set()
 
-function adicionarCamada(mapa, definicao, aoPendente) {
+function adicionarCamada(mapa, definicao, aoPendente, antesDe) {
   if (mapa.getLayer(definicao.id)) return true
   try {
-    mapa.addLayer(definicao)
+    if (antesDe && mapa.getLayer(antesDe)) mapa.addLayer(definicao, antesDe)
+    else mapa.addLayer(definicao)
     return true
   } catch (erro) {
     // Um único aviso por camada: o retry é por evento (load/styledata), não
@@ -1295,6 +1326,53 @@ function aplicarDetalhe(
     aoPendente,
   )
 
+  // Item 6: calor da vantagem por município (escala divergente em torno de 0,
+  // lida de feature-state `margem_pp`) e o tracejado de quem virou em 2022
+  // (`virou`). Nascem invisíveis: quem liga é o botão MARGEM, por
+  // setLayoutProperty — não há camada sendo criada/destruída a cada clique (a
+  // lição do replay: camada recriada no meio do gesto deixa buraco na tela).
+  adicionarCamada(
+    mapa,
+    {
+      id: LAYER_MUN_MARGEM,
+      type: 'fill',
+      source: FONTE_MUNICIPIOS,
+      minzoom: 6.6,
+      layout: { visibility: 'none' },
+      paint: {
+        'fill-color': EXPRESSAO_CALOR_MUNICIPIO,
+        'fill-opacity': 0.92,
+      },
+    },
+    aoPendente,
+    LAYER_MUN_LINE,
+  )
+
+  adicionarCamada(
+    mapa,
+    {
+      id: LAYER_MUN_VIRA,
+      type: 'line',
+      source: FONTE_MUNICIPIOS,
+      minzoom: 6.6,
+      layout: { visibility: 'none', 'line-join': 'round' },
+      paint: {
+        'line-color': COR_VIRA_2022,
+        'line-width': 1.7,
+        'line-dasharray': TRACEJADO_VIRA_2022,
+        // Tracejado só no município que virou; o resto fica com opacidade 0.
+        'line-opacity': [
+          'case',
+          ['boolean', ['feature-state', 'virou'], false],
+          1,
+          0,
+        ],
+      },
+    },
+    aoPendente,
+    LAYER_MUN_LINE,
+  )
+
   adicionarCamada(
     mapa,
     {
@@ -1684,6 +1762,90 @@ function pintarEstados(mapa, geojson, replay, modoMargem) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// ITEM 6 — calor da vantagem por MUNICÍPIO.
+//
+// O backend já entrega a lista pronta (margem_votos, margem_pct, vv, lider,
+// partido_lider, virou_2022, delta_pp_2022) por codarea. Aqui só se:
+//   1. grava `margem_pp` (pontos COM sinal: + no lado PL, − no lado PT) e
+//      `virou` por feature-state — a cor e o tracejado leem isso;
+//   2. liga/desliga as duas camadas por `visibility` (nada é recriado);
+//   3. publica `window.__margemDebug` com o que a prova mede.
+function sinalDaMargem(margem) {
+  const pontosDaMargem = Number(margem?.margem_pct) || 0
+  const partido = String(margem?.partido_lider || '').toUpperCase()
+  return partido === 'PT' ? -pontosDaMargem : pontosDaMargem
+}
+
+function municipiosQueViraram(margensUf) {
+  const lista = Array.isArray(margensUf?.municipios) ? margensUf.municipios : []
+  return lista.filter((municipio) => municipio.virou_2022 === true)
+}
+
+function publicarDebugMargem(mapa, margensUf, ativo) {
+  let featuresCalor = 0
+  try {
+    if (ativo && mapa.getLayer && mapa.getLayer(LAYER_MUN_MARGEM)) {
+      featuresCalor = mapa.queryRenderedFeatures({ layers: [LAYER_MUN_MARGEM] }).length
+    }
+  } catch {
+    featuresCalor = 0
+  }
+  const lista = Array.isArray(margensUf?.municipios) ? margensUf.municipios : []
+  window.__margemDebug = {
+    ativo: Boolean(ativo),
+    uf: margensUf?.uf ?? null,
+    municipios: lista.length,
+    municipiosViraram: municipiosQueViraram(margensUf).length,
+    totalViraramAPI: Number(margensUf?.total_viraram ?? 0),
+    featuresCalor,
+    camadaVisivel: Boolean(
+      mapa.getLayer && mapa.getLayer(LAYER_MUN_MARGEM)
+        ? mapa.getLayoutProperty(LAYER_MUN_MARGEM, 'visibility') !== 'none'
+        : false,
+    ),
+    // A API já ordena por margem_votos × vv; aqui só se corta o topo.
+    top5: lista.slice(0, 5).map((municipio) => ({
+      nome: municipio.nome,
+      uf: margensUf?.uf ?? null,
+      lider: municipio.lider,
+      partido_lider: municipio.partido_lider,
+      margem_votos: municipio.margem_votos,
+      margem_pct: municipio.margem_pct,
+      virou_2022: municipio.virou_2022 === true,
+    })),
+  }
+}
+
+function pintarMunicipiosMargem(mapa, margensUf, ativo) {
+  if (!mapa || typeof mapa.getLayer !== 'function') return
+  const lista = Array.isArray(margensUf?.municipios) ? margensUf.municipios : []
+
+  if (lista.length > 0 && mapa.getSource && mapa.getSource(FONTE_MUNICIPIOS)) {
+    for (const municipio of lista) {
+      mapa.setFeatureState(
+        { source: FONTE_MUNICIPIOS, id: String(municipio.codarea) },
+        {
+          margem_pp: sinalDaMargem(municipio),
+          virou: municipio.virou_2022 === true,
+        },
+      )
+    }
+  }
+
+  const visivel = Boolean(ativo) && lista.length > 0
+  for (const camada of [LAYER_MUN_MARGEM, LAYER_MUN_VIRA]) {
+    if (mapa.getLayer(camada)) {
+      mapa.setLayoutProperty(camada, 'visibility', visivel ? 'visible' : 'none')
+    }
+  }
+
+  publicarDebugMargem(mapa, margensUf, ativo)
+  // A contagem de features rendidas só é honesta depois de um quadro: refaz o
+  // debug no primeiro `idle` que vem depois de ligar a camada.
+  if (visivel) mapa.once('idle', () => publicarDebugMargem(mapa, margensUf, ativo))
+}
+
 export default function MapView({
   geojson,
   selectedUf,
@@ -1699,6 +1861,7 @@ export default function MapView({
   onSelectLocal,
   replay,
   modoMargem,
+  margensUf,
 }) {
   const containerRef = useRef(null)
   const mapRef = useRef(null)
@@ -1727,6 +1890,10 @@ export default function MapView({
   // MapLibre, que são registrados uma vez só.
   const replayRef = useRef(replay)
   const modoMargemRef = useRef(modoMargem)
+  // Margens por município da UF aberta (item 6): lidas dentro dos handlers do
+  // MapLibre, que são registrados uma vez só.
+  const margensUfRef = useRef(margensUf)
+  const indiceMargensRef = useRef(new Map())
 
   geojsonRef.current = geojson
   selectedRef.current = selectedUf
@@ -1742,6 +1909,13 @@ export default function MapView({
   localSelecionadoRef.current = localSelecionado
   replayRef.current = replay
   modoMargemRef.current = modoMargem
+  margensUfRef.current = margensUf
+  indiceMargensRef.current = new Map(
+    (Array.isArray(margensUf?.municipios) ? margensUf.municipios : []).map((item) => [
+      String(item.codarea),
+      item,
+    ]),
+  )
 
   // Cria o mapa uma única vez.
   useEffect(() => {
@@ -2063,7 +2237,11 @@ export default function MapView({
         limparHover()
         mapa.getCanvas().style.cursor = 'pointer'
         if (feature.layer.id === LAYER_MUN_FILL) {
-          preencherTooltipMunicipio(tooltipEl, feature.properties || {})
+          preencherTooltipMunicipio(
+            tooltipEl,
+            feature.properties || {},
+            indiceMargensRef.current.get(String(feature.properties?.codarea ?? '')),
+          )
         } else {
           preencherTooltipZona(tooltipEl, feature.properties || {})
         }
@@ -2106,7 +2284,11 @@ export default function MapView({
       if (!feature) return
       const propriedades = feature.properties || {}
 
-      preencherTooltipMunicipio(tooltipEl, propriedades)
+      preencherTooltipMunicipio(
+        tooltipEl,
+        propriedades,
+        indiceMargensRef.current.get(String(propriedades.codarea ?? '')),
+      )
       tooltip.setLngLat(evento.lngLat).addTo(mapa)
 
       onSelectMunicipioRef.current?.(
@@ -2279,6 +2461,27 @@ export default function MapView({
       mapa.off('styledata', aplicar)
     }
   }, [replay, modoMargem])
+
+  // ITEM 6 — calor por município: feature-state + visibility, reaplicados quando
+  // o modo troca, quando a lista da UF chega e quando a malha municipal é
+  // recarregada (setData zera feature-state de feature nova).
+  useEffect(() => {
+    const mapa = mapRef.current
+    if (!mapa) return undefined
+
+    const aplicar = () => {
+      pintarMunicipiosMargem(mapa, margensUfRef.current, modoMargemRef.current)
+    }
+
+    aplicar()
+    if (!estiloCarregadoRef.current) mapa.once('load', aplicar)
+    mapa.on('styledata', aplicar)
+
+    return () => {
+      mapa.off('load', aplicar)
+      mapa.off('styledata', aplicar)
+    }
+  }, [modoMargem, margensUf, detalhe])
 
   // Cria/atualiza as fontes e camadas municipais/zonais/urnas quando chegam.
   useEffect(() => {

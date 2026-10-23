@@ -1,0 +1,581 @@
+{
+  "gerado": "2026-10-23T20:35:27.837Z",
+  "base": "http://127.0.0.1:8100",
+  "criterio": "margem_votos × vv",
+  "api": {
+    "CE": {
+      "total_municipios": 184,
+      "total_viraram": 1,
+      "comparacao_2022": true,
+      "top10": [
+        {
+          "nome": "FORTALEZA",
+          "margem_votos": 210751,
+          "margem_pct": 14.14,
+          "virou_2022": false
+        },
+        {
+          "nome": "JUAZEIRO DO NORTE",
+          "margem_votos": 66105,
+          "margem_pct": 40.85,
+          "virou_2022": false
+        },
+        {
+          "nome": "CAUCAIA",
+          "margem_votos": 37844,
+          "margem_pct": 18.56,
+          "virou_2022": false
+        },
+        {
+          "nome": "SOBRAL",
+          "margem_votos": 31116,
+          "margem_pct": 25.92,
+          "virou_2022": false
+        },
+        {
+          "nome": "CRATO",
+          "margem_votos": 46301,
+          "margem_pct": 58.35,
+          "virou_2022": false
+        },
+        {
+          "nome": "MARACANAÚ",
+          "margem_votos": 22750,
+          "margem_pct": 15.2,
+          "virou_2022": false
+        },
+        {
+          "nome": "ITAPIPOCA",
+          "margem_votos": 39561,
+          "margem_pct": 46.22,
+          "virou_2022": false
+        },
+        {
+          "nome": "IGUATU",
+          "margem_votos": 32999,
+          "margem_pct": 56.81,
+          "virou_2022": false
+        },
+        {
+          "nome": "MARANGUAPE",
+          "margem_votos": 17473,
+          "margem_pct": 25.16,
+          "virou_2022": false
+        },
+        {
+          "nome": "QUIXERAMOBIM",
+          "margem_votos": 24731,
+          "margem_pct": 51.06,
+          "virou_2022": false
+        }
+      ]
+    },
+    "SP": {
+      "total_municipios": 645,
+      "total_viraram": 70,
+      "comparacao_2022": true,
+      "top10": [
+        {
+          "nome": "SÃO PAULO",
+          "margem_votos": 291602,
+          "margem_pct": 4.45,
+          "virou_2022": false
+        },
+        {
+          "nome": "CAMPINAS",
+          "margem_votos": 87761,
+          "margem_pct": 13.86,
+          "virou_2022": false
+        },
+        {
+          "nome": "GUARULHOS",
+          "margem_votos": 64280,
+          "margem_pct": 9.01,
+          "virou_2022": false
+        },
+        {
+          "nome": "SÃO JOSÉ DOS CAMPOS",
+          "margem_votos": 104270,
+          "margem_pct": 24.84,
+          "virou_2022": false
+        },
+        {
+          "nome": "SOROCABA",
+          "margem_votos": 93363,
+          "margem_pct": 23.67,
+          "virou_2022": false
+        },
+        {
+          "nome": "RIBEIRÃO PRETO",
+          "margem_votos": 72645,
+          "margem_pct": 21.26,
+          "virou_2022": false
+        },
+        {
+          "nome": "SÃO JOSÉ DO RIO PRETO",
+          "margem_votos": 85532,
+          "margem_pct": 34.07,
+          "virou_2022": false
+        },
+        {
+          "nome": "PIRACICABA",
+          "margem_votos": 81157,
+          "margem_pct": 35.76,
+          "virou_2022": false
+        },
+        {
+          "nome": "JUNDIAÍ",
+          "margem_votos": 69316,
+          "margem_pct": 27.52,
+          "virou_2022": false
+        },
+        {
+          "nome": "LIMEIRA",
+          "margem_votos": 79683,
+          "margem_pct": 46.47,
+          "virou_2022": false
+        }
+      ]
+    }
+  },
+  "viewports": {
+    "CE_desktop_1440x900": {
+      "uf": "CE",
+      "viewport": "desktop_1440x900",
+      "ligado": {
+        "featuresCalor": 220,
+        "featuresVisiveis": 220,
+        "camadaVisivel": true,
+        "municipios": 184,
+        "municipiosViraram": 1,
+        "totalViraramAPI": 1,
+        "apiTotalViraram": 1,
+        "contagemCard": "1 viraram em relação a 2022 · de 184 municípios",
+        "top5": [
+          {
+            "nome": "FORTALEZA",
+            "margem": "210.751 votos · 14,14 pts",
+            "lider": "PT · LULA",
+            "virou": false
+          },
+          {
+            "nome": "JUAZEIRO DO NORTE",
+            "margem": "66.105 votos · 40,85 pts",
+            "lider": "PT · LULA",
+            "virou": false
+          },
+          {
+            "nome": "CAUCAIA",
+            "margem": "37.844 votos · 18,56 pts",
+            "lider": "PT · LULA",
+            "virou": false
+          },
+          {
+            "nome": "SOBRAL",
+            "margem": "31.116 votos · 25,92 pts",
+            "lider": "PT · LULA",
+            "virou": false
+          },
+          {
+            "nome": "CRATO",
+            "margem": "46.301 votos · 58,35 pts",
+            "lider": "PT · LULA",
+            "virou": false
+          }
+        ],
+        "top10_nomes": [
+          "FORTALEZA",
+          "JUAZEIRO DO NORTE",
+          "CAUCAIA",
+          "SOBRAL",
+          "CRATO",
+          "MARACANAÚ",
+          "ITAPIPOCA",
+          "IGUATU",
+          "MARANGUAPE",
+          "QUIXERAMOBIM"
+        ],
+        "legenda": true,
+        "notaUf": true,
+        "botoes": {
+          "margem": "true",
+          "replay": "false"
+        },
+        "featuresZonas": 1151,
+        "featuresMunicipios": 418,
+        "zoom": 7,
+        "card": {
+          "topo": 96,
+          "altura": 720,
+          "largura": 339,
+          "esquerda": 1081
+        },
+        "sheet": {
+          "topo": 0,
+          "altura": 0,
+          "largura": 0,
+          "fracaoTela": 0
+        },
+        "tela": {
+          "largura": 1440,
+          "altura": 900,
+          "scrollWidth": 1440,
+          "clientWidth": 1440
+        },
+        "arquivo": "_provas/margem_CE_desktop_1440x900.png"
+      },
+      "desligado": {
+        "ativo": false,
+        "featuresCalor": 0,
+        "featuresVisiveis": 0,
+        "camadaVisivel": false,
+        "camadaExiste": true,
+        "camadaVisibility": "none",
+        "linhas": 0,
+        "botoes": {
+          "margem": "false",
+          "replay": "false"
+        },
+        "featuresZonas": 1151,
+        "featuresMunicipios": 418
+      },
+      "console": {
+        "erros": [],
+        "respostas_ruins": []
+      }
+    },
+    "SP_desktop_1440x900": {
+      "uf": "SP",
+      "viewport": "desktop_1440x900",
+      "ligado": {
+        "featuresCalor": 700,
+        "featuresVisiveis": 700,
+        "camadaVisivel": true,
+        "municipios": 645,
+        "municipiosViraram": 70,
+        "totalViraramAPI": 70,
+        "apiTotalViraram": 70,
+        "contagemCard": "70 viraram em relação a 2022 · de 645 municípios",
+        "top5": [
+          {
+            "nome": "SÃO PAULO",
+            "margem": "291.602 votos · 4,45 pts",
+            "lider": "PT · LULA",
+            "virou": false
+          },
+          {
+            "nome": "CAMPINAS",
+            "margem": "87.761 votos · 13,86 pts",
+            "lider": "PL · FLAVIO BOLSONARO",
+            "virou": false
+          },
+          {
+            "nome": "GUARULHOS",
+            "margem": "64.280 votos · 9,01 pts",
+            "lider": "PL · FLAVIO BOLSONARO",
+            "virou": false
+          },
+          {
+            "nome": "SÃO JOSÉ DOS CAMPOS",
+            "margem": "104.270 votos · 24,84 pts",
+            "lider": "PL · FLAVIO BOLSONARO",
+            "virou": false
+          },
+          {
+            "nome": "SOROCABA",
+            "margem": "93.363 votos · 23,67 pts",
+            "lider": "PL · FLAVIO BOLSONARO",
+            "virou": false
+          }
+        ],
+        "top10_nomes": [
+          "SÃO PAULO",
+          "CAMPINAS",
+          "GUARULHOS",
+          "SÃO JOSÉ DOS CAMPOS",
+          "SOROCABA",
+          "RIBEIRÃO PRETO",
+          "SÃO JOSÉ DO RIO PRETO",
+          "PIRACICABA",
+          "JUNDIAÍ",
+          "LIMEIRA"
+        ],
+        "legenda": true,
+        "notaUf": true,
+        "botoes": {
+          "margem": "true",
+          "replay": "false"
+        },
+        "featuresZonas": 4607,
+        "featuresMunicipios": 1515,
+        "zoom": 7,
+        "card": {
+          "topo": 96,
+          "altura": 720,
+          "largura": 339,
+          "esquerda": 1081
+        },
+        "sheet": {
+          "topo": 0,
+          "altura": 0,
+          "largura": 0,
+          "fracaoTela": 0
+        },
+        "tela": {
+          "largura": 1440,
+          "altura": 900,
+          "scrollWidth": 1440,
+          "clientWidth": 1440
+        },
+        "arquivo": "_provas/margem_SP_desktop_1440x900.png"
+      },
+      "desligado": {
+        "ativo": false,
+        "featuresCalor": 0,
+        "featuresVisiveis": 0,
+        "camadaVisivel": false,
+        "camadaExiste": true,
+        "camadaVisibility": "none",
+        "linhas": 0,
+        "botoes": {
+          "margem": "false",
+          "replay": "false"
+        },
+        "featuresZonas": 4607,
+        "featuresMunicipios": 1515
+      },
+      "console": {
+        "erros": [],
+        "respostas_ruins": []
+      }
+    },
+    "CE_mobile_390x844": {
+      "uf": "CE",
+      "viewport": "mobile_390x844",
+      "ligado": {
+        "featuresCalor": 179,
+        "featuresVisiveis": 179,
+        "camadaVisivel": true,
+        "municipios": 184,
+        "municipiosViraram": 1,
+        "totalViraramAPI": 1,
+        "apiTotalViraram": 1,
+        "contagemCard": "1 viraram em relação a 2022 · de 184 municípios",
+        "top5": [
+          {
+            "nome": "FORTALEZA",
+            "margem": "210.751 votos · 14,14 pts",
+            "lider": "PT · LULA",
+            "virou": false
+          },
+          {
+            "nome": "JUAZEIRO DO NORTE",
+            "margem": "66.105 votos · 40,85 pts",
+            "lider": "PT · LULA",
+            "virou": false
+          },
+          {
+            "nome": "CAUCAIA",
+            "margem": "37.844 votos · 18,56 pts",
+            "lider": "PT · LULA",
+            "virou": false
+          },
+          {
+            "nome": "SOBRAL",
+            "margem": "31.116 votos · 25,92 pts",
+            "lider": "PT · LULA",
+            "virou": false
+          },
+          {
+            "nome": "CRATO",
+            "margem": "46.301 votos · 58,35 pts",
+            "lider": "PT · LULA",
+            "virou": false
+          }
+        ],
+        "top10_nomes": [
+          "FORTALEZA",
+          "JUAZEIRO DO NORTE",
+          "CAUCAIA",
+          "SOBRAL",
+          "CRATO",
+          "MARACANAÚ",
+          "ITAPIPOCA",
+          "IGUATU",
+          "MARANGUAPE",
+          "QUIXERAMOBIM"
+        ],
+        "legenda": true,
+        "notaUf": true,
+        "botoes": {
+          "margem": "true",
+          "replay": "false"
+        },
+        "featuresZonas": 1151,
+        "featuresMunicipios": 417,
+        "zoom": 7,
+        "card": {
+          "topo": 223,
+          "altura": 679,
+          "largura": 366,
+          "esquerda": 12
+        },
+        "sheet": {
+          "topo": 208,
+          "altura": 523,
+          "largura": 390,
+          "fracaoTela": 0.62
+        },
+        "tela": {
+          "largura": 390,
+          "altura": 844,
+          "scrollWidth": 390,
+          "clientWidth": 390
+        },
+        "arquivo": "_provas/margem_CE_mobile_390x844.png"
+      },
+      "desligado": {
+        "ativo": false,
+        "featuresCalor": 0,
+        "featuresVisiveis": 0,
+        "camadaVisivel": false,
+        "camadaExiste": true,
+        "camadaVisibility": "none",
+        "linhas": 0,
+        "botoes": {
+          "margem": "false",
+          "replay": "false"
+        },
+        "featuresZonas": 1151,
+        "featuresMunicipios": 417
+      },
+      "console": {
+        "erros": [],
+        "respostas_ruins": []
+      }
+    },
+    "SP_mobile_390x844": {
+      "uf": "SP",
+      "viewport": "mobile_390x844",
+      "ligado": {
+        "featuresCalor": 330,
+        "featuresVisiveis": 330,
+        "camadaVisivel": true,
+        "municipios": 645,
+        "municipiosViraram": 70,
+        "totalViraramAPI": 70,
+        "apiTotalViraram": 70,
+        "contagemCard": "70 viraram em relação a 2022 · de 645 municípios",
+        "top5": [
+          {
+            "nome": "SÃO PAULO",
+            "margem": "291.602 votos · 4,45 pts",
+            "lider": "PT · LULA",
+            "virou": false
+          },
+          {
+            "nome": "CAMPINAS",
+            "margem": "87.761 votos · 13,86 pts",
+            "lider": "PL · FLAVIO BOLSONARO",
+            "virou": false
+          },
+          {
+            "nome": "GUARULHOS",
+            "margem": "64.280 votos · 9,01 pts",
+            "lider": "PL · FLAVIO BOLSONARO",
+            "virou": false
+          },
+          {
+            "nome": "SÃO JOSÉ DOS CAMPOS",
+            "margem": "104.270 votos · 24,84 pts",
+            "lider": "PL · FLAVIO BOLSONARO",
+            "virou": false
+          },
+          {
+            "nome": "SOROCABA",
+            "margem": "93.363 votos · 23,67 pts",
+            "lider": "PL · FLAVIO BOLSONARO",
+            "virou": false
+          }
+        ],
+        "top10_nomes": [
+          "SÃO PAULO",
+          "CAMPINAS",
+          "GUARULHOS",
+          "SÃO JOSÉ DOS CAMPOS",
+          "SOROCABA",
+          "RIBEIRÃO PRETO",
+          "SÃO JOSÉ DO RIO PRETO",
+          "PIRACICABA",
+          "JUNDIAÍ",
+          "LIMEIRA"
+        ],
+        "legenda": true,
+        "notaUf": true,
+        "botoes": {
+          "margem": "true",
+          "replay": "false"
+        },
+        "featuresZonas": 3570,
+        "featuresMunicipios": 1120,
+        "zoom": 7,
+        "card": {
+          "topo": 223,
+          "altura": 679,
+          "largura": 366,
+          "esquerda": 12
+        },
+        "sheet": {
+          "topo": 208,
+          "altura": 523,
+          "largura": 390,
+          "fracaoTela": 0.62
+        },
+        "tela": {
+          "largura": 390,
+          "altura": 844,
+          "scrollWidth": 390,
+          "clientWidth": 390
+        },
+        "arquivo": "_provas/margem_SP_mobile_390x844.png"
+      },
+      "desligado": {
+        "ativo": false,
+        "featuresCalor": 0,
+        "featuresVisiveis": 0,
+        "camadaVisivel": false,
+        "camadaExiste": true,
+        "camadaVisibility": "none",
+        "linhas": 0,
+        "botoes": {
+          "margem": "false",
+          "replay": "false"
+        },
+        "featuresZonas": 3570,
+        "featuresMunicipios": 1120
+      },
+      "console": {
+        "erros": [],
+        "respostas_ruins": []
+      }
+    }
+  },
+  "exclusividade": {
+    "margem_desliga_ao_ligar_replay": true,
+    "replay_liga": true,
+    "replay_desliga_ao_ligar_margem": true,
+    "margem_liga": true,
+    "botoes_apos_replay": {
+      "margem": "false",
+      "replay": "true"
+    },
+    "botoes_apos_margem": {
+      "margem": "true",
+      "replay": "false"
+    },
+    "calor_apos_replay": 0,
+    "calor_apos_margem": 220
+  },
+  "problemas": [],
+  "ok": true
+}

@@ -421,6 +421,9 @@ type app struct {
 	eleicao2022   *eleicao2022
 	snapshots2026 []snapshot2026
 	margens       *margensResposta
+	// Margens por UF (item 6): o detalhe municipal de "de onde está ganhando",
+	// com a comparação de 2022 por município. Também montado no boot.
+	margensUF map[string]*margensUFResposta
 	// Replay da apuração por seção: custa a leitura do dump por seção (27
 	// arquivos), então é montado na primeira requisição e servido do cache.
 	apuracaoMu   sync.Mutex
@@ -486,6 +489,7 @@ func novaApp(cfg config) (*app, error) {
 		margens: montarMargens(
 			dadosCarregados.Publico, municipais, dados2022, cfg.Eleicao, cfg.Turno,
 		),
+		margensUF: montarMargensUF(municipais, dados2022, cfg.Eleicao, cfg.Turno),
 	}, nil
 }
 
@@ -608,6 +612,9 @@ func (a *app) rotaUFDados(caminho string) (http.HandlerFunc, bool) {
 		return a.handleUFZonasGeoJSON(uf), true
 	case "locais":
 		return a.handleUFLocais(uf), true
+	case "margens":
+		// Item 6: margem por município + quem virou em relação a 2022.
+		return a.handleUFMargens(uf), true
 	default:
 		return nil, false
 	}

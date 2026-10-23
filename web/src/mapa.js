@@ -256,4 +256,46 @@ export const EXPRESSAO_COR_MARGEM = [
   '#8e2a26',
 ]
 
+// ---------------------------------------------------------------------------
+// MAPA DE CALOR DA VANTAGEM POR MUNICÍPIO (item 6 do ROADMAP).
+//
+// A rampa das UFs acima é de INTENSIDADE (0 → 40 pontos, uma cor só): serve para
+// "onde está folgado". No município o Pedro pediu "de onde está ganhando", e
+// isso é uma escala DIVERGENTE em torno de zero:
+//
+//   0 (empate)  -> creme neutro
+//   lado PT     -> vermelho, mais fundo quanto maior a vantagem em pontos
+//   lado PL     -> azul, mais fundo quanto maior a vantagem em pontos
+//
+// O sinal vem de `margem_pp` (feature-state): +pontos quando o líder é do PL,
+// −pontos quando é do PT. É o MESMO dado de `margem_pct` da API, só orientado
+// pelo lado — nada é estimado.
+export const PONTOS_CORTE_MARGEM = [-40, -20, -8, 0, 8, 20, 40]
+
+export const EXPRESSAO_CALOR_MUNICIPIO = [
+  'interpolate',
+  ['linear'],
+  ['coalesce', ['feature-state', 'margem_pp'], 0],
+  -40,
+  '#7a0a1c',
+  -20,
+  '#c04a5e',
+  -8,
+  '#e9a3ac',
+  0,
+  '#efe9dc',
+  8,
+  '#a8c1e2',
+  20,
+  '#4a7cbe',
+  40,
+  '#0b2b5e',
+]
+
+// Contorno dos municípios que VIRARAM em relação a 2022 (partido do líder
+// mudou). Tracejado preto por cima de qualquer cor da rampa.
+export const COR_VIRA_2022 = '#10161f'
+export const TRACEJADO_VIRA_2022 = [2.5, 1.8]
+
+
 

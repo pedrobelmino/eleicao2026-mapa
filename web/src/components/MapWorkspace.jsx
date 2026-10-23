@@ -205,6 +205,12 @@ export default function MapWorkspace({
   const [margens, setMargens] = useState(null)
   const [margensCarregando, setMargensCarregando] = useState(false)
   const [margensErro, setMargensErro] = useState(null)
+  // Item 6: margens POR MUNICÍPIO da UF aberta — é o que pinta o calor e
+  // alimenta o card de decisivos. Uma requisição por UF, com cache.
+  const [margensUf, setMargensUf] = useState(null)
+  const [margensUfCarregando, setMargensUfCarregando] = useState(false)
+  const [margensUfErro, setMargensUfErro] = useState(null)
+  const cacheMargensUfRef = useRef(new Map())
 
   useEffect(() => {
     if (!replayAberto || replays[fonte]) return undefined
@@ -260,9 +266,54 @@ export default function MapWorkspace({
     }
   }, [margensAberto, margens, margensCarregando])
 
+  // Item 6 — margens por município da UF aberta. Só busca com o modo MARGEM
+  // ligado e uma UF selecionada (sem UF não há município para pintar).
+  useEffect(() => {
+    if (!margensAberto || !ufSelecionada) {
+      setMargensUf(null)
+      setMargensUfErro(null)
+      setMargensUfCarregando(false)
+      return undefined
+    }
+
+    const cache = cacheMargensUfRef.current
+    if (cache.has(ufSelecionada)) {
+      setMargensUf(cache.get(ufSelecionada))
+      setMargensUfErro(null)
+      setMargensUfCarregando(false)
+      return undefined
+    }
+
+    let ativo = true
+    setMargensUf(null)
+    setMargensUfErro(null)
+    setMargensUfCarregando(true)
+
+    fetchJSON(`${API_BASE}/uf/${ufSelecionada}/margens`)
+      .then((resposta) => {
+        if (!ativo) return
+        if (resposta?.erro) {
+          setMargensUfErro(String(resposta.erro))
+          setMargensUfCarregando(false)
+          return
+        }
+        cache.set(ufSelecionada, resposta)
+        setMargensUf(resposta)
+        setMargensUfCarregando(false)
+      })
+      .catch(() => {
+        if (!ativo) return
+        setMargensUfErro('não foi possível carregar as margens desta UF')
+        setMargensUfCarregando(false)
+      })
+
+    return () => {
+      ativo = false
+    }
+  }, [margensAberto, ufSelecionada])
+
   // A série dos dois formatos vira uma lista só de passos (ver normalizarPassos).
   const passos = useMemo(() => normalizarPassos(replay), [replay])
-
   // Play: um passo a cada 700 ms em 1x, intervalo dividido pela velocidade
   // (8x, 60x). Para no último passo — que é o arquivo fechado, 100% apurado.
   useEffect(() => {
@@ -313,9 +364,24 @@ export default function MapWorkspace({
 
   const alternarReplay = () => {
     setReplayAberto((aberto) => {
-      if (aberto) setTocando(false)
-      return !aberto
+      const novo = !aberto
+      // Um modo por vez: ligar o replay desliga o calor de margem (o Pedro já
+      // reclamou dos dois painéis ao mesmo tempo).
+      if (novo) setMargensAberto(false)
+      else setTocando(false)
+      return novo
     })
+  }
+
+  // Item 6: UM comportamento no botão — liga/desliga o calor de margem. Ligar
+  // desliga o replay; nada mais muda de significado com o botão.
+  const alternarMargem = () => {
+    const novo = !margensAberto
+    setMargensAberto(novo)
+    if (novo) {
+      setReplayAberto(false)
+      setTocando(false)
+    }
   }
 
 
@@ -583,7 +649,8 @@ export default function MapWorkspace({
           onSelectMunicipio={selecionarMunicipio}
           onSelectLocal={setLocalSelecionado}
           replay={frameReplay}
-          modoMargem={!replayAberto && margensAberto}
+          modoMargem={margensAberto}
+          margensUf={margensUf}
         />
         <PlacarBarra estados={estados} />
         <div className="modos-mapa" role="group" aria-label="Modos de leitura do mapa">
@@ -599,7 +666,7 @@ export default function MapWorkspace({
           <button
             type="button"
             className={`modos-btn${margensAberto ? ' is-ativo' : ''}`}
-            onClick={() => setMargensAberto((valor) => !valor)}
+            onClick={alternarMargem}
             aria-pressed={margensAberto}
             data-prova="modo-margem"
           >
@@ -627,7 +694,7 @@ export default function MapWorkspace({
             onFechar={alternarReplay}
           />
         ) : null}
-        <Legend zoom={zoom} />
+        <Legend zoom={zoom} modoMargem={margensAberto} />
       </main>
 
       <aside className="side-panel" ref={painelRef} aria-label="Painel da apuração">
@@ -636,7 +703,11 @@ export default function MapWorkspace({
             margens={margens}
             carregando={margensCarregando}
             erro={margensErro}
-            onFechar={() => setMargensAberto(false)}
+            margensUf={margensUf}
+            uf={ufSelecionada}
+            carregandoUf={margensUfCarregando}
+            erroUf={margensUfErro}
+            onFechar={alternarMargem}
           />
         ) : null}
 
@@ -768,7 +839,11 @@ export default function MapWorkspace({
               margens={margens}
               carregando={margensCarregando}
               erro={margensErro}
-              onFechar={() => setMargensAberto(false)}
+              margensUf={margensUf}
+              uf={ufSelecionada}
+              carregandoUf={margensUfCarregando}
+              erroUf={margensUfErro}
+              onFechar={alternarMargem}
             />
           </div>
         ) : null}
