@@ -1,0 +1,37 @@
+{
+  "_nota": "Procedência das fotos oficiais do painel. Gerado por scripts/fotos_candidatos.py: baixa o JSON oficial de candidatos do TSE (carg->agr->par->cand), usa o sqcand de lá na URL da foto e grava o sha256 do arquivo. O componente Avatar só mostra a foto quando o nome/número/partido casa com este catálogo; fora disso, inicial do nome.",
+  "eleicao": "6257",
+  "turno": "1",
+  "cargo": "1",
+  "coletado_em": "2026-10-22T21:02:48-0300",
+  "fotos": [
+    {
+      "numero": "13",
+      "nome_oficial": "LUIZ INÁCIO LULA DA SILVA",
+      "nome_urna": "",
+      "partido": "PT",
+      "sqcand": "280002542548",
+      "fonte_json": "https://resultados.tse.jus.br/oficial/ele2026/6257/dados/br/br-c0001-e006257-u.json",
+      "fonte_foto": "https://resultados.tse.jus.br/oficial/ele2026/6257/fotos/br/280002542548.jpeg",
+      "arquivo": "web/public/candidato-13.jpeg",
+      "sha256": "f3e9d937a40bc8d56fec508a44943bd032b9f5e27ac09abdc610b0d2a333ab19",
+      "bytes": 6969,
+      "largura": 161,
+      "altura": 225
+    },
+    {
+      "numero": "22",
+      "nome_oficial": "FLAVIO NANTES BOLSONARO",
+      "nome_urna": "",
+      "partido": "PL",
+      "sqcand": "280002551544",
+      "fonte_json": "https://resultados.tse.jus.br/oficial/ele2026/6257/dados/br/br-c0001-e006257-u.json",
+      "fonte_foto": "https://resultados.tse.jus.br/oficial/ele2026/6257/fotos/br/280002551544.jpeg",
+      "arquivo": "web/public/candidato-22.jpeg",
+      "sha256": "3f29c4846e3839944a2668cc4b663c1ca2b90fef846314f8fd4434a031d0a917",
+      "bytes": 6753,
+      "largura": 161,
+      "altura": 225
+    }
+  ]
+}
