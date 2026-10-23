@@ -25,6 +25,35 @@ export const ZOOM_ZONA = 4.6
 export const ZOOM_MUNICIPIO = 7.4
 export const ZOOM_LOCAL = 9.2
 
+// ---------------------------------------------------------------------------
+// RÓTULO DE MUNICÍPIO: UMA fonte por faixa de zoom (item 4b do ROADMAP).
+//
+// Duas camadas desenham nome de cidade: o basemap CARTO Positron (source-layer
+// `places` do source `protomaps`) e a nossa `municipios-labels`. Se as duas
+// ficam ligadas ao mesmo tempo o nome aparece DUAS vezes na tela — foi o que o
+// Pedro viu no nível de cidade.
+//
+// A faixa é decidida aqui, num lugar só, e lida pelo mapa e pela prova:
+//   zoom <  ZOOM_ROTULO_APP -> basemap (nosso rótulo ainda não existe)
+//   zoom >= ZOOM_ROTULO_APP -> app (municipios-labels), basemap desligado
+// ZOOM_ROTULO_APP é também o minzoom de `municipios-labels` (lanes/labels do
+// estilo), então é a MESMA régua: não existe zoom em que nenhuma das duas
+// fontes desenhe — na virada, a troca tem de ser instantânea (cross-fade 0 no
+// basemap), senão aparece a janela cega medida em 23/10 (z8 CE sem "Fortaleza"
+// nenhum).
+//
+// Se um dia o minzoom do nosso rótulo mudar, muda AQUI — nunca nos dois
+// lugares — senão volta a janela cega (z8 sem nome nenhum) ou a duplicata.
+export const ZOOM_ROTULO_APP = 8.0
+
+// Fonte de rótulo de lugar ativa naquele zoom: 'app' ou 'basemap'.
+export function fonteDeRotuloPorZoom(zoom) {
+  const z = Number(zoom)
+  if (!Number.isFinite(z)) return 'basemap'
+  return z >= ZOOM_ROTULO_APP ? 'app' : 'basemap'
+}
+
+
 // Faixa das BARRAS DE ZONA NO NÍVEL DE CIDADE. O polígono inteiro da zona só
 // serve para a faixa de estado; perto da cidade ele cobriria o município
 // todo, então a mesma barra passa a ser desenhada num losango pequeno no

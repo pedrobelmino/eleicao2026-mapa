@@ -1,0 +1,624 @@
+{
+  "gerado": "2026-10-23T11:15:07.796Z",
+  "base": "http://127.0.0.1:8110",
+  "criterio": "ocorrencias da cidade-alvo == 1 em z8, z9.5 e z10.5 (desktop e mobile)",
+  "zooms": [
+    8,
+    9.5,
+    10.5
+  ],
+  "itens": [
+    {
+      "z": 8,
+      "cidade": "Fortaleza",
+      "ocorrencias": 1,
+      "uf": "CE",
+      "viewport": "desktop_1440x900",
+      "zoomMedido": 8,
+      "fontes": [
+        "municipios-labels"
+      ],
+      "ancoras": [
+        [
+          530,
+          406
+        ]
+      ],
+      "duplicadosNoQuadro": [],
+      "nomesDistintos": 39,
+      "featuresZonas": 815,
+      "featuresMunicipios": 299,
+      "featuresLocais": 0,
+      "featuresLocaisPontos": 0,
+      "placeOcultas": [
+        "place_hamlet",
+        "place_suburbs",
+        "place_villages",
+        "place_town",
+        "place_country_2",
+        "place_country_1",
+        "place_state",
+        "place_continent",
+        "place_city_r6",
+        "place_city_r5",
+        "place_city_dot_r7",
+        "place_city_dot_r4",
+        "place_city_dot_r2",
+        "place_city_dot_z7",
+        "place_capital_dot_z7"
+      ],
+      "consoleErros": 0,
+      "requestsFalhos": 0,
+      "print": "_provas/rotulos_CE_desktop_1440x900_z8.png",
+      "erro": null
+    },
+    {
+      "z": 9.5,
+      "cidade": "Fortaleza",
+      "ocorrencias": 1,
+      "uf": "CE",
+      "viewport": "desktop_1440x900",
+      "zoomMedido": 9.5,
+      "fontes": [
+        "municipios-labels"
+      ],
+      "ancoras": [
+        [
+          531,
+          501
+        ]
+      ],
+      "duplicadosNoQuadro": [],
+      "nomesDistintos": 8,
+      "featuresZonas": 307,
+      "featuresMunicipios": 81,
+      "featuresLocais": 0,
+      "featuresLocaisPontos": 0,
+      "placeOcultas": [
+        "place_hamlet",
+        "place_suburbs",
+        "place_villages",
+        "place_town",
+        "place_country_2",
+        "place_country_1",
+        "place_state",
+        "place_continent",
+        "place_city_r6",
+        "place_city_r5",
+        "place_city_dot_r7",
+        "place_city_dot_r4",
+        "place_city_dot_r2",
+        "place_city_dot_z7",
+        "place_capital_dot_z7"
+      ],
+      "consoleErros": 0,
+      "requestsFalhos": 0,
+      "print": "_provas/rotulos_CE_desktop_1440x900_z9.5.png",
+      "erro": null
+    },
+    {
+      "z": 10.5,
+      "cidade": "Fortaleza",
+      "ocorrencias": 1,
+      "uf": "CE",
+      "viewport": "desktop_1440x900",
+      "zoomMedido": 10.5,
+      "fontes": [
+        "municipios-labels"
+      ],
+      "ancoras": [
+        [
+          532,
+          647
+        ]
+      ],
+      "duplicadosNoQuadro": [],
+      "nomesDistintos": 3,
+      "featuresZonas": 288,
+      "featuresMunicipios": 63,
+      "featuresLocais": 0,
+      "featuresLocaisPontos": 0,
+      "placeOcultas": [
+        "place_hamlet",
+        "place_suburbs",
+        "place_villages",
+        "place_town",
+        "place_country_2",
+        "place_country_1",
+        "place_state",
+        "place_continent",
+        "place_city_r6",
+        "place_city_r5",
+        "place_city_dot_r7",
+        "place_city_dot_r4",
+        "place_city_dot_r2",
+        "place_city_dot_z7",
+        "place_capital_dot_z7"
+      ],
+      "consoleErros": 0,
+      "requestsFalhos": 0,
+      "print": "_provas/rotulos_CE_desktop_1440x900_z10.5.png",
+      "erro": null
+    },
+    {
+      "z": 8,
+      "cidade": "São Paulo",
+      "ocorrencias": 1,
+      "uf": "SP",
+      "viewport": "desktop_1440x900",
+      "zoomMedido": 8,
+      "fontes": [
+        "municipios-labels"
+      ],
+      "ancoras": [
+        [
+          538,
+          520
+        ]
+      ],
+      "duplicadosNoQuadro": [],
+      "nomesDistintos": 78,
+      "featuresZonas": 2781,
+      "featuresMunicipios": 668,
+      "featuresLocais": 0,
+      "featuresLocaisPontos": 0,
+      "placeOcultas": [
+        "place_hamlet",
+        "place_suburbs",
+        "place_villages",
+        "place_town",
+        "place_country_2",
+        "place_country_1",
+        "place_state",
+        "place_continent",
+        "place_city_r6",
+        "place_city_r5",
+        "place_city_dot_r7",
+        "place_city_dot_r4",
+        "place_city_dot_r2",
+        "place_city_dot_z7",
+        "place_capital_dot_z7"
+      ],
+      "consoleErros": 0,
+      "requestsFalhos": 0,
+      "print": "_provas/rotulos_SP_desktop_1440x900_z8.png",
+      "erro": null
+    },
+    {
+      "z": 9.5,
+      "cidade": "São Paulo",
+      "ocorrencias": 1,
+      "uf": "SP",
+      "viewport": "desktop_1440x900",
+      "zoomMedido": 9.5,
+      "fontes": [
+        "municipios-labels"
+      ],
+      "ancoras": [
+        [
+          552,
+          824
+        ]
+      ],
+      "duplicadosNoQuadro": [],
+      "nomesDistintos": 35,
+      "featuresZonas": 1382,
+      "featuresMunicipios": 325,
+      "featuresLocais": 0,
+      "featuresLocaisPontos": 0,
+      "placeOcultas": [
+        "place_hamlet",
+        "place_suburbs",
+        "place_villages",
+        "place_town",
+        "place_country_2",
+        "place_country_1",
+        "place_state",
+        "place_continent",
+        "place_city_r6",
+        "place_city_r5",
+        "place_city_dot_r7",
+        "place_city_dot_r4",
+        "place_city_dot_r2",
+        "place_city_dot_z7",
+        "place_capital_dot_z7"
+      ],
+      "consoleErros": 0,
+      "requestsFalhos": 0,
+      "print": "_provas/rotulos_SP_desktop_1440x900_z9.5.png",
+      "erro": null
+    },
+    {
+      "z": 10.5,
+      "cidade": "São Paulo",
+      "ocorrencias": 1,
+      "uf": "SP",
+      "viewport": "desktop_1440x900",
+      "zoomMedido": 10.5,
+      "fontes": [
+        "municipios-labels"
+      ],
+      "ancoras": [
+        [
+          627,
+          565
+        ]
+      ],
+      "duplicadosNoQuadro": [],
+      "nomesDistintos": 16,
+      "featuresZonas": 1153,
+      "featuresMunicipios": 154,
+      "featuresLocais": 0,
+      "featuresLocaisPontos": 0,
+      "placeOcultas": [
+        "place_hamlet",
+        "place_suburbs",
+        "place_villages",
+        "place_town",
+        "place_country_2",
+        "place_country_1",
+        "place_state",
+        "place_continent",
+        "place_city_r6",
+        "place_city_r5",
+        "place_city_dot_r7",
+        "place_city_dot_r4",
+        "place_city_dot_r2",
+        "place_city_dot_z7",
+        "place_capital_dot_z7"
+      ],
+      "consoleErros": 0,
+      "requestsFalhos": 0,
+      "print": "_provas/rotulos_SP_desktop_1440x900_z10.5.png",
+      "erro": null
+    },
+    {
+      "z": 8,
+      "cidade": "Fortaleza",
+      "ocorrencias": 1,
+      "uf": "CE",
+      "viewport": "mobile_390x844",
+      "zoomMedido": 8,
+      "fontes": [
+        "municipios-labels"
+      ],
+      "ancoras": [
+        [
+          195,
+          391
+        ]
+      ],
+      "duplicadosNoQuadro": [],
+      "nomesDistintos": 18,
+      "featuresZonas": 393,
+      "featuresMunicipios": 130,
+      "featuresLocais": 0,
+      "featuresLocaisPontos": 0,
+      "placeOcultas": [
+        "place_hamlet",
+        "place_suburbs",
+        "place_villages",
+        "place_town",
+        "place_country_2",
+        "place_country_1",
+        "place_state",
+        "place_continent",
+        "place_city_r6",
+        "place_city_r5",
+        "place_city_dot_r7",
+        "place_city_dot_r4",
+        "place_city_dot_r2",
+        "place_city_dot_z7",
+        "place_capital_dot_z7"
+      ],
+      "consoleErros": 0,
+      "requestsFalhos": 0,
+      "print": "_provas/rotulos_CE_mobile_390x844_z8.png",
+      "erro": null
+    },
+    {
+      "z": 9.5,
+      "cidade": "Fortaleza",
+      "ocorrencias": 1,
+      "uf": "CE",
+      "viewport": "mobile_390x844",
+      "zoomMedido": 9.5,
+      "fontes": [
+        "municipios-labels"
+      ],
+      "ancoras": [
+        [
+          196,
+          486
+        ]
+      ],
+      "duplicadosNoQuadro": [],
+      "nomesDistintos": 5,
+      "featuresZonas": 307,
+      "featuresMunicipios": 81,
+      "featuresLocais": 0,
+      "featuresLocaisPontos": 0,
+      "placeOcultas": [
+        "place_hamlet",
+        "place_suburbs",
+        "place_villages",
+        "place_town",
+        "place_country_2",
+        "place_country_1",
+        "place_state",
+        "place_continent",
+        "place_city_r6",
+        "place_city_r5",
+        "place_city_dot_r7",
+        "place_city_dot_r4",
+        "place_city_dot_r2",
+        "place_city_dot_z7",
+        "place_capital_dot_z7"
+      ],
+      "consoleErros": 0,
+      "requestsFalhos": 0,
+      "print": "_provas/rotulos_CE_mobile_390x844_z9.5.png",
+      "erro": null
+    },
+    {
+      "z": 10.5,
+      "cidade": "Fortaleza",
+      "ocorrencias": 1,
+      "uf": "CE",
+      "viewport": "mobile_390x844",
+      "zoomMedido": 10.5,
+      "fontes": [
+        "municipios-labels"
+      ],
+      "ancoras": [
+        [
+          197,
+          632
+        ]
+      ],
+      "duplicadosNoQuadro": [],
+      "nomesDistintos": 2,
+      "featuresZonas": 167,
+      "featuresMunicipios": 26,
+      "featuresLocais": 0,
+      "featuresLocaisPontos": 0,
+      "placeOcultas": [
+        "place_hamlet",
+        "place_suburbs",
+        "place_villages",
+        "place_town",
+        "place_country_2",
+        "place_country_1",
+        "place_state",
+        "place_continent",
+        "place_city_r6",
+        "place_city_r5",
+        "place_city_dot_r7",
+        "place_city_dot_r4",
+        "place_city_dot_r2",
+        "place_city_dot_z7",
+        "place_capital_dot_z7"
+      ],
+      "consoleErros": 0,
+      "requestsFalhos": 0,
+      "print": "_provas/rotulos_CE_mobile_390x844_z10.5.png",
+      "erro": null
+    },
+    {
+      "z": 8,
+      "cidade": "São Paulo",
+      "ocorrencias": 1,
+      "uf": "SP",
+      "viewport": "mobile_390x844",
+      "zoomMedido": 8,
+      "fontes": [
+        "municipios-labels"
+      ],
+      "ancoras": [
+        [
+          203,
+          505
+        ]
+      ],
+      "duplicadosNoQuadro": [],
+      "nomesDistintos": 35,
+      "featuresZonas": 2148,
+      "featuresMunicipios": 433,
+      "featuresLocais": 0,
+      "featuresLocaisPontos": 0,
+      "placeOcultas": [
+        "place_hamlet",
+        "place_suburbs",
+        "place_villages",
+        "place_town",
+        "place_country_2",
+        "place_country_1",
+        "place_state",
+        "place_continent",
+        "place_city_r6",
+        "place_city_r5",
+        "place_city_dot_r7",
+        "place_city_dot_r4",
+        "place_city_dot_r2",
+        "place_city_dot_z7",
+        "place_capital_dot_z7"
+      ],
+      "consoleErros": 0,
+      "requestsFalhos": 0,
+      "print": "_provas/rotulos_SP_mobile_390x844_z8.png",
+      "erro": null
+    },
+    {
+      "z": 9.5,
+      "cidade": "São Paulo",
+      "ocorrencias": 1,
+      "uf": "SP",
+      "viewport": "mobile_390x844",
+      "zoomMedido": 9.5,
+      "fontes": [
+        "municipios-labels"
+      ],
+      "ancoras": [
+        [
+          217,
+          809
+        ]
+      ],
+      "duplicadosNoQuadro": [],
+      "nomesDistintos": 10,
+      "featuresZonas": 468,
+      "featuresMunicipios": 69,
+      "featuresLocais": 0,
+      "featuresLocaisPontos": 0,
+      "placeOcultas": [
+        "place_hamlet",
+        "place_suburbs",
+        "place_villages",
+        "place_town",
+        "place_country_2",
+        "place_country_1",
+        "place_state",
+        "place_continent",
+        "place_city_r6",
+        "place_city_r5",
+        "place_city_dot_r7",
+        "place_city_dot_r4",
+        "place_city_dot_r2",
+        "place_city_dot_z7",
+        "place_capital_dot_z7"
+      ],
+      "consoleErros": 0,
+      "requestsFalhos": 0,
+      "print": "_provas/rotulos_SP_mobile_390x844_z9.5.png",
+      "erro": null
+    },
+    {
+      "z": 10.5,
+      "cidade": "São Paulo",
+      "ocorrencias": 1,
+      "uf": "SP",
+      "viewport": "mobile_390x844",
+      "zoomMedido": 10.5,
+      "fontes": [
+        "municipios-labels"
+      ],
+      "ancoras": [
+        [
+          292,
+          550
+        ]
+      ],
+      "duplicadosNoQuadro": [],
+      "nomesDistintos": 8,
+      "featuresZonas": 597,
+      "featuresMunicipios": 61,
+      "featuresLocais": 0,
+      "featuresLocaisPontos": 0,
+      "placeOcultas": [
+        "place_hamlet",
+        "place_suburbs",
+        "place_villages",
+        "place_town",
+        "place_country_2",
+        "place_country_1",
+        "place_state",
+        "place_continent",
+        "place_city_r6",
+        "place_city_r5",
+        "place_city_dot_r7",
+        "place_city_dot_r4",
+        "place_city_dot_r2",
+        "place_city_dot_z7",
+        "place_capital_dot_z7"
+      ],
+      "consoleErros": 0,
+      "requestsFalhos": 0,
+      "print": "_provas/rotulos_SP_mobile_390x844_z10.5.png",
+      "erro": null
+    }
+  ],
+  "drill": [
+    {
+      "z": 10.5,
+      "cidade": "Fortaleza",
+      "uf": "CE",
+      "viewport": "desktop_1440x900",
+      "modo": "drill-municipio",
+      "ocorrencias": 1,
+      "fontes": [
+        "municipios-labels"
+      ],
+      "featuresZonas": 288,
+      "featuresLocais": 277,
+      "featuresLocaisPontos": 13,
+      "locaisNoMunicipio": 196,
+      "prediosDesenhados": 196,
+      "modoPredios": "predios",
+      "consoleErros": 0,
+      "requestsFalhos": 0,
+      "print": "_provas/rotulos_drill_CE_desktop_1440x900_z10.5.png"
+    },
+    {
+      "z": 10.5,
+      "cidade": "São Paulo",
+      "uf": "SP",
+      "viewport": "desktop_1440x900",
+      "modo": "drill-municipio",
+      "ocorrencias": 1,
+      "fontes": [
+        "municipios-labels"
+      ],
+      "featuresZonas": 1153,
+      "featuresLocais": 352,
+      "featuresLocaisPontos": 35,
+      "locaisNoMunicipio": 161,
+      "prediosDesenhados": 166,
+      "modoPredios": "predios",
+      "consoleErros": 0,
+      "requestsFalhos": 0,
+      "print": "_provas/rotulos_drill_SP_desktop_1440x900_z10.5.png"
+    },
+    {
+      "z": 10.5,
+      "cidade": "Fortaleza",
+      "uf": "CE",
+      "viewport": "mobile_390x844",
+      "modo": "drill-municipio",
+      "ocorrencias": 1,
+      "fontes": [
+        "municipios-labels"
+      ],
+      "featuresZonas": 167,
+      "featuresLocais": 259,
+      "featuresLocaisPontos": 13,
+      "locaisNoMunicipio": 196,
+      "prediosDesenhados": 196,
+      "modoPredios": "predios",
+      "consoleErros": 0,
+      "requestsFalhos": 0,
+      "print": "_provas/rotulos_drill_CE_mobile_390x844_z10.5.png"
+    },
+    {
+      "z": 10.5,
+      "cidade": "São Paulo",
+      "uf": "SP",
+      "viewport": "mobile_390x844",
+      "modo": "drill-municipio",
+      "ocorrencias": 1,
+      "fontes": [
+        "municipios-labels"
+      ],
+      "featuresZonas": 597,
+      "featuresLocais": 306,
+      "featuresLocaisPontos": 33,
+      "locaisNoMunicipio": 161,
+      "prediosDesenhados": 155,
+      "modoPredios": "predios",
+      "consoleErros": 0,
+      "requestsFalhos": 0,
+      "print": "_provas/rotulos_drill_SP_mobile_390x844_z10.5.png"
+    }
+  ],
+  "falhas": [],
+  "ok": true
+}

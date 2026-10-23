@@ -15,7 +15,9 @@ import {
   FATOR_ALTURA_BARRA_CIDADE,
   ZOOM_LOCAL,
   ZOOM_MUNICIPIO,
+  ZOOM_ROTULO_APP,
   ZOOM_ZONA,
+  fonteDeRotuloPorZoom,
   nivelPorZoom,
 } from '../mapa.js'
 import {
@@ -102,11 +104,12 @@ const FONTE_URNAS = 'urnas'
 const LAYER_URNA_PLACA = 'urnas-placa'
 const LAYER_URNA_BLOCO = 'urnas-bloco'
 
-// O nosso rótulo de município (LAYER_MUN_LABELS) entra em 8.4, desenhado por
-// cima dos prismas. O texto do basemap é que fica oculto durante toda a faixa
-// das barras de zona (ZOOM_ZONA..ZOOM_BARRA_ZONA_FIM), senão o símbolo 3D é
-// cortado ao meio por um prisma.
-const ZOOM_ROTULO_MUNICIPIO = 8.4
+// O nosso rótulo de município (LAYER_MUN_LABELS) entra em ZOOM_ROTULO_APP,
+// desenhado por cima dos prismas — e é a ÚNICA fonte de nome de lugar a partir
+// dali (o basemap é desligado por regerirRotulosBase). Antes desse zoom quem
+// desenha é o basemap, porque o nosso rótulo ainda não existe. A régua mora em
+// mapa.js para o mapa e a prova lerem o MESMO número.
+const ZOOM_ROTULO_MUNICIPIO = ZOOM_ROTULO_APP
 
 // Acima disto o município tem locais demais para desenhar prédio por local; a
 // camada cai para os pontos/ícones 2D (o raio continua codificando os votos).
@@ -748,39 +751,67 @@ function atualizarVisibilidadePredios(mapa, quantidade) {
   }
 }
 
-// Rótulos de município do BASEMAP (CARTO Positron). São símbolos 3D: um prisma
-// na frente CORTA o nome ao meio em vez de escondê-lo inteiro, e era isso que
-// deixava "Sob…", "For…" e "Juaze…" pendurados nas colunas no zoom de estado.
-// As barras de zona existem até ZOOM_BARRA_ZONA_FIM, então o texto do basemap
-// fica oculto nessa faixa inteira para não voltar para trás de um prisma. O
-// nosso LAYER_MUN_LABELS, esse, é desenhado por cima dos prismas. Estado/país/
-// água continuam visíveis: são contexto.
-const ROTULO_BASE_MUNICIPIO = /^place_(city|town|villages|hamlet|suburbs|capital)/
+// Rótulos de lugar do BASEMAP (CARTO Positron). A regra é: UMA fonte de rótulo
+// por faixa de zoom (ver fonteDeRotuloPorZoom em mapa.js). O nosso
+// LAYER_MUN_LABELS é desenhado por cima dos prismas e entra em ZOOM_ROTULO_APP;
+// a partir dali os símbolos de lugar do basemap são desligados por completo.
+// Antes disso o basemap é a única fonte e fica visível.
+//
+// Enumeramos as camadas por `source-layer` + tipo `symbol` — NUNCA por id
+// inventado. Medido em 23/10 no style do Positron: source `protomaps`,
+// source-layer `places` (place_city_r6/r5, place_town, place_villages,
+// place_hamlet, place_suburbs, place_state, place_country_*, place_*_dot_*).
+const FONTE_LAYERS_ROTULO = /^(places?|place_label)$/
 
-// Última decisão aplicada por instância de mapa. Um style swap devolve as
-// camadas do basemap ao padrão, então nesse evento a decisão é refeita à força
-// (forcar: true), mesmo que o valor desejado não tenha mudado.
+// Última decisão aplicada por instância de mapa ('app' | 'basemap'). O handler
+// de `zoom` dispara a cada frame: sem este guarda seria um setLayoutProperty
+// por frame, um por camada. Um style swap devolve as camadas do basemap ao
+// padrão, então nesse evento a decisão é refeita à força (forcar: true).
 const rotulosBaseAplicados = new WeakMap()
 
 function regerirRotulosBase(mapa, { forcar = false } = {}) {
   if (!mapa || typeof mapa.getStyle !== 'function') return
 
-  const zoom = mapa.getZoom()
-  const temPrismas = Boolean(mapa.getSource(FONTE_ZONAS))
-  const ocultar =
-    temPrismas && zoom >= ZOOM_ZONA && zoom < ZOOM_BARRA_ZONA_FIM
-  if (!forcar && rotulosBaseAplicados.get(mapa) === ocultar) return
+  const fonte = fonteDeRotuloPorZoom(mapa.getZoom())
+  if (!forcar && rotulosBaseAplicados.get(mapa) === fonte) return
 
   const estilo = mapa.getStyle()
   if (!estilo) return
-  rotulosBaseAplicados.set(mapa, ocultar)
-
-  const visibilidade = ocultar ? 'none' : 'visible'
-  for (const camada of estilo.layers || []) {
-    if (!ROTULO_BASE_MUNICIPIO.test(camada.id)) continue
-    if (mapa.getLayoutProperty(camada.id, 'visibility') === visibilidade) continue
-    mapa.setLayoutProperty(camada.id, 'visibility', visibilidade)
+  // [23/10/2026] `ufs-labels` (a sigla da UF) segue a MESMA régua de faixa e é
+  // atualizada ANTES do guard de estado: sem isto ela ficava desenhada no zoom de
+  // município e, como o município de São Paulo tem o mesmo nome da UF, o mapa
+  // mostrava "SÃO PAULO" duas vezes. Não dá para fazer por expressão —
+  // `layout.visibility` recusa zoom ("zoom expressions not supported") e o
+  // `maxzoom` da camada não a tira do quadro (medido). O `forcar` do style swap
+  // reaplica; sem camada ainda criada, a exceção é engolida e o próximo
+  // load/styledata resolve.
+  try {
+    const alvo = fonte === 'basemap' ? 'visible' : 'none'
+    if (mapa.getLayer && mapa.getLayer('ufs-labels') &&
+        mapa.getLayoutProperty('ufs-labels', 'visibility') !== alvo) {
+      mapa.setLayoutProperty('ufs-labels', 'visibility', alvo)
+    }
+  } catch {
+    /* camada ainda não criada neste estilo */
   }
+
+  if (!forcar && rotulosBaseAplicados.get(mapa) === fonte) return
+
+  const visibilidade = fonte === 'basemap' ? 'visible' : 'none'
+
+  for (const camada of estilo.layers || []) {
+    if (camada.type !== 'symbol') continue
+    if (!FONTE_LAYERS_ROTULO.test(String(camada['source-layer'] || ''))) continue
+    try {
+      if (mapa.getLayoutProperty(camada.id, 'visibility') === visibilidade) continue
+      mapa.setLayoutProperty(camada.id, 'visibility', visibilidade)
+    } catch {
+      // Camada removida no meio do laço (style swap): a próxima passada, com
+      // forcar, resolve. Estado não é gravado, então a decisão será refeita.
+      return
+    }
+  }
+  rotulosBaseAplicados.set(mapa, fonte)
 }
 
 function colecaoVazia() {
@@ -1928,8 +1959,23 @@ export default function MapView({
         type: 'symbol',
         source: FONTE,
         minzoom: 3,
+        // [23/10/2026] maxzoom devolve a faixa de estado. Sem ele a sigla "SP"
+        // do centroide seguia desenhada no zoom de MUNICÍPIO e, como o município
+        // São Paulo tem o mesmo nome da UF, o print do drill mostrava
+        // "SÃO PAULO" duas vezes (medido: ufs-labels + municipios-labels em
+        // z8 e z10.5, desktop e mobile). O nome da cidade é da camada própria.
+        maxzoom: ZOOM_ROTULO_APP,
         layout: {
           'text-field': ['get', 'uf'],
+          // [23/10/2026] A sigla da UF morre no zoom de município. Duas coisas
+          // medidas aqui: (a) `maxzoom` da camada NÃO bastava — `ufs-labels`
+          // seguia no quadro em z8 e z10.5 (queryRenderedFeatures); (b)
+          // `layout.visibility` NÃO aceita expressão de zoom ("layers.ufs-labels
+          // .layout.visibility: zoom expressions not supported", erro de console).
+          // Solução: a camada do app troca a visibilidade com setLayoutProperty
+          // em regerirRotulosBase (mesma faixa ZOOM_ROTULO_APP), e aqui ela nasce
+          // visível só abaixo da faixa.
+          'visibility': 'visible',
           'text-font': ['Montserrat SemiBold'],
           'text-size': ['interpolate', ['linear'], ['zoom'], 3, 9, 5, 12, 7, 14],
           'text-allow-overlap': false,
@@ -2138,11 +2184,16 @@ export default function MapView({
         mapa,
         Array.isArray(locaisRef.current) ? locaisRef.current.length : 0,
       )
+      // Fim de gesto: reaplica a decisão de rótulo (idempotente — o guarda por
+      // instância devolve na hora se a faixa não mudou).
+      regerirRotulosBase(mapa)
       atualizarDebug()
       onZoomRef.current?.(mapa.getZoom())
     })
 
-    // Os rótulos do basemap saem da faixa dos prismas junto com o zoom.
+    // Os rótulos do basemap saem da faixa do nosso rótulo junto com o zoom.
+    // O handler roda a cada frame, mas regerirRotulosBase lê o guarda antes de
+    // tocar em qualquer camada: setLayoutProperty só quando a faixa muda.
     mapa.on('zoom', () => regerirRotulosBase(mapa))
 
     const aoPerderContexto = () => {
