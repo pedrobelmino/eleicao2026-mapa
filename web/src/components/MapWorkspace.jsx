@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import maplibregl from 'maplibre-gl'
 import MapView from './MapView.jsx'
 import NationalScoreboard from './NationalScoreboard.jsx'
+import PlacarBarra from './PlacarBarra.jsx'
+import PlacarGaveta from './PlacarGaveta.jsx'
 import DetailCard from './DetailCard.jsx'
 import MunicipioCard from './MunicipioCard.jsx'
 import LocalCard from './LocalCard.jsx'
@@ -92,6 +94,9 @@ export default function MapWorkspace({
   const [totalLocais, setTotalLocais] = useState(0)
   const [locaisCarregando, setLocaisCarregando] = useState(false)
   const [localSelecionado, setLocalSelecionado] = useState(null)
+  // Gaveta do placar no celular: nasce no estado `is-peek` (~70 px) e só abre
+  // por toque no resumo — o mapa fica com o resto da tela.
+  const [gavetaAberta, setGavetaAberta] = useState(false)
   const [zoom, setZoom] = useState(() => {
     if (zoomInicial == null || zoomInicial === '') return 3.1
     const inicial = Number(zoomInicial)
@@ -318,6 +323,7 @@ export default function MapWorkspace({
           onSelectMunicipio={selecionarMunicipio}
           onSelectLocal={setLocalSelecionado}
         />
+        <PlacarBarra estados={estados} />
         <Legend zoom={zoom} />
       </main>
 
@@ -354,14 +360,33 @@ export default function MapWorkspace({
         </p>
       </aside>
 
+      <PlacarGaveta
+        estados={estados}
+        aberta={gavetaAberta}
+        onToggle={() => setGavetaAberta((valor) => !valor)}
+      />
+
       <section
-        className={`bottom-sheet mobile-only${selecionada ? ' is-open' : ''}`}
+        className={`bottom-sheet sheet-detalhe mobile-only${selecionada ? ' is-open' : ''}`}
         aria-label="Detalhes da seleção no mapa"
         aria-hidden={!selecionada}
       >
         <div className="sheet-grip" aria-hidden="true" />
         <div className="sheet-header">
-          <NationalScoreboard estados={estados} variante="sheet" />
+          <div className="sheet-header-texto">
+            <span className="sheet-header-kicker">
+              {localDetalhe
+                ? 'local de votação'
+                : municipioDetalhe
+                  ? 'município'
+                  : 'estado selecionado'}
+            </span>
+            <strong className="sheet-header-titulo">
+              {localDetalhe
+                ? `Local ${localDetalhe.nr_local ?? '—'}`
+                : municipioDetalhe?.nome || selecionada?.nome || 'seleção'}
+            </strong>
+          </div>
           <button
             type="button"
             className="sheet-close"

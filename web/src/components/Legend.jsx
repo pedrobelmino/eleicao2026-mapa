@@ -10,13 +10,24 @@
 //
 // A regra do concreto só vale onde há cor de candidato disputando com apuração
 // parcial (macro e estado) — por isso o texto dela aparece só nesses níveis.
+import { useState } from 'react'
 import {
   COR_CONCRETO,
   CORES_PARTIDO,
   NIVEIS_ZOOM_TEXTO,
+  ZOOM_BARRA_ZONA_FIM,
   nivelPorZoom,
   ROTULO_NIVEL,
 } from '../mapa.js'
+
+// Nome curto do nível para o chip (o título completo fica no corpo da legenda,
+// que no celular nasce recolhido).
+const NIVEL_CURTO = {
+  macro: 'UF',
+  zona: 'zona',
+  municipio: 'município',
+  local: 'local',
+}
 
 const TEXTOS = {
   macro: {
@@ -44,11 +55,12 @@ const TEXTOS = {
   municipio: {
     titulo: 'município',
     mostraBarra: true,
-    mostraSegmentos: false,
+    mostraSegmentos: true,
     regraConcreto: true,
     itens: [
       'cor = partido do líder no município',
       'tonalidade = margem do líder em pontos (0 a 40+)',
+      'as barras das zonas continuam na tela (mesma composição)',
       'toque no município = abrir locais de votação',
     ],
   },
@@ -100,65 +112,96 @@ export default function Legend({ zoom }) {
     itens: ['cor = partido do líder', 'tonalidade = margem do líder (pontos)'],
   }
 
+  // No nível local as barras de zona convivem com os prédios até
+  // ZOOM_BARRA_ZONA_FIM; só depois disso a lista de segmentos deixa a tela.
+  const zoomNumero = Number(zoom)
+  const barrasDeZonaVisiveis =
+    chave === 'local' &&
+    Number.isFinite(zoomNumero) &&
+    zoomNumero < ZOOM_BARRA_ZONA_FIM
+  const mostraSegmentos = texto.mostraSegmentos || barrasDeZonaVisiveis
+  const itens = barrasDeZonaVisiveis
+    ? [...texto.itens, 'até z≈12.2 as barras de zona seguem no mapa']
+    : texto.itens
+
+  // No celular a legenda nasce recolhida (chip de 44 px); no desktop o chip é
+  // display:none e o corpo aparece sempre — o CSS é que decide, o estado é um só.
+  const [aberta, setAberta] = useState(false)
+
   return (
     <aside
-      className="legend"
+      className={`legend${aberta ? ' legend--aberta' : ''}`}
       data-nivel={chave}
       aria-label={`Legenda do mapa — nível ${texto.titulo}`}
     >
-      <div className="legend-title">nível: {texto.titulo}</div>
+      <button
+        type="button"
+        className="legend-toggle"
+        onClick={() => setAberta((valor) => !valor)}
+        aria-expanded={aberta}
+      >
+        <span className="legend-toggle-rotulo">Legenda</span>
+        <span className="legend-toggle-nivel">{NIVEL_CURTO[chave] || chave}</span>
+        <span className="legend-toggle-seta" aria-hidden="true">
+          ⌃
+        </span>
+      </button>
 
-      {texto.mostraBarra ? (
-        <>
-          <div className="legend-bar" aria-hidden="true" />
-          <div className="legend-scale" aria-hidden="true">
-            <span>40+</span>
-            <span>margem em pontos</span>
-            <span>0</span>
-            <span>40+</span>
-          </div>
-        </>
-      ) : null}
+      <div className="legend-corpo">
+        <div className="legend-title">nível: {texto.titulo}</div>
 
-      {texto.mostraSegmentos ? (
-        <ul
-          className="legend-segmentos"
-          aria-label="Segmentos empilhados do prisma da zona"
-        >
-          {SEGMENTOS_ZONA.map((segmento) => (
-            <li key={segmento.rotulo}>
-              <i
-                aria-hidden="true"
-                className="legend-segmento-cor"
-                style={{ background: segmento.cor }}
-              />
-              {segmento.rotulo}
-            </li>
+        {texto.mostraBarra ? (
+          <>
+            <div className="legend-bar" aria-hidden="true" />
+            <div className="legend-scale" aria-hidden="true">
+              <span>40+</span>
+              <span>margem em pontos</span>
+              <span>0</span>
+              <span>40+</span>
+            </div>
+          </>
+        ) : null}
+
+        {mostraSegmentos ? (
+          <ul
+            className="legend-segmentos"
+            aria-label="Segmentos empilhados do prisma da zona"
+          >
+            {SEGMENTOS_ZONA.map((segmento) => (
+              <li key={segmento.rotulo}>
+                <i
+                  aria-hidden="true"
+                  className="legend-segmento-cor"
+                  style={{ background: segmento.cor }}
+                />
+                {segmento.rotulo}
+              </li>
+            ))}
+          </ul>
+        ) : null}
+
+        <div className="legend-parties" aria-hidden="true">
+          <span className="legend-party legend-party--pl">PL</span>
+          <span className="legend-party legend-party--pt">PT</span>
+        </div>
+
+        <ul className="legend-itens">
+          {itens.map((item) => (
+            <li key={item}>{item}</li>
           ))}
         </ul>
-      ) : null}
 
-      <div className="legend-parties" aria-hidden="true">
-        <span className="legend-party legend-party--pl">PL</span>
-        <span className="legend-party legend-party--pt">PT</span>
-      </div>
+        {texto.regraConcreto ? (
+          <p className="legend-regra" data-regra="concreto">
+            {REGRA_CONCRETO}
+          </p>
+        ) : null}
 
-      <ul className="legend-itens">
-        {texto.itens.map((item) => (
-          <li key={item}>{item}</li>
-        ))}
-      </ul>
-
-      {texto.regraConcreto ? (
-        <p className="legend-regra" data-regra="concreto">
-          {REGRA_CONCRETO}
+        <p className="legend-note">
+          níveis por zoom: {NIVEIS_ZOOM_TEXTO.join(' → ')}
         </p>
-      ) : null}
-
-      <p className="legend-note">
-        níveis por zoom: {NIVEIS_ZOOM_TEXTO.join(' → ')}
-      </p>
-      <p className="legend-note legend-fonte">fonte: TSE — dados públicos</p>
+        <p className="legend-note legend-fonte">fonte: TSE — dados públicos</p>
+      </div>
     </aside>
   )
 }

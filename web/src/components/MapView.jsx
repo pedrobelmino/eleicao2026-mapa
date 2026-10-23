@@ -8,6 +8,9 @@ import {
   EXPRESSAO_COR,
   EXPRESSAO_COR_UF,
   TRANSICAO_COR_UF,
+  ZOOM_BARRA_ZONA,
+  ZOOM_BARRA_ZONA_FIM,
+  FATOR_ALTURA_BARRA_CIDADE,
   ZOOM_LOCAL,
   ZOOM_MUNICIPIO,
   ZOOM_ZONA,
@@ -18,6 +21,7 @@ import {
   construirPredios,
   construirUrnas,
   pontosDosLocais,
+  prepararZonas,
 } from '../cidade.js'
 import { instalarControleDeMouse } from '../controle_mouse.js'
 import { numero, percentual, pontos } from '../format.js'
@@ -45,6 +49,34 @@ const LAYERS_ZONAS = [
   LAYER_ZONAS_NAO_APURADO,
 ]
 
+// As mesmas 4 fatias da barra de composição, desenhadas no losango de cidade
+// (centroide da zona) em vez do polígono inteiro.
+const LAYER_ZONAS_BARRA_LULA = 'zonas-barra-lula'
+const LAYER_ZONAS_BARRA_FLAVIO = 'zonas-barra-flavio'
+const LAYER_ZONAS_BARRA_OUTROS = 'zonas-barra-outros'
+const LAYER_ZONAS_BARRA_NAO_APURADO = 'zonas-barra-nao-apurado'
+const LAYERS_ZONAS_BARRA = [
+  LAYER_ZONAS_BARRA_LULA,
+  LAYER_ZONAS_BARRA_FLAVIO,
+  LAYER_ZONAS_BARRA_OUTROS,
+  LAYER_ZONAS_BARRA_NAO_APURADO,
+]
+
+// O mesmo empilhamento, agora no losango ESTREITO do nível de cidade. O largo
+// só é legível na aproximação; perto da cidade ele fica enorme, então o par
+// minzoom/maxzoom troca a geometria em vez de tentar corrigir a largura com
+// uma expressão de zoom (proibida em fill-extrusion-height/base).
+const LAYER_ZONAS_BARRA_FINA_LULA = 'zonas-barra-fina-lula'
+const LAYER_ZONAS_BARRA_FINA_FLAVIO = 'zonas-barra-fina-flavio'
+const LAYER_ZONAS_BARRA_FINA_OUTROS = 'zonas-barra-fina-outros'
+const LAYER_ZONAS_BARRA_FINA_NAO_APURADO = 'zonas-barra-fina-nao-apurado'
+const LAYERS_ZONAS_BARRA_FINA = [
+  LAYER_ZONAS_BARRA_FINA_LULA,
+  LAYER_ZONAS_BARRA_FINA_FLAVIO,
+  LAYER_ZONAS_BARRA_FINA_OUTROS,
+  LAYER_ZONAS_BARRA_FINA_NAO_APURADO,
+]
+
 const LAYER_MUN_FILL = 'municipios-fill'
 const LAYER_MUN_LINE = 'municipios-line'
 const LAYER_MUN_LABELS = 'municipios-labels'
@@ -68,9 +100,10 @@ const FONTE_URNAS = 'urnas'
 const LAYER_URNA_PLACA = 'urnas-placa'
 const LAYER_URNA_BLOCO = 'urnas-bloco'
 
-// Os rótulos de município só entram quando as colunas 3D já desceram a zero
-// (ver ALTURA_PRISMAS): antes disso o símbolo cai atrás do prisma e aparece
-// cortado. Este é o zoom mínimo seguro.
+// O nosso rótulo de município (LAYER_MUN_LABELS) entra em 8.4, desenhado por
+// cima dos prismas. O texto do basemap é que fica oculto durante toda a faixa
+// das barras de zona (ZOOM_ZONA..ZOOM_BARRA_ZONA_FIM), senão o símbolo 3D é
+// cortado ao meio por um prisma.
 const ZOOM_ROTULO_MUNICIPIO = 8.4
 
 // Acima disto o município tem locais demais para desenhar prédio por local; a
@@ -96,9 +129,9 @@ const OPACIDADE_UFS_COM_DETALHE = [
   0.06,
 ]
 
-// As colunas das zonas saem de cena ANTES dos rótulos de município entrarem
-// (ZOOM_ROTULO_MUNICIPIO): altura 0 significa nenhum fragmento no depth buffer,
-// então nada fica na frente do texto.
+// As colunas de área saem enquanto a barra de cidade entra em 7.4; a soma das
+// duas opacidades nunca cai a zero, então não há pulo. A camada de área só é
+// cortada em 8.6 (maxzoom), mesmo com opacidade 0 em 8.2.
 const OPACIDADE_PRISMAS = [
   'interpolate',
   ['linear'],
@@ -107,12 +140,38 @@ const OPACIDADE_PRISMAS = [
   0,
   6.2,
   0.9,
-  7.2,
+  7.0,
   0.9,
-  7.8,
+  7.6,
   0.35,
   8.2,
   0,
+]
+
+// Barra LARGA: entra na aproximação e sai quando a fina assume. O pico de
+// 0.96 é para o segmento vermelho de Lula não se dissolver no fill vermelho do
+// município.
+const OPACIDADE_BARRAS_CIDADE = [
+  'interpolate',
+  ['linear'],
+  ['zoom'],
+  ZOOM_BARRA_ZONA, 0,
+  8.0, 0.96,
+  9.3, 0.96,
+  9.9, 0,
+]
+
+// Barra FINA: nível de cidade; sai em 12.2 para o nível local ficar limpo. O
+// pico de 0.96 é para o segmento vermelho de Lula não se dissolver no fill
+// vermelho do município.
+const OPACIDADE_BARRAS_FINAS = [
+  'interpolate',
+  ['linear'],
+  ['zoom'],
+  9.3, 0,
+  9.8, 0.96,
+  11.4, 0.96,
+  ZOOM_BARRA_ZONA_FIM, 0,
 ]
 
 // Fator de entrada/saída das colunas por zoom: 0 abaixo de 5.0 (a camada ainda
@@ -161,6 +220,20 @@ const BASE_OUTROS = ALTURA_FLAVIO
 const ALTURA_OUTROS = ['+', BASE_OUTROS, alturaDoSegmento('bar_outros')]
 const BASE_NAO_APURADO = ALTURA_OUTROS
 const ALTURA_NAO_APURADO = ['+', BASE_NAO_APURADO, alturaDoSegmento('bar_nao_apurado')]
+
+// Versão em escala de cidade da MESMA barra: cada segmento é multiplicado pelo
+// FATOR_ALTURA_BARRA_CIDADE (nunca por zoom — expressão de zoom não é aceita
+// dentro de fill-extrusion-height/base). O empilhamento é idêntico ao da área.
+function alturaDaBarraCidade(campo) {
+  return ['*', alturaDoSegmento(campo), FATOR_ALTURA_BARRA_CIDADE]
+}
+const CIDADE_ALTURA_LULA = alturaDaBarraCidade('bar_lula')
+const CIDADE_BASE_FLAVIO = CIDADE_ALTURA_LULA
+const CIDADE_ALTURA_FLAVIO = ['+', CIDADE_BASE_FLAVIO, alturaDaBarraCidade('bar_flavio')]
+const CIDADE_BASE_OUTROS = CIDADE_ALTURA_FLAVIO
+const CIDADE_ALTURA_OUTROS = ['+', CIDADE_BASE_OUTROS, alturaDaBarraCidade('bar_outros')]
+const CIDADE_BASE_NAO_APURADO = CIDADE_ALTURA_OUTROS
+const CIDADE_ALTURA_NAO_APURADO = ['+', CIDADE_BASE_NAO_APURADO, alturaDaBarraCidade('bar_nao_apurado')]
 
 
 const OPACIDADE_MUNICIPIOS = [
@@ -386,12 +459,21 @@ function limitesDaColecao(geojson) {
 
 function paddingDoMapa() {
   if (typeof window !== 'undefined' && window.innerWidth <= 820) {
-    return {
-      top: 52,
-      right: 24,
-      bottom: Math.round(window.innerHeight * 0.72),
-      left: 24,
-    }
+    // O padding de baixo é o espaço que o sheet cobre DENTRO do canvas. Antes
+    // era 72% de innerHeight, conta que ignora cabeçalho/rodapé e estourava a
+    // altura do canvas em telas curtas (390x700): o MapLibre avisava "Map
+    // cannot fit within canvas" e o enquadramento da UF saía errado.
+    const estagio = document.querySelector('.map-stage')
+    const altura = estagio?.clientHeight || window.innerHeight
+    const topo = 52
+    // Reserva 48% do canvas para o sheet (mesma fração do max-height do
+    // .sheet-detalhe) e nunca a ponto de não sobrar faixa de mapa: com
+    // topo + baixo >= altura o MapLibre não consegue enquadrar nada.
+    const baixo = Math.max(
+      40,
+      Math.min(Math.round(altura * 0.48), altura - topo - 120),
+    )
+    return { top: topo, right: 24, bottom: baixo, left: 24 }
   }
   return { top: 64, right: 64, bottom: 64, left: 64 }
 }
@@ -539,6 +621,9 @@ function publicarDebug(mapa, locais, detalhe, municipioSelecionado) {
     featuresUfs: 0,
     featuresMunicipios: 0,
     featuresZonas: 0,
+    zonasBarras: 0,
+    zonasBarrasFinas: 0,
+    barrasDesenhadas: 0,
     featuresLocais: 0,
     featuresLocaisPontos: 0,
     predios: 0,
@@ -579,6 +664,18 @@ function publicarDebug(mapa, locais, detalhe, municipioSelecionado) {
       featuresUfs: numero(() => contarFonte(mapa, FONTE)),
       featuresMunicipios: numero(() => contarFonte(mapa, FONTE_MUNICIPIOS)),
       featuresZonas: numero(() => contarFonte(mapa, FONTE_ZONAS)),
+      // Barras da última coleção preparada (áreas + os dois losangos na mesma
+      // fonte): largas e finas somadas.
+      zonasBarras:
+        (metricasZonas.get(mapa)?.barras || 0) +
+        (metricasZonas.get(mapa)?.barrasFinas || 0),
+      zonasBarrasFinas: metricasZonas.get(mapa)?.barrasFinas || 0,
+      barrasDesenhadas: numero(() =>
+        [...LAYERS_ZONAS_BARRA, ...LAYERS_ZONAS_BARRA_FINA].reduce(
+          (soma, camada) => soma + contarCamada(mapa, camada),
+          0,
+        ),
+      ),
       featuresLocais: numero(() => contarFonte(mapa, FONTE_LOCAIS)),
       featuresLocaisPontos: numero(() => contarFonte(mapa, FONTE_LOCAIS_PONTOS)),
       // querySourceFeatures conta por tile e duplica prédio na divisa: a
@@ -652,9 +749,10 @@ function atualizarVisibilidadePredios(mapa, quantidade) {
 // Rótulos de município do BASEMAP (CARTO Positron). São símbolos 3D: um prisma
 // na frente CORTA o nome ao meio em vez de escondê-lo inteiro, e era isso que
 // deixava "Sob…", "For…" e "Juaze…" pendurados nas colunas no zoom de estado.
-// Na faixa em que os prismas estão acesos esses rótulos dão lugar ao nosso
-// (LAYER_MUN_LABELS), que só entra em ZOOM_ROTULO_MUNICIPIO, quando a altura
-// das colunas já é zero. Estado/país/água continuam visíveis: são contexto.
+// As barras de zona existem até ZOOM_BARRA_ZONA_FIM, então o texto do basemap
+// fica oculto nessa faixa inteira para não voltar para trás de um prisma. O
+// nosso LAYER_MUN_LABELS, esse, é desenhado por cima dos prismas. Estado/país/
+// água continuam visíveis: são contexto.
 const ROTULO_BASE_MUNICIPIO = /^place_(city|town|villages|hamlet|suburbs|capital)/
 
 // Última decisão aplicada por instância de mapa. Um style swap devolve as
@@ -667,7 +765,8 @@ function regerirRotulosBase(mapa, { forcar = false } = {}) {
 
   const zoom = mapa.getZoom()
   const temPrismas = Boolean(mapa.getSource(FONTE_ZONAS))
-  const ocultar = temPrismas && zoom >= ZOOM_ZONA && zoom < ZOOM_ROTULO_MUNICIPIO
+  const ocultar =
+    temPrismas && zoom >= ZOOM_ZONA && zoom < ZOOM_BARRA_ZONA_FIM
   if (!forcar && rotulosBaseAplicados.get(mapa) === ocultar) return
 
   const estilo = mapa.getStyle()
@@ -737,6 +836,9 @@ function adicionarFonte(mapa, id, definicao, aoPendente) {
 // tempo de render medido da última aplicação de locais.
 const estadoLocal = { selecionado: null }
 const metricasRender = new WeakMap()
+// Quantidade de áreas/barras da última coleção preparada por mapa. O debug usa
+// a contagem da coleção (não querySourceFeatures, que duplica na divisa).
+const metricasZonas = new WeakMap()
 // Último desenho de urnas por mapa (para o __mapaDebug e para a prova).
 const urnasDebug = new WeakMap()
 
@@ -896,8 +998,11 @@ function removerDetalhe(mapa) {
     LAYER_MUN_LABELS,
     LAYER_MUN_LINE,
     LAYER_MUN_FILL,
-    // As 4 camadas da barra: nenhuma pode ficar órfã sobre uma fonte removida.
+    // As 4 camadas de área e as 8 de barra (larga + fina): nenhuma pode ficar
+    // órfã sobre uma fonte removida.
     ...LAYERS_ZONAS,
+    ...LAYERS_ZONAS_BARRA,
+    ...LAYERS_ZONAS_BARRA_FINA,
   ]) {
     if (mapa.getLayer(camada)) mapa.removeLayer(camada)
   }
@@ -944,7 +1049,16 @@ function aplicarDetalhe(
   }
 
   const municipiosGeo = detalhe.municipiosGeo || colecaoVazia()
-  const zonasGeo = detalhe.zonasGeo || colecaoVazia()
+  // A mesma fonte carrega as duas formas da zona: o polígono original
+  // (forma: 'area', faixa de estado) e o losango no centroide (forma: 'barra',
+  // faixa de cidade). Assim a fonte 'zonas' continua carregada acima de 8.2.
+  const zonas = prepararZonas(detalhe.zonasGeo)
+  const zonasGeo = zonas.colecao
+  metricasZonas.set(mapa, {
+    areas: zonas.areas,
+    barras: zonas.barras,
+    barrasFinas: zonas.barrasFinas,
+  })
 
   const fonteMunicipios = mapa.getSource(FONTE_MUNICIPIOS)
   if (fonteMunicipios) fonteMunicipios.setData(municipiosGeo)
@@ -1015,14 +1129,116 @@ function aplicarDetalhe(
         type: 'fill-extrusion',
         source: FONTE_ZONAS,
         minzoom: 4.6,
-        // Some antes dos rótulos de município entrarem — era o papel da
-        // ESCALA_ALTURA, que não pode viver dentro do fill-extrusion-*.
-        maxzoom: 8.2,
+        // A barra de cidade (7.4) assume enquanto esta coluna de área sai; por
+        // isso a área pode passar de 8.2 sem deixar buraco até o corte em 8.6.
+        maxzoom: 8.6,
+        filter: ['==', ['get', 'forma'], 'area'],
         paint: {
           'fill-extrusion-color': definicao.cor,
           'fill-extrusion-height': definicao.altura,
           'fill-extrusion-base': definicao.base,
           'fill-extrusion-opacity': OPACIDADE_PRISMAS,
+          'fill-extrusion-vertical-gradient': true,
+        },
+      },
+      aoPendente,
+    )
+  }
+
+  // O losango LARGO da barra de composição, no centroide da zona: o polígono
+  // inteiro cobriria o município na aproximação. A altura é a escala de cidade
+  // (FATOR_ALTURA_BARRA_CIDADE), nunca uma expressão de zoom; quem controla a
+  // faixa é o par minzoom/maxzoom. Em 9.9 ele cede lugar ao losango fino.
+  for (const definicao of [
+    {
+      id: LAYER_ZONAS_BARRA_LULA,
+      cor: COR_SEGMENTO_LULA,
+      base: 0,
+      altura: CIDADE_ALTURA_LULA,
+    },
+    {
+      id: LAYER_ZONAS_BARRA_FLAVIO,
+      cor: COR_SEGMENTO_FLAVIO,
+      base: CIDADE_BASE_FLAVIO,
+      altura: CIDADE_ALTURA_FLAVIO,
+    },
+    {
+      id: LAYER_ZONAS_BARRA_OUTROS,
+      cor: COR_SEGMENTO_OUTROS,
+      base: CIDADE_BASE_OUTROS,
+      altura: CIDADE_ALTURA_OUTROS,
+    },
+    {
+      id: LAYER_ZONAS_BARRA_NAO_APURADO,
+      cor: COR_SEGMENTO_NAO_APURADO,
+      base: CIDADE_BASE_NAO_APURADO,
+      altura: CIDADE_ALTURA_NAO_APURADO,
+    },
+  ]) {
+    adicionarCamada(
+      mapa,
+      {
+        id: definicao.id,
+        type: 'fill-extrusion',
+        source: FONTE_ZONAS,
+        filter: ['==', ['get', 'forma'], 'barra'],
+        minzoom: ZOOM_BARRA_ZONA,
+        maxzoom: 9.9,
+        paint: {
+          'fill-extrusion-color': definicao.cor,
+          'fill-extrusion-height': definicao.altura,
+          'fill-extrusion-base': definicao.base,
+          'fill-extrusion-opacity': OPACIDADE_BARRAS_CIDADE,
+          'fill-extrusion-vertical-gradient': true,
+        },
+      },
+      aoPendente,
+    )
+  }
+
+  // O losango ESTREITO assume a partir de 9.3 e vai até ZOOM_BARRA_ZONA_FIM.
+  // A largura menor compensa a projeção no nível de cidade; as alturas/bases
+  // são as MESMAS do losango largo — o empilhamento não muda, só a largura.
+  for (const definicao of [
+    {
+      id: LAYER_ZONAS_BARRA_FINA_LULA,
+      cor: COR_SEGMENTO_LULA,
+      base: 0,
+      altura: CIDADE_ALTURA_LULA,
+    },
+    {
+      id: LAYER_ZONAS_BARRA_FINA_FLAVIO,
+      cor: COR_SEGMENTO_FLAVIO,
+      base: CIDADE_BASE_FLAVIO,
+      altura: CIDADE_ALTURA_FLAVIO,
+    },
+    {
+      id: LAYER_ZONAS_BARRA_FINA_OUTROS,
+      cor: COR_SEGMENTO_OUTROS,
+      base: CIDADE_BASE_OUTROS,
+      altura: CIDADE_ALTURA_OUTROS,
+    },
+    {
+      id: LAYER_ZONAS_BARRA_FINA_NAO_APURADO,
+      cor: COR_SEGMENTO_NAO_APURADO,
+      base: CIDADE_BASE_NAO_APURADO,
+      altura: CIDADE_ALTURA_NAO_APURADO,
+    },
+  ]) {
+    adicionarCamada(
+      mapa,
+      {
+        id: definicao.id,
+        type: 'fill-extrusion',
+        source: FONTE_ZONAS,
+        filter: ['==', ['get', 'forma'], 'barra-fina'],
+        minzoom: 9.3,
+        maxzoom: ZOOM_BARRA_ZONA_FIM,
+        paint: {
+          'fill-extrusion-color': definicao.cor,
+          'fill-extrusion-height': definicao.altura,
+          'fill-extrusion-base': definicao.base,
+          'fill-extrusion-opacity': OPACIDADE_BARRAS_FINAS,
           'fill-extrusion-vertical-gradient': true,
         },
       },
@@ -1084,8 +1300,9 @@ function aplicarDetalhe(
       id: LAYER_MUN_LABELS,
       type: 'symbol',
       source: FONTE_MUNICIPIOS,
-      // Só entra depois que a altura dos prismas chega a zero (8.2): assim
-      // nenhum nome cai atrás de uma coluna 3D.
+      // O nosso rótulo é desenhado por cima dos prismas, então pode entrar
+      // antes das barras de zona saírem (12.2). Quem cede lugar é o texto do
+      // basemap, oculto por regerirRotulosBase.
       minzoom: ZOOM_ROTULO_MUNICIPIO,
       layout: {
         'text-field': ['get', 'nome'],

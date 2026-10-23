@@ -1,0 +1,1715 @@
+{
+  "base": "http://127.0.0.1:8110",
+  "quando": "2026-10-23T01:18:05.130Z",
+  "telas": {
+    "390x844": {
+      "fechado": {
+        "url": "/mapa?uf=SP&z=5.9",
+        "viewport": {
+          "w": 390,
+          "h": 844
+        },
+        "scroll": {
+          "scrollWidth": 390,
+          "clientWidth": 390,
+          "iguais": true,
+          "bodyScrollWidth": 390
+        },
+        "barra": {
+          "x": 0,
+          "y": 54,
+          "w": 390,
+          "h": 46,
+          "display": "grid",
+          "visibility": "visible",
+          "fontSize": "10.5px",
+          "zIndex": "12"
+        },
+        "linhas": [
+          {
+            "texto": "PLFLAVIO BOLSONARO47,03%56.104.503",
+            "partido": "PL",
+            "nome": "FLAVIO BOLSONARO",
+            "pct": "47,03%",
+            "votos": "56.104.503"
+          },
+          {
+            "texto": "PTLULA45,16%53.879.538",
+            "partido": "PT",
+            "nome": "LULA",
+            "pct": "45,16%",
+            "votos": "53.879.538"
+          }
+        ],
+        "gaveta": {
+          "x": 0,
+          "y": 662,
+          "w": 390,
+          "h": 70,
+          "display": "flex",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "42"
+        },
+        "gavetaClasse": "bottom-sheet placar-gaveta mobile-only is-peek",
+        "resumo": {
+          "x": 0,
+          "y": 677,
+          "w": 390,
+          "h": 50,
+          "display": "grid",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "auto"
+        },
+        "chevron": {
+          "x": 334,
+          "y": 678,
+          "w": 44,
+          "h": 44,
+          "display": "grid",
+          "visibility": "visible",
+          "fontSize": "13px",
+          "zIndex": "auto"
+        },
+        "corpoGaveta": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "display": "none",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "auto"
+        },
+        "metricas": [
+          "margem2.224.965 votos1,87 ponto · 1,87% dos válidos",
+          "votos válidos119.300.78895,23% dos votos totais",
+          "participação78,92%125.275.835 de 158.745.502 eleitores",
+          "seções apuradas499.248 de 499.248100,00% do total"
+        ],
+        "chip": {
+          "x": 10,
+          "y": 108,
+          "w": 135,
+          "h": 44,
+          "display": "inline-flex",
+          "visibility": "visible",
+          "fontSize": "10.5px",
+          "zIndex": "auto"
+        },
+        "chipRotulo": "Legendazona⌃",
+        "corpoLegenda": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "display": "none",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "auto"
+        },
+        "atribuicao": {
+          "x": 163,
+          "y": 614,
+          "w": 209,
+          "h": 28,
+          "display": "block",
+          "visibility": "visible",
+          "fontSize": "9px",
+          "zIndex": "auto"
+        },
+        "prisasNaTela": {
+          "lula": 657,
+          "flavio": 644,
+          "outros": 632,
+          "nao_apurado": 627
+        },
+        "zoom": 5.9
+      },
+      "comMapa": {
+        "url": "/mapa?uf=SP&z=5.9",
+        "viewport": {
+          "w": 390,
+          "h": 844
+        },
+        "scroll": {
+          "scrollWidth": 390,
+          "clientWidth": 390,
+          "iguais": true,
+          "bodyScrollWidth": 390
+        },
+        "barra": {
+          "x": 0,
+          "y": 54,
+          "w": 390,
+          "h": 46,
+          "display": "grid",
+          "visibility": "visible",
+          "fontSize": "10.5px",
+          "zIndex": "12"
+        },
+        "linhas": [
+          {
+            "texto": "PLFLAVIO BOLSONARO47,03%56.104.503",
+            "partido": "PL",
+            "nome": "FLAVIO BOLSONARO",
+            "pct": "47,03%",
+            "votos": "56.104.503"
+          },
+          {
+            "texto": "PTLULA45,16%53.879.538",
+            "partido": "PT",
+            "nome": "LULA",
+            "pct": "45,16%",
+            "votos": "53.879.538"
+          }
+        ],
+        "gaveta": {
+          "x": 0,
+          "y": 662,
+          "w": 390,
+          "h": 70,
+          "display": "flex",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "42"
+        },
+        "gavetaClasse": "bottom-sheet placar-gaveta mobile-only is-peek",
+        "resumo": {
+          "x": 0,
+          "y": 677,
+          "w": 390,
+          "h": 50,
+          "display": "grid",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "auto"
+        },
+        "chevron": {
+          "x": 334,
+          "y": 678,
+          "w": 44,
+          "h": 44,
+          "display": "grid",
+          "visibility": "visible",
+          "fontSize": "13px",
+          "zIndex": "auto"
+        },
+        "corpoGaveta": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "display": "none",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "auto"
+        },
+        "metricas": [
+          "margem2.224.965 votos1,87 ponto · 1,87% dos válidos",
+          "votos válidos119.300.78895,23% dos votos totais",
+          "participação78,92%125.275.835 de 158.745.502 eleitores",
+          "seções apuradas499.248 de 499.248100,00% do total"
+        ],
+        "chip": {
+          "x": 10,
+          "y": 108,
+          "w": 135,
+          "h": 44,
+          "display": "inline-flex",
+          "visibility": "visible",
+          "fontSize": "10.5px",
+          "zIndex": "auto"
+        },
+        "chipRotulo": "Legendazona⌃",
+        "corpoLegenda": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "display": "none",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "auto"
+        },
+        "atribuicao": {
+          "x": 163,
+          "y": 614,
+          "w": 209,
+          "h": 28,
+          "display": "block",
+          "visibility": "visible",
+          "fontSize": "9px",
+          "zIndex": "auto"
+        },
+        "prisasNaTela": {
+          "lula": null,
+          "flavio": null,
+          "outros": null,
+          "nao_apurado": null
+        },
+        "zoom": 5.9
+      },
+      "torres": {
+        "url": "/mapa?uf=SP&z=5.9",
+        "viewport": {
+          "w": 390,
+          "h": 844
+        },
+        "scroll": {
+          "scrollWidth": 390,
+          "clientWidth": 390,
+          "iguais": true,
+          "bodyScrollWidth": 390
+        },
+        "barra": {
+          "x": 0,
+          "y": 54,
+          "w": 390,
+          "h": 46,
+          "display": "grid",
+          "visibility": "visible",
+          "fontSize": "10.5px",
+          "zIndex": "12"
+        },
+        "linhas": [
+          {
+            "texto": "PLFLAVIO BOLSONARO47,03%56.104.503",
+            "partido": "PL",
+            "nome": "FLAVIO BOLSONARO",
+            "pct": "47,03%",
+            "votos": "56.104.503"
+          },
+          {
+            "texto": "PTLULA45,16%53.879.538",
+            "partido": "PT",
+            "nome": "LULA",
+            "pct": "45,16%",
+            "votos": "53.879.538"
+          }
+        ],
+        "gaveta": {
+          "x": 0,
+          "y": 662,
+          "w": 390,
+          "h": 70,
+          "display": "flex",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "42"
+        },
+        "gavetaClasse": "bottom-sheet placar-gaveta mobile-only is-peek",
+        "resumo": {
+          "x": 0,
+          "y": 677,
+          "w": 390,
+          "h": 50,
+          "display": "grid",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "auto"
+        },
+        "chevron": {
+          "x": 334,
+          "y": 678,
+          "w": 44,
+          "h": 44,
+          "display": "grid",
+          "visibility": "visible",
+          "fontSize": "13px",
+          "zIndex": "auto"
+        },
+        "corpoGaveta": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "display": "none",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "auto"
+        },
+        "metricas": [
+          "margem2.224.965 votos1,87 ponto · 1,87% dos válidos",
+          "votos válidos119.300.78895,23% dos votos totais",
+          "participação78,92%125.275.835 de 158.745.502 eleitores",
+          "seções apuradas499.248 de 499.248100,00% do total"
+        ],
+        "chip": {
+          "x": 10,
+          "y": 108,
+          "w": 135,
+          "h": 44,
+          "display": "inline-flex",
+          "visibility": "visible",
+          "fontSize": "10.5px",
+          "zIndex": "auto"
+        },
+        "chipRotulo": "Legendazona⌃",
+        "corpoLegenda": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "display": "none",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "auto"
+        },
+        "atribuicao": {
+          "x": 163,
+          "y": 614,
+          "w": 209,
+          "h": 28,
+          "display": "block",
+          "visibility": "visible",
+          "fontSize": "9px",
+          "zIndex": "auto"
+        },
+        "prisasNaTela": {
+          "lula": 645,
+          "flavio": 635,
+          "outros": 623,
+          "nao_apurado": 620
+        },
+        "zoom": 5.9
+      },
+      "aberto": {
+        "url": "/mapa?uf=SP&z=5.9",
+        "viewport": {
+          "w": 390,
+          "h": 844
+        },
+        "scroll": {
+          "scrollWidth": 390,
+          "clientWidth": 390,
+          "iguais": true,
+          "bodyScrollWidth": 390
+        },
+        "barra": {
+          "x": 0,
+          "y": 54,
+          "w": 390,
+          "h": 46,
+          "display": "grid",
+          "visibility": "visible",
+          "fontSize": "10.5px",
+          "zIndex": "12"
+        },
+        "linhas": [
+          {
+            "texto": "PLFLAVIO BOLSONARO47,03%56.104.503",
+            "partido": "PL",
+            "nome": "FLAVIO BOLSONARO",
+            "pct": "47,03%",
+            "votos": "56.104.503"
+          },
+          {
+            "texto": "PTLULA45,16%53.879.538",
+            "partido": "PT",
+            "nome": "LULA",
+            "pct": "45,16%",
+            "votos": "53.879.538"
+          }
+        ],
+        "gaveta": {
+          "x": 0,
+          "y": 288,
+          "w": 390,
+          "h": 444,
+          "display": "flex",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "42"
+        },
+        "gavetaClasse": "bottom-sheet placar-gaveta mobile-only is-open",
+        "resumo": {
+          "x": 0,
+          "y": 303,
+          "w": 390,
+          "h": 50,
+          "display": "grid",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "auto"
+        },
+        "chevron": {
+          "x": 334,
+          "y": 304,
+          "w": 44,
+          "h": 44,
+          "display": "grid",
+          "visibility": "visible",
+          "fontSize": "13px",
+          "zIndex": "auto"
+        },
+        "corpoGaveta": {
+          "x": 0,
+          "y": 353,
+          "w": 390,
+          "h": 379,
+          "display": "block",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "auto"
+        },
+        "metricas": [
+          "margem2.224.965 votos1,87 ponto · 1,87% dos válidos",
+          "votos válidos119.300.78895,23% dos votos totais",
+          "participação78,92%125.275.835 de 158.745.502 eleitores",
+          "seções apuradas499.248 de 499.248100,00% do total"
+        ],
+        "chip": {
+          "x": 10,
+          "y": 108,
+          "w": 135,
+          "h": 44,
+          "display": "inline-flex",
+          "visibility": "visible",
+          "fontSize": "10.5px",
+          "zIndex": "auto"
+        },
+        "chipRotulo": "Legendazona⌃",
+        "corpoLegenda": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "display": "none",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "auto"
+        },
+        "atribuicao": {
+          "x": 163,
+          "y": 614,
+          "w": 209,
+          "h": 28,
+          "display": "block",
+          "visibility": "visible",
+          "fontSize": "9px",
+          "zIndex": "auto"
+        },
+        "prisasNaTela": {
+          "lula": null,
+          "flavio": null,
+          "outros": null,
+          "nao_apurado": null
+        },
+        "zoom": 5.9
+      },
+      "reFechado": {
+        "url": "/mapa?uf=SP&z=5.9",
+        "viewport": {
+          "w": 390,
+          "h": 844
+        },
+        "scroll": {
+          "scrollWidth": 390,
+          "clientWidth": 390,
+          "iguais": true,
+          "bodyScrollWidth": 390
+        },
+        "barra": {
+          "x": 0,
+          "y": 54,
+          "w": 390,
+          "h": 46,
+          "display": "grid",
+          "visibility": "visible",
+          "fontSize": "10.5px",
+          "zIndex": "12"
+        },
+        "linhas": [
+          {
+            "texto": "PLFLAVIO BOLSONARO47,03%56.104.503",
+            "partido": "PL",
+            "nome": "FLAVIO BOLSONARO",
+            "pct": "47,03%",
+            "votos": "56.104.503"
+          },
+          {
+            "texto": "PTLULA45,16%53.879.538",
+            "partido": "PT",
+            "nome": "LULA",
+            "pct": "45,16%",
+            "votos": "53.879.538"
+          }
+        ],
+        "gaveta": {
+          "x": 0,
+          "y": 662,
+          "w": 390,
+          "h": 70,
+          "display": "flex",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "42"
+        },
+        "gavetaClasse": "bottom-sheet placar-gaveta mobile-only is-peek",
+        "resumo": {
+          "x": 0,
+          "y": 677,
+          "w": 390,
+          "h": 50,
+          "display": "grid",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "auto"
+        },
+        "chevron": {
+          "x": 334,
+          "y": 678,
+          "w": 44,
+          "h": 44,
+          "display": "grid",
+          "visibility": "visible",
+          "fontSize": "13px",
+          "zIndex": "auto"
+        },
+        "corpoGaveta": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "display": "none",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "auto"
+        },
+        "metricas": [
+          "margem2.224.965 votos1,87 ponto · 1,87% dos válidos",
+          "votos válidos119.300.78895,23% dos votos totais",
+          "participação78,92%125.275.835 de 158.745.502 eleitores",
+          "seções apuradas499.248 de 499.248100,00% do total"
+        ],
+        "chip": {
+          "x": 10,
+          "y": 108,
+          "w": 135,
+          "h": 44,
+          "display": "inline-flex",
+          "visibility": "visible",
+          "fontSize": "10.5px",
+          "zIndex": "auto"
+        },
+        "chipRotulo": "Legendazona⌃",
+        "corpoLegenda": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "display": "none",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "auto"
+        },
+        "atribuicao": {
+          "x": 163,
+          "y": 614,
+          "w": 209,
+          "h": 28,
+          "display": "block",
+          "visibility": "visible",
+          "fontSize": "9px",
+          "zIndex": "auto"
+        },
+        "prisasNaTela": {
+          "lula": null,
+          "flavio": null,
+          "outros": null,
+          "nao_apurado": null
+        },
+        "zoom": 5.9
+      },
+      "legendaAberta": {
+        "url": "/mapa?uf=SP&z=5.9",
+        "viewport": {
+          "w": 390,
+          "h": 844
+        },
+        "scroll": {
+          "scrollWidth": 390,
+          "clientWidth": 390,
+          "iguais": true,
+          "bodyScrollWidth": 390
+        },
+        "barra": {
+          "x": 0,
+          "y": 54,
+          "w": 390,
+          "h": 46,
+          "display": "grid",
+          "visibility": "visible",
+          "fontSize": "10.5px",
+          "zIndex": "12"
+        },
+        "linhas": [
+          {
+            "texto": "PLFLAVIO BOLSONARO47,03%56.104.503",
+            "partido": "PL",
+            "nome": "FLAVIO BOLSONARO",
+            "pct": "47,03%",
+            "votos": "56.104.503"
+          },
+          {
+            "texto": "PTLULA45,16%53.879.538",
+            "partido": "PT",
+            "nome": "LULA",
+            "pct": "45,16%",
+            "votos": "53.879.538"
+          }
+        ],
+        "gaveta": {
+          "x": 0,
+          "y": 662,
+          "w": 390,
+          "h": 70,
+          "display": "flex",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "42"
+        },
+        "gavetaClasse": "bottom-sheet placar-gaveta mobile-only is-peek",
+        "resumo": {
+          "x": 0,
+          "y": 677,
+          "w": 390,
+          "h": 50,
+          "display": "grid",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "auto"
+        },
+        "chevron": {
+          "x": 334,
+          "y": 678,
+          "w": 44,
+          "h": 44,
+          "display": "grid",
+          "visibility": "visible",
+          "fontSize": "13px",
+          "zIndex": "auto"
+        },
+        "corpoGaveta": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "display": "none",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "auto"
+        },
+        "metricas": [
+          "margem2.224.965 votos1,87 ponto · 1,87% dos válidos",
+          "votos válidos119.300.78895,23% dos votos totais",
+          "participação78,92%125.275.835 de 158.745.502 eleitores",
+          "seções apuradas499.248 de 499.248100,00% do total"
+        ],
+        "chip": {
+          "x": 21,
+          "y": 116,
+          "w": 192,
+          "h": 44,
+          "display": "inline-flex",
+          "visibility": "visible",
+          "fontSize": "10.5px",
+          "zIndex": "auto"
+        },
+        "chipRotulo": "Legendazona⌃",
+        "corpoLegenda": {
+          "x": 21,
+          "y": 160,
+          "w": 192,
+          "h": 266,
+          "display": "block",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "auto"
+        },
+        "atribuicao": {
+          "x": 163,
+          "y": 614,
+          "w": 209,
+          "h": 28,
+          "display": "block",
+          "visibility": "visible",
+          "fontSize": "9px",
+          "zIndex": "auto"
+        },
+        "prisasNaTela": {
+          "lula": null,
+          "flavio": null,
+          "outros": null,
+          "nao_apurado": null
+        },
+        "zoom": 5.9
+      },
+      "prismaAchado": 666,
+      "consoleErros": [
+        "warning: [.WebGL-0x3540017b200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+        "warning: [.WebGL-0x3540017b200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+        "warning: [.WebGL-0x3540017b200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+        "warning: [.WebGL-0x3540017b200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+      ],
+      "prints": [
+        "_provas/placar_mobile_390x844_detalhe.png",
+        "_provas/placar_mobile_390x844_torres.png",
+        "_provas/placar_mobile_390x844_fechado.png",
+        "_provas/placar_mobile_390x844_aberto.png",
+        "_provas/placar_mobile_390x844_refechado.png"
+      ]
+    },
+    "390x700": {
+      "fechado": {
+        "url": "/mapa?uf=SP&z=5.9",
+        "viewport": {
+          "w": 390,
+          "h": 700
+        },
+        "scroll": {
+          "scrollWidth": 390,
+          "clientWidth": 390,
+          "iguais": true,
+          "bodyScrollWidth": 390
+        },
+        "barra": {
+          "x": 0,
+          "y": 54,
+          "w": 390,
+          "h": 46,
+          "display": "grid",
+          "visibility": "visible",
+          "fontSize": "10.5px",
+          "zIndex": "12"
+        },
+        "linhas": [
+          {
+            "texto": "PLFLAVIO BOLSONARO47,03%56.104.503",
+            "partido": "PL",
+            "nome": "FLAVIO BOLSONARO",
+            "pct": "47,03%",
+            "votos": "56.104.503"
+          },
+          {
+            "texto": "PTLULA45,16%53.879.538",
+            "partido": "PT",
+            "nome": "LULA",
+            "pct": "45,16%",
+            "votos": "53.879.538"
+          }
+        ],
+        "gaveta": {
+          "x": 0,
+          "y": 518,
+          "w": 390,
+          "h": 70,
+          "display": "flex",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "42"
+        },
+        "gavetaClasse": "bottom-sheet placar-gaveta mobile-only is-peek",
+        "resumo": {
+          "x": 0,
+          "y": 533,
+          "w": 390,
+          "h": 50,
+          "display": "grid",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "auto"
+        },
+        "chevron": {
+          "x": 334,
+          "y": 534,
+          "w": 44,
+          "h": 44,
+          "display": "grid",
+          "visibility": "visible",
+          "fontSize": "13px",
+          "zIndex": "auto"
+        },
+        "corpoGaveta": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "display": "none",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "auto"
+        },
+        "metricas": [
+          "margem2.224.965 votos1,87 ponto · 1,87% dos válidos",
+          "votos válidos119.300.78895,23% dos votos totais",
+          "participação78,92%125.275.835 de 158.745.502 eleitores",
+          "seções apuradas499.248 de 499.248100,00% do total"
+        ],
+        "chip": {
+          "x": 10,
+          "y": 108,
+          "w": 135,
+          "h": 44,
+          "display": "inline-flex",
+          "visibility": "visible",
+          "fontSize": "10.5px",
+          "zIndex": "auto"
+        },
+        "chipRotulo": "Legendazona⌃",
+        "corpoLegenda": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "display": "none",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "auto"
+        },
+        "atribuicao": {
+          "x": 163,
+          "y": 470,
+          "w": 209,
+          "h": 28,
+          "display": "block",
+          "visibility": "visible",
+          "fontSize": "9px",
+          "zIndex": "auto"
+        },
+        "prisasNaTela": {
+          "lula": 652,
+          "flavio": 635,
+          "outros": 615,
+          "nao_apurado": 607
+        },
+        "zoom": 5.9
+      },
+      "comMapa": {
+        "url": "/mapa?uf=SP&z=5.9",
+        "viewport": {
+          "w": 390,
+          "h": 700
+        },
+        "scroll": {
+          "scrollWidth": 390,
+          "clientWidth": 390,
+          "iguais": true,
+          "bodyScrollWidth": 390
+        },
+        "barra": {
+          "x": 0,
+          "y": 54,
+          "w": 390,
+          "h": 46,
+          "display": "grid",
+          "visibility": "visible",
+          "fontSize": "10.5px",
+          "zIndex": "12"
+        },
+        "linhas": [
+          {
+            "texto": "PLFLAVIO BOLSONARO47,03%56.104.503",
+            "partido": "PL",
+            "nome": "FLAVIO BOLSONARO",
+            "pct": "47,03%",
+            "votos": "56.104.503"
+          },
+          {
+            "texto": "PTLULA45,16%53.879.538",
+            "partido": "PT",
+            "nome": "LULA",
+            "pct": "45,16%",
+            "votos": "53.879.538"
+          }
+        ],
+        "gaveta": {
+          "x": 0,
+          "y": 518,
+          "w": 390,
+          "h": 70,
+          "display": "flex",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "42"
+        },
+        "gavetaClasse": "bottom-sheet placar-gaveta mobile-only is-peek",
+        "resumo": {
+          "x": 0,
+          "y": 533,
+          "w": 390,
+          "h": 50,
+          "display": "grid",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "auto"
+        },
+        "chevron": {
+          "x": 334,
+          "y": 534,
+          "w": 44,
+          "h": 44,
+          "display": "grid",
+          "visibility": "visible",
+          "fontSize": "13px",
+          "zIndex": "auto"
+        },
+        "corpoGaveta": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "display": "none",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "auto"
+        },
+        "metricas": [
+          "margem2.224.965 votos1,87 ponto · 1,87% dos válidos",
+          "votos válidos119.300.78895,23% dos votos totais",
+          "participação78,92%125.275.835 de 158.745.502 eleitores",
+          "seções apuradas499.248 de 499.248100,00% do total"
+        ],
+        "chip": {
+          "x": 10,
+          "y": 108,
+          "w": 135,
+          "h": 44,
+          "display": "inline-flex",
+          "visibility": "visible",
+          "fontSize": "10.5px",
+          "zIndex": "auto"
+        },
+        "chipRotulo": "Legendazona⌃",
+        "corpoLegenda": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "display": "none",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "auto"
+        },
+        "atribuicao": {
+          "x": 163,
+          "y": 470,
+          "w": 209,
+          "h": 28,
+          "display": "block",
+          "visibility": "visible",
+          "fontSize": "9px",
+          "zIndex": "auto"
+        },
+        "prisasNaTela": {
+          "lula": null,
+          "flavio": null,
+          "outros": null,
+          "nao_apurado": null
+        },
+        "zoom": 5.9
+      },
+      "torres": {
+        "url": "/mapa?uf=SP&z=5.9",
+        "viewport": {
+          "w": 390,
+          "h": 700
+        },
+        "scroll": {
+          "scrollWidth": 390,
+          "clientWidth": 390,
+          "iguais": true,
+          "bodyScrollWidth": 390
+        },
+        "barra": {
+          "x": 0,
+          "y": 54,
+          "w": 390,
+          "h": 46,
+          "display": "grid",
+          "visibility": "visible",
+          "fontSize": "10.5px",
+          "zIndex": "12"
+        },
+        "linhas": [
+          {
+            "texto": "PLFLAVIO BOLSONARO47,03%56.104.503",
+            "partido": "PL",
+            "nome": "FLAVIO BOLSONARO",
+            "pct": "47,03%",
+            "votos": "56.104.503"
+          },
+          {
+            "texto": "PTLULA45,16%53.879.538",
+            "partido": "PT",
+            "nome": "LULA",
+            "pct": "45,16%",
+            "votos": "53.879.538"
+          }
+        ],
+        "gaveta": {
+          "x": 0,
+          "y": 518,
+          "w": 390,
+          "h": 70,
+          "display": "flex",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "42"
+        },
+        "gavetaClasse": "bottom-sheet placar-gaveta mobile-only is-peek",
+        "resumo": {
+          "x": 0,
+          "y": 533,
+          "w": 390,
+          "h": 50,
+          "display": "grid",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "auto"
+        },
+        "chevron": {
+          "x": 334,
+          "y": 534,
+          "w": 44,
+          "h": 44,
+          "display": "grid",
+          "visibility": "visible",
+          "fontSize": "13px",
+          "zIndex": "auto"
+        },
+        "corpoGaveta": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "display": "none",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "auto"
+        },
+        "metricas": [
+          "margem2.224.965 votos1,87 ponto · 1,87% dos válidos",
+          "votos válidos119.300.78895,23% dos votos totais",
+          "participação78,92%125.275.835 de 158.745.502 eleitores",
+          "seções apuradas499.248 de 499.248100,00% do total"
+        ],
+        "chip": {
+          "x": 10,
+          "y": 108,
+          "w": 135,
+          "h": 44,
+          "display": "inline-flex",
+          "visibility": "visible",
+          "fontSize": "10.5px",
+          "zIndex": "auto"
+        },
+        "chipRotulo": "Legendazona⌃",
+        "corpoLegenda": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "display": "none",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "auto"
+        },
+        "atribuicao": {
+          "x": 163,
+          "y": 470,
+          "w": 209,
+          "h": 28,
+          "display": "block",
+          "visibility": "visible",
+          "fontSize": "9px",
+          "zIndex": "auto"
+        },
+        "prisasNaTela": {
+          "lula": 637,
+          "flavio": 622,
+          "outros": 604,
+          "nao_apurado": 602
+        },
+        "zoom": 5.9
+      },
+      "aberto": {
+        "url": "/mapa?uf=SP&z=5.9",
+        "viewport": {
+          "w": 390,
+          "h": 700
+        },
+        "scroll": {
+          "scrollWidth": 390,
+          "clientWidth": 390,
+          "iguais": true,
+          "bodyScrollWidth": 390
+        },
+        "barra": {
+          "x": 0,
+          "y": 54,
+          "w": 390,
+          "h": 46,
+          "display": "grid",
+          "visibility": "visible",
+          "fontSize": "10.5px",
+          "zIndex": "12"
+        },
+        "linhas": [
+          {
+            "texto": "PLFLAVIO BOLSONARO47,03%56.104.503",
+            "partido": "PL",
+            "nome": "FLAVIO BOLSONARO",
+            "pct": "47,03%",
+            "votos": "56.104.503"
+          },
+          {
+            "texto": "PTLULA45,16%53.879.538",
+            "partido": "PT",
+            "nome": "LULA",
+            "pct": "45,16%",
+            "votos": "53.879.538"
+          }
+        ],
+        "gaveta": {
+          "x": 0,
+          "y": 174,
+          "w": 390,
+          "h": 414,
+          "display": "flex",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "42"
+        },
+        "gavetaClasse": "bottom-sheet placar-gaveta mobile-only is-open",
+        "resumo": {
+          "x": 0,
+          "y": 189,
+          "w": 390,
+          "h": 50,
+          "display": "grid",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "auto"
+        },
+        "chevron": {
+          "x": 334,
+          "y": 190,
+          "w": 44,
+          "h": 44,
+          "display": "grid",
+          "visibility": "visible",
+          "fontSize": "13px",
+          "zIndex": "auto"
+        },
+        "corpoGaveta": {
+          "x": 0,
+          "y": 239,
+          "w": 390,
+          "h": 349,
+          "display": "block",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "auto"
+        },
+        "metricas": [
+          "margem2.224.965 votos1,87 ponto · 1,87% dos válidos",
+          "votos válidos119.300.78895,23% dos votos totais",
+          "participação78,92%125.275.835 de 158.745.502 eleitores",
+          "seções apuradas499.248 de 499.248100,00% do total"
+        ],
+        "chip": {
+          "x": 10,
+          "y": 108,
+          "w": 135,
+          "h": 44,
+          "display": "inline-flex",
+          "visibility": "visible",
+          "fontSize": "10.5px",
+          "zIndex": "auto"
+        },
+        "chipRotulo": "Legendazona⌃",
+        "corpoLegenda": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "display": "none",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "auto"
+        },
+        "atribuicao": {
+          "x": 163,
+          "y": 470,
+          "w": 209,
+          "h": 28,
+          "display": "block",
+          "visibility": "visible",
+          "fontSize": "9px",
+          "zIndex": "auto"
+        },
+        "prisasNaTela": {
+          "lula": null,
+          "flavio": null,
+          "outros": null,
+          "nao_apurado": null
+        },
+        "zoom": 5.9
+      },
+      "reFechado": {
+        "url": "/mapa?uf=SP&z=5.9",
+        "viewport": {
+          "w": 390,
+          "h": 700
+        },
+        "scroll": {
+          "scrollWidth": 390,
+          "clientWidth": 390,
+          "iguais": true,
+          "bodyScrollWidth": 390
+        },
+        "barra": {
+          "x": 0,
+          "y": 54,
+          "w": 390,
+          "h": 46,
+          "display": "grid",
+          "visibility": "visible",
+          "fontSize": "10.5px",
+          "zIndex": "12"
+        },
+        "linhas": [
+          {
+            "texto": "PLFLAVIO BOLSONARO47,03%56.104.503",
+            "partido": "PL",
+            "nome": "FLAVIO BOLSONARO",
+            "pct": "47,03%",
+            "votos": "56.104.503"
+          },
+          {
+            "texto": "PTLULA45,16%53.879.538",
+            "partido": "PT",
+            "nome": "LULA",
+            "pct": "45,16%",
+            "votos": "53.879.538"
+          }
+        ],
+        "gaveta": {
+          "x": 0,
+          "y": 518,
+          "w": 390,
+          "h": 70,
+          "display": "flex",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "42"
+        },
+        "gavetaClasse": "bottom-sheet placar-gaveta mobile-only is-peek",
+        "resumo": {
+          "x": 0,
+          "y": 533,
+          "w": 390,
+          "h": 50,
+          "display": "grid",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "auto"
+        },
+        "chevron": {
+          "x": 334,
+          "y": 534,
+          "w": 44,
+          "h": 44,
+          "display": "grid",
+          "visibility": "visible",
+          "fontSize": "13px",
+          "zIndex": "auto"
+        },
+        "corpoGaveta": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "display": "none",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "auto"
+        },
+        "metricas": [
+          "margem2.224.965 votos1,87 ponto · 1,87% dos válidos",
+          "votos válidos119.300.78895,23% dos votos totais",
+          "participação78,92%125.275.835 de 158.745.502 eleitores",
+          "seções apuradas499.248 de 499.248100,00% do total"
+        ],
+        "chip": {
+          "x": 10,
+          "y": 108,
+          "w": 135,
+          "h": 44,
+          "display": "inline-flex",
+          "visibility": "visible",
+          "fontSize": "10.5px",
+          "zIndex": "auto"
+        },
+        "chipRotulo": "Legendazona⌃",
+        "corpoLegenda": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "display": "none",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "auto"
+        },
+        "atribuicao": {
+          "x": 163,
+          "y": 470,
+          "w": 209,
+          "h": 28,
+          "display": "block",
+          "visibility": "visible",
+          "fontSize": "9px",
+          "zIndex": "auto"
+        },
+        "prisasNaTela": {
+          "lula": null,
+          "flavio": null,
+          "outros": null,
+          "nao_apurado": null
+        },
+        "zoom": 5.9
+      },
+      "legendaAberta": {
+        "url": "/mapa?uf=SP&z=5.9",
+        "viewport": {
+          "w": 390,
+          "h": 700
+        },
+        "scroll": {
+          "scrollWidth": 390,
+          "clientWidth": 390,
+          "iguais": true,
+          "bodyScrollWidth": 390
+        },
+        "barra": {
+          "x": 0,
+          "y": 54,
+          "w": 390,
+          "h": 46,
+          "display": "grid",
+          "visibility": "visible",
+          "fontSize": "10.5px",
+          "zIndex": "12"
+        },
+        "linhas": [
+          {
+            "texto": "PLFLAVIO BOLSONARO47,03%56.104.503",
+            "partido": "PL",
+            "nome": "FLAVIO BOLSONARO",
+            "pct": "47,03%",
+            "votos": "56.104.503"
+          },
+          {
+            "texto": "PTLULA45,16%53.879.538",
+            "partido": "PT",
+            "nome": "LULA",
+            "pct": "45,16%",
+            "votos": "53.879.538"
+          }
+        ],
+        "gaveta": {
+          "x": 0,
+          "y": 518,
+          "w": 390,
+          "h": 70,
+          "display": "flex",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "42"
+        },
+        "gavetaClasse": "bottom-sheet placar-gaveta mobile-only is-peek",
+        "resumo": {
+          "x": 0,
+          "y": 533,
+          "w": 390,
+          "h": 50,
+          "display": "grid",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "auto"
+        },
+        "chevron": {
+          "x": 334,
+          "y": 534,
+          "w": 44,
+          "h": 44,
+          "display": "grid",
+          "visibility": "visible",
+          "fontSize": "13px",
+          "zIndex": "auto"
+        },
+        "corpoGaveta": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "display": "none",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "auto"
+        },
+        "metricas": [
+          "margem2.224.965 votos1,87 ponto · 1,87% dos válidos",
+          "votos válidos119.300.78895,23% dos votos totais",
+          "participação78,92%125.275.835 de 158.745.502 eleitores",
+          "seções apuradas499.248 de 499.248100,00% do total"
+        ],
+        "chip": {
+          "x": 21,
+          "y": 116,
+          "w": 192,
+          "h": 44,
+          "display": "inline-flex",
+          "visibility": "visible",
+          "fontSize": "10.5px",
+          "zIndex": "auto"
+        },
+        "chipRotulo": "Legendazona⌃",
+        "corpoLegenda": {
+          "x": 21,
+          "y": 160,
+          "w": 192,
+          "h": 266,
+          "display": "block",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "auto"
+        },
+        "atribuicao": {
+          "x": 163,
+          "y": 470,
+          "w": 209,
+          "h": 28,
+          "display": "block",
+          "visibility": "visible",
+          "fontSize": "9px",
+          "zIndex": "auto"
+        },
+        "prisasNaTela": {
+          "lula": null,
+          "flavio": null,
+          "outros": null,
+          "nao_apurado": null
+        },
+        "zoom": 5.9
+      },
+      "prismaAchado": 661,
+      "consoleErros": [],
+      "prints": [
+        "_provas/placar_mobile_390x700_detalhe.png",
+        "_provas/placar_mobile_390x700_torres.png",
+        "_provas/placar_mobile_390x700_fechado.png",
+        "_provas/placar_mobile_390x700_aberto.png",
+        "_provas/placar_mobile_390x700_refechado.png"
+      ]
+    },
+    "desktop": {
+      "medida": {
+        "url": "/mapa?uf=SP&z=6.3",
+        "viewport": {
+          "w": 1440,
+          "h": 900
+        },
+        "scroll": {
+          "scrollWidth": 1440,
+          "clientWidth": 1440,
+          "iguais": true,
+          "bodyScrollWidth": 1440
+        },
+        "barra": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "display": "none",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "auto"
+        },
+        "linhas": [
+          {
+            "texto": "PLFLAVIO BOLSONARO47,03%56.104.503",
+            "partido": "PL",
+            "nome": "FLAVIO BOLSONARO",
+            "pct": "47,03%",
+            "votos": "56.104.503"
+          },
+          {
+            "texto": "PTLULA45,16%53.879.538",
+            "partido": "PT",
+            "nome": "LULA",
+            "pct": "45,16%",
+            "votos": "53.879.538"
+          }
+        ],
+        "gaveta": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "display": "none",
+          "visibility": "hidden",
+          "fontSize": "14px",
+          "zIndex": "40"
+        },
+        "gavetaClasse": "bottom-sheet placar-gaveta mobile-only is-peek",
+        "resumo": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "display": "inline-block",
+          "visibility": "hidden",
+          "fontSize": "14px",
+          "zIndex": "auto"
+        },
+        "chevron": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "display": "inline",
+          "visibility": "hidden",
+          "fontSize": "14px",
+          "zIndex": "auto"
+        },
+        "corpoGaveta": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "display": "block",
+          "visibility": "hidden",
+          "fontSize": "14px",
+          "zIndex": "auto"
+        },
+        "metricas": [
+          "margem2.224.965 votos1,87 ponto · 1,87% dos válidos",
+          "votos válidos119.300.78895,23% dos votos totais",
+          "participação78,92%125.275.835 de 158.745.502 eleitores",
+          "seções apuradas499.248 de 499.248100,00% do total"
+        ],
+        "chip": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "display": "none",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "auto"
+        },
+        "chipRotulo": "Legendazona⌃",
+        "corpoLegenda": {
+          "x": 32,
+          "y": 461,
+          "w": 190,
+          "h": 294,
+          "display": "block",
+          "visibility": "visible",
+          "fontSize": "14px",
+          "zIndex": "auto"
+        },
+        "atribuicao": {
+          "x": 850,
+          "y": 752,
+          "w": 202,
+          "h": 24,
+          "display": "block",
+          "visibility": "visible",
+          "fontSize": "10px",
+          "zIndex": "auto"
+        },
+        "prisasNaTela": {
+          "lula": 791,
+          "flavio": 791,
+          "outros": 791,
+          "nao_apurado": 791
+        },
+        "zoom": 6.3
+      },
+      "consoleErros": [],
+      "prints": [
+        "_provas/placar_mobile_desktop_1440x900.png"
+      ]
+    }
+  },
+  "resumo": {
+    "390x844": {
+      "scrollLateral": "nao",
+      "barra": 46,
+      "linhas": [
+        "PLFLAVIO BOLSONARO47,03%56.104.503",
+        "PTLULA45,16%53.879.538"
+      ],
+      "peek": 70,
+      "aberta": 444,
+      "chevron": "44x44",
+      "chip": 44,
+      "corpoLegendaVisivel": false,
+      "atribuicaoY": 614,
+      "console": {
+        "total": 4,
+        "errosDoApp": [],
+        "avisos": [
+          "warning: [.WebGL-0x3540017b200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+          "warning: [.WebGL-0x3540017b200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+          "warning: [.WebGL-0x3540017b200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+          "warning: [.WebGL-0x3540017b200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+        ]
+      }
+    },
+    "390x700": {
+      "scrollLateral": "nao",
+      "barra": 46,
+      "linhas": [
+        "PLFLAVIO BOLSONARO47,03%56.104.503",
+        "PTLULA45,16%53.879.538"
+      ],
+      "peek": 70,
+      "aberta": 414,
+      "chevron": "44x44",
+      "chip": 44,
+      "corpoLegendaVisivel": false,
+      "atribuicaoY": 470,
+      "console": {
+        "total": 0,
+        "errosDoApp": [],
+        "avisos": []
+      }
+    },
+    "desktop": {
+      "scrollLateral": "nao",
+      "barra": 0,
+      "linhas": [
+        "PLFLAVIO BOLSONARO47,03%56.104.503",
+        "PTLULA45,16%53.879.538"
+      ],
+      "peek": 0,
+      "aberta": null,
+      "chevron": "0x0",
+      "chip": 0,
+      "corpoLegendaVisivel": true,
+      "atribuicaoY": 752,
+      "console": {
+        "total": 0,
+        "errosDoApp": [],
+        "avisos": []
+      }
+    }
+  }
+}
