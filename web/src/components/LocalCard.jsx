@@ -1,5 +1,6 @@
 import { corDoPartido } from '../mapa.js'
 import { numero, percentual, pontos } from '../format.js'
+import Avatar from './Avatar.jsx'
 
 function temNumero(valor) {
   const n = Number(valor)
@@ -49,6 +50,12 @@ export default function LocalCard({ local, uf, municipio, totalLocais, onVoltar 
       ) : null}
 
       <div className="leader-banner">
+        <Avatar
+          nome={local.lider}
+          partido={local.partido_lider}
+          tamanho={36}
+          className="leader-avatar"
+        />
         <span className="leader-flag">{local.partido_lider || '—'}</span>
         <div className="leader-copy">
           <span>presidente favorável no local</span>

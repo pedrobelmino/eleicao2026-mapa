@@ -1,5 +1,6 @@
 import { corDoPartido } from '../mapa.js'
 import { numero, percentual, pontos } from '../format.js'
+import Avatar from './Avatar.jsx'
 
 function Metric({ rotulo, valor, unidade, largura }) {
   return (
@@ -38,6 +39,12 @@ export default function MunicipioCard({ municipio, uf, onVoltar }) {
       </header>
 
       <div className="leader-banner">
+        <Avatar
+          nome={municipio.lider}
+          partido={municipio.partido_lider}
+          tamanho={36}
+          className="leader-avatar"
+        />
         <span className="leader-flag">{municipio.partido_lider || '—'}</span>
         <div className="leader-copy">
           <span>líder no município</span>

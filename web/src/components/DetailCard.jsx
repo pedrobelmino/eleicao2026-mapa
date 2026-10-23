@@ -1,5 +1,7 @@
 import { corDoPartido } from '../mapa.js'
 import { numero, percentual, pontos } from '../format.js'
+import Avatar from './Avatar.jsx'
+import { useIdentidade } from '../identidade.js'
 
 function Metric({ rotulo, valor, unidade, largura }) {
   return (
@@ -14,6 +16,8 @@ function Metric({ rotulo, valor, unidade, largura }) {
 }
 
 export default function DetailCard({ uf, onClose, mostrarFechar = true }) {
+  // Hook antes do early return: o card é montado/desmontado ao trocar de UF.
+  const identidade = useIdentidade(uf?.uf)
   if (!uf) return null
 
   const cor = corDoPartido(uf.partido_lider)
@@ -45,7 +49,40 @@ export default function DetailCard({ uf, onClose, mostrarFechar = true }) {
         ) : null}
       </header>
 
+      {identidade ? (
+        <section className="identidade" aria-label={`Identidade de ${uf.nome}`}>
+          <div className="identidade-topo">
+            <div className="identidade-copy">
+              <h3 className="identidade-apelido">
+                {identidade.apelido || uf.nome}
+              </h3>
+              <p className="identidade-nota">
+                figurinhas em emoji · sem pacote animado licenciado
+              </p>
+            </div>
+            <div className="identidade-figurinhas" aria-hidden="true">
+              {(identidade.figurinhas || []).slice(0, 3).map((emoji) => (
+                <span key={emoji}>{emoji}</span>
+              ))}
+            </div>
+          </div>
+          {(identidade.destaques || []).length ? (
+            <ul className="identidade-destaques">
+              {identidade.destaques.slice(0, 2).map((destaque) => (
+                <li key={destaque}>{destaque}</li>
+              ))}
+            </ul>
+          ) : null}
+        </section>
+      ) : null}
+
       <div className="leader-banner">
+        <Avatar
+          nome={uf.lider}
+          partido={uf.partido_lider}
+          tamanho={36}
+          className="leader-avatar"
+        />
         <span className="leader-flag">{uf.partido_lider || '—'}</span>
         <div className="leader-copy">
           <span>líder no estado</span>

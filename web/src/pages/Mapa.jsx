@@ -3,6 +3,8 @@ import Header from '../components/Header.jsx'
 import MapWorkspace from '../components/MapWorkspace.jsx'
 import StateViews from '../components/StateViews.jsx'
 import { API_BASE, fetchJSON } from '../api.js'
+import Rodape from '../components/Rodape.jsx'
+import { rotuloTurno } from '../format.js'
 
 const ESTADO_INICIAL = {
   fase: 'loading',
@@ -11,12 +13,13 @@ const ESTADO_INICIAL = {
   erro: null,
 }
 
-// A rota /mapa aceita atalhos de prova/drill-down: ?uf=CE&z=6.3 e ?m=<cd_tse>
-// (município já aberto). Sem query, tudo continua como antes (Brasil inteiro,
-// sem UF selecionada).
+// A rota /mapa aceita atalhos de prova/drill-down: ?uf=CE&z=6.3, ?m=<cd_tse>
+// (município já aberto), ?replay=<frame> (abre o replay naquele frame) e
+// ?margem=1 (abre o mapa de calor de margem + o card). Sem query, tudo
+// continua como antes (Brasil inteiro, sem UF selecionada).
 function lerAtalhosDaUrl() {
   if (typeof window === 'undefined') {
-    return { ufInicial: null, municipioInicial: null, zoomInicial: null }
+    return { ufInicial: null, municipioInicial: null, zoomInicial: null, replayInicial: null, margemInicial: false }
   }
   const parametros = new URLSearchParams(window.location.search)
   const ufBruta = parametros.get('uf')
@@ -25,11 +28,19 @@ function lerAtalhosDaUrl() {
   const zoom = zoomBruto != null && zoomBruto.trim() !== '' ? Number(zoomBruto) : NaN
   const municipioBruto = parametros.get('m')
   const municipio = municipioBruto ? municipioBruto.trim() : ''
+  const replayBruto = parametros.get('replay')
+  const replay =
+    replayBruto != null && /^\d+$/.test(replayBruto.trim())
+      ? Number(replayBruto.trim())
+      : null
+  const margemBruta = parametros.get('margem')
 
   return {
     ufInicial: /^[A-Z]{2}$/.test(uf) ? uf : null,
     municipioInicial: /^\d+$/.test(municipio) ? municipio : null,
     zoomInicial: Number.isFinite(zoom) ? zoom : null,
+    replayInicial: replay,
+    margemInicial: margemBruta === '1' || margemBruta === 'true',
   }
 }
 
@@ -85,8 +96,17 @@ export default function Mapa() {
           ufInicial={atalhos.ufInicial}
           municipioInicial={atalhos.municipioInicial}
           zoomInicial={atalhos.zoomInicial}
+          replayInicial={atalhos.replayInicial}
+          margemInicial={atalhos.margemInicial}
         />
       ) : null}
+
+      <Rodape
+        variante="mapa"
+        eleicao={dados.estados?.eleicao}
+        turno={dados.estados ? rotuloTurno(dados.estados.turno) : null}
+        geradoEm={dados.estados?.gerado_em}
+      />
     </div>
   )
 }

@@ -11,7 +11,8 @@ export default function Regioes({ dados }) {
   const nomes = (nacional.candidatos || []).slice(0, 2).map((c) => c.nome)
 
   return (
-    <table className="tabela">
+    <div className="rolagem-x">
+      <table className="tabela">
       <thead>
         <tr>
           <th>Região</th>
@@ -64,6 +65,7 @@ export default function Regioes({ dados }) {
           )
         })}
       </tbody>
-    </table>
+      </table>
+    </div>
   )
 }

@@ -1,4 +1,5 @@
 import { coresCandidatos, CORES, milhar, pct } from './formato.js'
+import Avatar from '../Avatar.jsx'
 
 // Placar nacional com os dois primeiros colocados, na ordem publicada pelo TSE.
 // A barra proporcional e a legenda ficam no mesmo grid dos cartões, como na
@@ -24,6 +25,12 @@ export default function Placar({ dados }) {
         return (
           <div className="cand" style={{ '--cor': cor }} key={candidato.nome}>
             <div className="nome">
+              <Avatar
+                nome={candidato.nome}
+                partido={candidato.partido}
+                tamanho={42}
+                className="placar-avatar"
+              />
               <span>{candidato.nome}</span>
               <em>{candidato.partido}</em>
             </div>

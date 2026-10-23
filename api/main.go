@@ -15,14 +15,20 @@ import (
 	"runtime/debug"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 )
 
 type config struct {
-	Eleicao       string
-	Turno         string
-	DadosDir      string
+	Eleicao  string
+	Turno    string
+	DadosDir string
+	// TSEBase é a base oficial do TSE (sem barra final). Junto de ELEICAO e
+	// TURNO ela compõe todas as URLs de origem: trocar de turno é trocar
+	// configuração, não código.
+	TSEBase       string
+	TSEPortal     string
 	Serie2022File string
 	// Eleicao2022File: resultado final de 2022 por UF e por município (gerado
 	// por scripts/prepara_2022.py a partir do arquivo do TSE). Alimenta o
@@ -31,7 +37,6 @@ type config struct {
 	// Serie2026File: coletas reais do painel (snapshots com st/ts por UF).
 	Serie2026File string
 	Porta         string
-	TSEBase       string
 	// ApuracaoDemo simula apuração parcial por UF (UF -> % de seções
 	// apuradas). Vazio = dados reais. Só existe para provar a exibição da
 	// apuração em andamento (barra com segmento de concreto e estado em
@@ -50,6 +55,7 @@ func carregarConfig() config {
 		Serie2026File:   envOu("SERIE_2026_FILE", filepath.Join(dadosDir, "serie_presidente_2026.jsonl")),
 		Porta:           envOu("PORT", "8080"),
 		TSEBase:         envOu("TSE_BASE", "https://resultados.tse.jus.br/oficial/ele2026"),
+		TSEPortal:       envOu("TSE_PORTAL", "https://resultados.tse.jus.br/"),
 		ApuracaoDemo:    lerApuracaoDemo(os.Getenv("APURACAO_DEMO")),
 	}
 }
@@ -421,9 +427,24 @@ type app struct {
 	limit *limitador
 	obs   *observador
 	anon  *anonimo
+
+	// Fonte oficial (eleição, turno e URLs) e o cache do diagnóstico. O cache
+	// fica aqui, e não na fonte, para o diagnóstico ser um só por instância.
+	fonte        fonte
+	fonteMu      sync.Mutex
+	fonteCache   verificacaoFonte
+	fonteCacheEm time.Time
 }
 
 func novaApp(cfg config) (*app, error) {
+	// Configuração da fonte antes dos dados: se ELEICAO/TURNO/URL estiverem
+	// errados, o processo para aqui com uma mensagem clara em vez de subir
+	// servindo URLs que o TSE nunca vai ter.
+	fonteOficial, err := novaFonte(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("configuração da fonte inválida: %w", err)
+	}
+
 	dadosCarregados, err := carregarDados(cfg.DadosDir, cfg.ApuracaoDemo)
 	if err != nil {
 		return nil, err
@@ -457,6 +478,7 @@ func novaApp(cfg config) (*app, error) {
 		limit:         limitadorDaApp,
 		obs:           novoObservador(),
 		anon:          contagem,
+		fonte:         fonteOficial,
 		margens: montarMargens(
 			dadosCarregados.Publico, municipais, dados2022, cfg.Eleicao, cfg.Turno,
 		),
@@ -492,6 +514,13 @@ func (a *app) rotear(w http.ResponseWriter, r *http.Request) {
 		manipulador = a.handleUfsGeoJSON
 	case "/api/estados/identidade":
 		manipulador = a.handleIdentidade
+	case "/api/config":
+		// Eleição, turno e URLs derivadas: é o que o front e a checklist leem
+		// para saber em que turno o painel está.
+		manipulador = a.handleConfig
+	case "/api/fonte":
+		// Diagnóstico da fonte oficial (200/503). Não é a página: é o termômetro.
+		manipulador = a.handleFonte
 	case "/api/replay":
 		manipulador = a.handleReplay
 	case "/api/margens":
@@ -587,6 +616,9 @@ type healthResposta struct {
 	GeradoEm string `json:"gerado_em"`
 	UFs      int    `json:"ufs"`
 	Features int    `json:"features"`
+	// Fonte é a URL oficial de onde o turno configurado sai. Fica no health
+	// porque é a primeira coisa que a checklist do dia confere.
+	Fonte string `json:"fonte"`
 }
 
 func (a *app) handleHealth(w http.ResponseWriter, _ *http.Request) {
@@ -597,6 +629,7 @@ func (a *app) handleHealth(w http.ResponseWriter, _ *http.Request) {
 		GeradoEm: a.dados.Publico.GeradoEm,
 		UFs:      len(a.dados.Publico.UFs),
 		Features: len(a.dados.Malha.Features),
+		Fonte:    a.fonte.Nacional,
 	})
 }
 
@@ -910,6 +943,9 @@ func main() {
 	}
 
 	log.Printf("dados carregados: %d UFs, %d features", len(aplicacao.dados.Publico.UFs), len(aplicacao.dados.Malha.Features))
+	// Uma linha só com a origem: no dia da eleição é o que se olha primeiro
+	// para saber se o painel está no turno certo.
+	log.Print(descricaoFonte(aplicacao.fonte))
 
 	servidor := &http.Server{
 		Addr:              "0.0.0.0:" + cfg.Porta,

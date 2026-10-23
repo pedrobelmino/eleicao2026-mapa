@@ -17,6 +17,16 @@ const BASE_PADRAO_M = 0;
 const LADO_CELULA_PADRAO_M = 45;
 const VAO_PADRAO_M = 10;
 
+// Larguras dos dois losangos de zona. Os números foram medidos na captura
+// (z≈8.5 ~216 m/px, z≈10.5 ~54 m/px); o largo é lido na aproximação (z≈7.4 a
+// 9.9) e o fino no nível de cidade (z≈9.3 a 12.2). A projeção muda os metros
+// por pixel a cada nível de zoom, então a mesma largura em metros não serve
+// para as duas faixas.
+const LADO_LARGO_MIN_PADRAO_M = 2000;
+const LADO_LARGO_MAX_PADRAO_M = 4000;
+const LADO_FINO_MIN_PADRAO_M = 500;
+const LADO_FINO_MAX_PADRAO_M = 1400;
+
 const METROS_POR_GRAU_LAT = 110540;
 const METROS_POR_GRAU_LON_EQUADOR = 111320;
 const COS_MINIMO = 1e-9;
@@ -417,4 +427,245 @@ export function pontosDosLocais(locais) {
   }
 
   return { type: 'FeatureCollection', features };
+}
+
+/**
+ * Área assinada (shoelace) de um anel no plano lon/lat. O valor absoluto serve
+ * para escolher o anel externo de maior área em MultiPolygon; o sinal depende
+ * apenas da orientação do anel.
+ */
+function areaAssinada(anel) {
+  if (!Array.isArray(anel) || anel.length < 3) return 0;
+  let soma = 0;
+  for (let i = 0; i < anel.length; i += 1) {
+    const atual = anel[i];
+    const proximo = anel[(i + 1) % anel.length];
+    const x0 = numeroFinito(atual?.[0], NaN);
+    const y0 = numeroFinito(atual?.[1], NaN);
+    const x1 = numeroFinito(proximo?.[0], NaN);
+    const y1 = numeroFinito(proximo?.[1], NaN);
+    if (
+      !Number.isFinite(x0) ||
+      !Number.isFinite(y0) ||
+      !Number.isFinite(x1) ||
+      !Number.isFinite(y1)
+    ) {
+      return NaN;
+    }
+    soma += x0 * y1 - x1 * y0;
+  }
+  return soma / 2;
+}
+
+/** Anel externo de um Polygon ou o de maior área absoluta de um MultiPolygon. */
+function anelExternoDaZona(geometria) {
+  if (!geometria || !Array.isArray(geometria.coordinates)) return null;
+
+  if (geometria.type === 'Polygon') {
+    return Array.isArray(geometria.coordinates[0])
+      ? geometria.coordinates[0]
+      : null;
+  }
+
+  if (geometria.type === 'MultiPolygon') {
+    let escolhido = null;
+    let maiorArea = -Infinity;
+    for (let i = 0; i < geometria.coordinates.length; i += 1) {
+      const poligono = geometria.coordinates[i];
+      const anel = Array.isArray(poligono) ? poligono[0] : null;
+      if (!Array.isArray(anel)) continue;
+      const area = Math.abs(areaAssinada(anel));
+      // Anel degenerado (área 0) ainda pode ser o único; NaN é descartado.
+      if (!Number.isFinite(area)) continue;
+      if (area > maiorArea) {
+        maiorArea = area;
+        escolhido = anel;
+      }
+    }
+    return escolhido;
+  }
+
+  return null;
+}
+
+/**
+ * Centroide de área (shoelace) do anel externo. Se o cálculo degenerar (área
+ * zero/NaN) ou o anel tiver menos de 3 pontos, usa a média aritmética das
+ * coordenadas do anel. Devolve [lon, lat] ou null quando não há coordenada.
+ */
+function centroideDaZona(anel) {
+  if (!Array.isArray(anel) || anel.length === 0) return null;
+
+  if (anel.length >= 3) {
+    let soma = 0;
+    let somaX = 0;
+    let somaY = 0;
+    let finito = true;
+
+    for (let i = 0; i < anel.length; i += 1) {
+      const atual = anel[i];
+      const proximo = anel[(i + 1) % anel.length];
+      const x0 = numeroFinito(atual?.[0], NaN);
+      const y0 = numeroFinito(atual?.[1], NaN);
+      const x1 = numeroFinito(proximo?.[0], NaN);
+      const y1 = numeroFinito(proximo?.[1], NaN);
+      if (
+        !Number.isFinite(x0) ||
+        !Number.isFinite(y0) ||
+        !Number.isFinite(x1) ||
+        !Number.isFinite(y1)
+      ) {
+        finito = false;
+        break;
+      }
+      const cruz = x0 * y1 - x1 * y0;
+      soma += cruz;
+      somaX += (x0 + x1) * cruz;
+      somaY += (y0 + y1) * cruz;
+    }
+
+    const area = soma / 2;
+    if (finito && Number.isFinite(area) && area !== 0) {
+      const lon = somaX / (6 * area);
+      const lat = somaY / (6 * area);
+      if (Number.isFinite(lon) && Number.isFinite(lat)) return [lon, lat];
+    }
+  }
+
+  // Fallback: média aritmética das coordenadas válidas do anel.
+  let somaX = 0;
+  let somaY = 0;
+  let total = 0;
+  for (let i = 0; i < anel.length; i += 1) {
+    const x = numeroFinito(anel[i]?.[0], NaN);
+    const y = numeroFinito(anel[i]?.[1], NaN);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+    somaX += x;
+    somaY += y;
+    total += 1;
+  }
+  if (total === 0) return null;
+  return [somaX / total, somaY / total];
+}
+
+/**
+ * Prepara as zonas eleitorais para as TRÊS formas que o mapa desenha:
+ *
+ * - `forma: 'area'`       -> o polígono original, usado na faixa de estado;
+ * - `forma: 'barra'`      -> losango LARGO no centroide da zona, lido na
+ *   aproximação (z≈7.4 a 9.9);
+ * - `forma: 'barra-fina'` -> losango ESTREITO no mesmo centroide, lido no
+ *   nível de cidade (z≈9.3 a 12.2).
+ *
+ * Por que duas barras: o losango tem tamanho fixo em METROS, mas a projeção
+ * muda a quantidade de metros por pixel a cada nível de zoom (≈216 m/px em
+ * z=8.5 e ≈54 m/px em z=10.5). A largura em metros precisa acompanhar essa
+ * mudança, e como não se pode usar expressão de `zoom` dentro de
+ * fill-extrusion-height/base, quem faz a troca é o par minzoom/maxzoom das
+ * camadas — NUNCA uma expressão de zoom na altura. As duas barras usam as
+ * MESMAS alturas e bases de cidade; só a largura do losango muda.
+ *
+ * Cada forma mantém TODAS as propriedades da área (inclusive bar_lula,
+ * bar_flavio, bar_outros, bar_nao_apurado e altura_m) e ganha `forma`. O lado
+ * de cada losango cresce com sqrt(vv / maiorVv), a mesma suavização usada nos
+ * locais. É geometria pura, determinística e sem DOM.
+ */
+export function prepararZonas(zonasGeo, opcoes) {
+  const featuresEntrada = Array.isArray(zonasGeo?.features)
+    ? zonasGeo.features
+    : [];
+  if (featuresEntrada.length === 0) {
+    return { colecao: colecaoVazia(), areas: 0, barras: 0, barrasFinas: 0 };
+  }
+
+  const {
+    ladoLargoMinM = LADO_LARGO_MIN_PADRAO_M,
+    ladoLargoMaxM = LADO_LARGO_MAX_PADRAO_M,
+    ladoMinM = LADO_FINO_MIN_PADRAO_M,
+    ladoMaxM = LADO_FINO_MAX_PADRAO_M,
+  } = opcoes ?? {};
+  const ladoLargoMin = numeroFinito(ladoLargoMinM, LADO_LARGO_MIN_PADRAO_M);
+  const ladoLargoMax = numeroFinito(ladoLargoMaxM, LADO_LARGO_MAX_PADRAO_M);
+  const ladoMin = numeroFinito(ladoMinM, LADO_FINO_MIN_PADRAO_M);
+  const ladoMax = numeroFinito(ladoMaxM, LADO_FINO_MAX_PADRAO_M);
+
+  // O maior vv é a referência da escala e é calculado sobre a coleção inteira,
+  // inclusive nas zonas que depois não gerarem barra por falta de coordenada.
+  let maiorVv = 0;
+  for (let i = 0; i < featuresEntrada.length; i += 1) {
+    const feature = featuresEntrada[i];
+    if (!feature) continue;
+    const vv = Math.max(0, numeroFinito(feature.properties?.vv, 0));
+    if (vv > maiorVv) maiorVv = vv;
+  }
+
+  const features = [];
+  let areas = 0;
+  let barras = 0;
+  let barrasFinas = 0;
+
+  for (let i = 0; i < featuresEntrada.length; i += 1) {
+    const feature = featuresEntrada[i];
+    if (!feature) continue;
+
+    const propriedades =
+      feature.properties && typeof feature.properties === 'object'
+        ? feature.properties
+        : {};
+
+    // A área é a geometria original, intacta; só ganha o discriminante.
+    const featureArea = {
+      type: 'Feature',
+      properties: { ...propriedades, forma: 'area' },
+      geometry: feature.geometry,
+    };
+    if (feature.id !== undefined) featureArea.id = feature.id;
+    features.push(featureArea);
+    areas += 1;
+
+    const anel = anelExternoDaZona(feature.geometry);
+    const centro = centroideDaZona(anel);
+    if (!centro) continue;
+
+    const [lon, lat] = centro;
+    if (!coordenadaValida(lat, lon)) continue;
+
+    // As duas barras compartilham o MESMO centroide e o mesmo anel de 45°;
+    // só o lado muda para compensar a escala da projeção em cada faixa.
+    const vv = Math.max(0, numeroFinito(propriedades.vv, 0));
+    const proporcao = maiorVv > 0 ? Math.sqrt(vv / maiorVv) : 0;
+    const ladoLargoM = ladoLargoMin + (ladoLargoMax - ladoLargoMin) * proporcao;
+    const ladoFinoM = ladoMin + (ladoMax - ladoMin) * proporcao;
+    const anelBarra = anelRetangulo(lat, lon, ladoLargoM, ladoLargoM, 45);
+    const anelBarraFina = anelRetangulo(lat, lon, ladoFinoM, ladoFinoM, 45);
+
+    const featureBarra = {
+      type: 'Feature',
+      properties: { ...propriedades, forma: 'barra' },
+      geometry: {
+        type: 'Polygon',
+        coordinates: [anelBarra],
+      },
+    };
+    features.push(featureBarra);
+    barras += 1;
+
+    const featureBarraFina = {
+      type: 'Feature',
+      properties: { ...propriedades, forma: 'barra-fina' },
+      geometry: {
+        type: 'Polygon',
+        coordinates: [anelBarraFina],
+      },
+    };
+    features.push(featureBarraFina);
+    barrasFinas += 1;
+  }
+
+  return {
+    colecao: { type: 'FeatureCollection', features },
+    areas,
+    barras,
+    barrasFinas,
+  };
 }

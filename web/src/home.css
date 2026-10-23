@@ -94,16 +94,30 @@
 
 .home-app .pilha {
   display: grid;
+  /* minmax(0, 1fr) é o que impede o card de ser dimensionado pelo min-content
+     da tabela: sem isso o card passa da largura da tela e o conteúdo é
+     cortado pelo overflow-x do envelope. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   margin: 22px 0;
 }
 
 .home-app .card {
+  min-width: 0;
   background: linear-gradient(180deg, var(--card), var(--card2));
   border: 1px solid var(--borda);
   border-radius: 18px;
   padding: 18px 18px 20px;
   box-shadow: 0 14px 34px #0000 0;
+}
+
+/* Tabela larga rola dentro do card, no eixo X: o documento nunca ganha scroll
+   horizontal (é o que a auditoria de 390x844 cobra). */
+.home-app .rolagem-x {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .home-app .card h2 {
@@ -148,12 +162,23 @@
   font-weight: 700;
   font-size: 17px;
   display: flex;
-  justify-content: space-between;
-  gap: 8px;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  /* a sigla do partido fica no canto direito mesmo com a foto à esquerda */
+  min-width: 0;
+}
+
+.home-app .cand .nome > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .home-app .cand .nome em {
   font-style: normal;
+  margin-left: auto;
   color: var(--fraco);
   font-size: 12px;
   font-weight: 600;
@@ -423,6 +448,14 @@
   margin: 14px 0 0;
 }
 
+/* Link dentro de texto corrido: 24px de altura de alvo (piso AA) sem quebrar
+   a linha do parágrafo. */
+.home-app .nota a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+}
+
 .home-app .barras {
   display: flex;
   align-items: flex-end;
@@ -480,21 +513,37 @@
   border-radius: 12px;
   font-size: 15px;
   white-space: nowrap;
+  /* Área de toque de botão, mesmo sendo um link. */
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
 }
 
 .home-app .cta a:hover {
   filter: brightness(1.08);
 }
 
-.home-app .rodape {
+/* Rodapé de créditos compartilhado (web/src/components/Rodape.jsx), no tema
+   escuro da home. */
+.home-app .rodape-site {
   color: var(--fraco);
   font-size: 12.5px;
   margin-top: 26px;
-  padding-top: 16px;
+  padding: 16px 0 0;
   border-top: 1px solid var(--borda);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 18px;
+  background: transparent;
+  display: grid;
+  gap: 8px;
+}
+
+.home-app .rodape-site p {
+  margin: 0;
+}
+
+.home-app .rodape-site b {
+  color: var(--texto);
+  font-weight: 700;
+  margin-right: 4px;
 }
 
 .home-app .vazio {
@@ -520,6 +569,9 @@
   border-radius: 10px;
   padding: 9px 16px;
   margin-top: 12px;
+  /* 44px de alvo: é botão de recuperação, o dedo tem de acertar de primeira. */
+  min-height: 44px;
+  min-width: 44px;
 }
 
 .home-app .turnos,
@@ -546,6 +598,9 @@
   border: 1px solid var(--borda);
   border-radius: 999px;
   padding: 8px 14px;
+  /* Aba/botão de camada: 44px de altura de alvo. */
+  min-height: 44px;
+  min-width: 44px;
   transition:
     filter 0.15s,
     background 0.15s;
@@ -731,11 +786,21 @@
   color: var(--teal);
   font-size: 13px;
   font-weight: 700;
+  /* Summary é controle: 44px de altura de alvo no celular. */
+  display: flex;
+  align-items: center;
+  min-height: 44px;
 }
 
 .home-app .tabela a {
   color: var(--teal);
   text-decoration: none;
+  /* Piso de área de toque para link dentro de tabela: 28px de altura, acima
+     do mínimo de 24 (WCAG 2.5.8) e sem inflar a linha da tabela. */
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  min-width: 24px;
 }
 
 .home-app .tabela a:hover {
@@ -747,8 +812,14 @@
   font-size: 11.5px;
 }
 
-.home-app .rodape a {
+/* Link do rodapé: 28px de altura de alvo (piso AA é 24) em qualquer tema. */
+.rodape-site a,
+.home-app .rodape-site a {
   color: var(--teal);
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  min-width: 24px;
 }
 
 /* Página 404 (mesmo tema escuro, sem depender do CSS do mapa). */

@@ -9,6 +9,7 @@ export default function Fontes({ dados }) {
 
   return (
     <>
+      <div className="rolagem-x">
       <table className="tabela fontes-uf">
         <thead>
           <tr>
@@ -48,6 +49,7 @@ export default function Fontes({ dados }) {
           ))}
         </tbody>
       </table>
+      </div>
       <p className="nota">
         Os links abrem em nova aba. Portal de resultados do TSE:{' '}
         <a href={PORTAL_TSE} target="_blank" rel="noopener noreferrer">

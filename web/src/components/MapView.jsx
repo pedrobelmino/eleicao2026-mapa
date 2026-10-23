@@ -7,6 +7,8 @@ import {
   COR_CONCRETO,
   EXPRESSAO_COR,
   EXPRESSAO_COR_UF,
+  EXPRESSAO_COR_UF_REPLAY,
+  EXPRESSAO_COR_MARGEM,
   TRANSICAO_COR_UF,
   ZOOM_BARRA_ZONA,
   ZOOM_BARRA_ZONA_FIM,
@@ -1593,6 +1595,56 @@ function aplicarLocais(mapa, locais, aoPendente, detalhe, municipioSelecionado) 
   publicarDebug(mapa, lista, detalhe, municipioSelecionado)
 }
 
+// Modo de pintura do estado. Três leituras, uma camada:
+//   ao vivo  -> EXPRESSAO_COR_UF (regra do concreto, lê as propriedades)
+//   margem   -> EXPRESSAO_COR_MARGEM (mapa de calor, ignora o concreto)
+//   replay   -> EXPRESSAO_COR_UF_REPLAY (lê feature-state por UF)
+// No replay o estado de cada UF entra por feature-state: `fechada` quando as
+// seções apuradas do frame igualam o total da UF, e a cor sai de `partido` e
+// `margem` do arquivo de 2022 (o GeoJSON carrega as propriedades do pleito
+// atual, que não valem para o replay).
+function pintarEstados(mapa, geojson, replay, modoMargem) {
+  if (!mapa || typeof mapa.getLayer !== 'function') return
+  if (!mapa.getLayer(LAYER_FILL) || !mapa.getSource(FONTE)) return
+
+  let expressao = EXPRESSAO_COR_UF
+  if (replay) expressao = EXPRESSAO_COR_UF_REPLAY
+  else if (modoMargem) expressao = EXPRESSAO_COR_MARGEM
+  mapa.setPaintProperty(LAYER_FILL, 'fill-color', expressao)
+
+  const base = replay?.base || {}
+  const doFrame = replay?.frame?.ufs || null
+  const features = geojson?.features || []
+  let fechadas = 0
+
+  for (const feature of features) {
+    const sigla = feature?.properties?.uf
+    if (!sigla) continue
+    const referencia = base[sigla]
+    const total = Number(referencia?.secoes_total) || 0
+    const apuradas = doFrame ? Number(doFrame[sigla]) || 0 : 0
+    const fechada = Boolean(replay && total > 0 && apuradas >= total)
+    if (fechada) fechadas += 1
+    mapa.setFeatureState(
+      { source: FONTE, id: sigla },
+      {
+        fechada,
+        partido: referencia?.partido_lider || '',
+        margem: Number(referencia?.margem_pct) || 0,
+      },
+    )
+  }
+
+  // Handle de prova (scripts/provas/replay.mjs): o que a camada está pintando.
+  window.__replayDebug = {
+    modo: replay ? 'replay' : modoMargem ? 'margem' : 'ao vivo',
+    frame: replay?.frame?.i ?? null,
+    pct_apurado: replay?.frame?.pct_apurado ?? null,
+    ufs_fechadas: fechadas,
+    ufs_total: features.length,
+  }
+}
+
 export default function MapView({
   geojson,
   selectedUf,
@@ -1606,6 +1658,8 @@ export default function MapView({
   onZoom,
   onSelectMunicipio,
   onSelectLocal,
+  replay,
+  modoMargem,
 }) {
   const containerRef = useRef(null)
   const mapRef = useRef(null)
@@ -1630,6 +1684,10 @@ export default function MapView({
   const reaplicarDetalheRef = useRef(null)
   // Último local para o qual a câmera já aproximou (evita re-zoom em loop).
   const ultimoLocalZoomadoRef = useRef(null)
+  // Modo de pintura das UFs (replay/mapa de calor) lido dentro dos handlers do
+  // MapLibre, que são registrados uma vez só.
+  const replayRef = useRef(replay)
+  const modoMargemRef = useRef(modoMargem)
 
   geojsonRef.current = geojson
   selectedRef.current = selectedUf
@@ -1643,6 +1701,8 @@ export default function MapView({
   locaisRef.current = locais
   onSelectLocalRef.current = onSelectLocal
   localSelecionadoRef.current = localSelecionado
+  replayRef.current = replay
+  modoMargemRef.current = modoMargem
 
   // Cria o mapa uma única vez.
   useEffect(() => {
@@ -1908,6 +1968,15 @@ export default function MapView({
       )
       atualizarDebug()
       onZoomRef.current?.(mapa.getZoom())
+      // Estado das UFs no modo corrente (ao vivo, margem ou replay). O efeito
+      // de [replay, modoMargem] reaplica a cada mudança de frame; aqui garante
+      // a primeira pintura, porque o efeito roda antes das camadas existirem.
+      pintarEstados(
+        mapa,
+        geojsonRef.current,
+        replayRef.current,
+        modoMargemRef.current,
+      )
     })
 
     if (podeHover) {
@@ -2128,6 +2197,29 @@ export default function MapView({
       mapa.off('load', aplicar)
     }
   }, [geojson])
+
+  // Replay e mapa de calor mudam só a PINTURA da camada de UF (expressão +
+  // feature-state). Nada aqui mexe em geometria, altura de prisma ou zoom — as
+  // duas lições caras do projeto: expressão com 'zoom' dentro de altura de
+  // extrusão derruba o mapa, e o resto é pintura.
+  useEffect(() => {
+    const mapa = mapRef.current
+    if (!mapa) return undefined
+
+    const aplicar = () => {
+      pintarEstados(mapa, geojsonRef.current, replay, modoMargem)
+    }
+
+    aplicar()
+    if (!estiloCarregadoRef.current) mapa.once('load', aplicar)
+    // Style swap (basemap) recria as camadas: reaplica a pintura do modo.
+    mapa.on('styledata', aplicar)
+
+    return () => {
+      mapa.off('load', aplicar)
+      mapa.off('styledata', aplicar)
+    }
+  }, [replay, modoMargem])
 
   // Cria/atualiza as fontes e camadas municipais/zonais/urnas quando chegam.
   useEffect(() => {

@@ -11,6 +11,7 @@ import Insights from '../components/home/Insights.jsx'
 import Estados from '../components/home/Estados.jsx'
 import Fontes from '../components/home/Fontes.jsx'
 import LinhaTempo from '../components/home/LinhaTempo.jsx'
+import Rodape from '../components/Rodape.jsx'
 
 const CANAL_YOUTUBE = 'https://www.youtube.com/@belmino.c.f'
 
@@ -169,11 +170,12 @@ export default function Home() {
             </a>
           </div>
 
-          <div className="rodape">
-            <span>Fonte: TSE · arquivos públicos de resultado por UF</span>
-            <span>Nada é estimado sem estar marcado como estimativa</span>
-            <span>O painel conta visitas de forma anônima</span>
-          </div>
+          <Rodape
+            variante="home"
+            eleicao={dados?.eleicao}
+            turno={dados?.turno}
+            geradoEm={dados?.gerado_em}
+          />
         </div>
       </div>
     </div>

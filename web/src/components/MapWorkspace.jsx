@@ -9,6 +9,8 @@ import MunicipioCard from './MunicipioCard.jsx'
 import LocalCard from './LocalCard.jsx'
 import Legend, { ResumoLideres } from './Legend.jsx'
 import FallbackView from './FallbackView.jsx'
+import ReplayBar from './ReplayBar.jsx'
+import MargensCard from './MargensCard.jsx'
 import { indexarUFs, resumoLideres } from '../dados.js'
 import { API_BASE, fetchJSON } from '../api.js'
 
@@ -70,6 +72,8 @@ export default function MapWorkspace({
   ufInicial,
   municipioInicial,
   zoomInicial,
+  replayInicial,
+  margemInicial,
 }) {
   const [webgl] = useState(suportaWebGL)
   const [mapaFalhou, setMapaFalhou] = useState(false)
@@ -106,6 +110,111 @@ export default function MapWorkspace({
   const painelRef = useRef(null)
   const sheetBodyRef = useRef(null)
   const cacheDetalheRef = useRef(new Map())
+
+  // ---------------------------------------------------------------------
+  // REPLAY e MARGENS. Os dois são modos de leitura do mesmo mapa: o replay
+  // troca o que a UF pinta (concreto até fechar 100%), e o mapa de calor de
+  // margem troca a rampa de cor. Nada disso altera dado do pleito atual.
+  // `?replay=<frame>` e `?margem=1` são atalhos de prova/drill-down.
+  const indiceInicial =
+    replayInicial == null || replayInicial === '' ? NaN : Number(replayInicial)
+  const [replayAberto, setReplayAberto] = useState(Number.isFinite(indiceInicial))
+  const [replay, setReplay] = useState(null)
+  const [replayCarregando, setReplayCarregando] = useState(false)
+  const [replayErro, setReplayErro] = useState(null)
+  const [indiceReplay, setIndiceReplay] = useState(
+    Number.isFinite(indiceInicial) && indiceInicial > 0 ? Math.round(indiceInicial) - 1 : 0,
+  )
+  const [tocando, setTocando] = useState(false)
+
+  const [margensAberto, setMargensAberto] = useState(Boolean(margemInicial))
+  const [margens, setMargens] = useState(null)
+  const [margensCarregando, setMargensCarregando] = useState(false)
+  const [margensErro, setMargensErro] = useState(null)
+
+  useEffect(() => {
+    if (!replayAberto || replay || replayCarregando) return undefined
+    let ativo = true
+    setReplayCarregando(true)
+    setReplayErro(null)
+    fetchJSON(`${API_BASE}/replay?modo=2022`)
+      .then((resposta) => {
+        if (!ativo) return
+        if (!resposta?.disponivel) {
+          setReplayErro(resposta?.nota || 'série histórica indisponível')
+          setReplayCarregando(false)
+          return
+        }
+        setReplay(resposta)
+        setReplayCarregando(false)
+      })
+      .catch(() => {
+        if (!ativo) return
+        setReplayErro('não foi possível carregar a série do replay')
+        setReplayCarregando(false)
+      })
+    return () => {
+      ativo = false
+    }
+  }, [replayAberto, replay, replayCarregando])
+
+  useEffect(() => {
+    if (!margensAberto || margens || margensCarregando) return undefined
+    let ativo = true
+    setMargensCarregando(true)
+    setMargensErro(null)
+    fetchJSON(`${API_BASE}/margens`)
+      .then((resposta) => {
+        if (!ativo) return
+        if (resposta?.erro) {
+          setMargensErro(String(resposta.erro))
+          setMargensCarregando(false)
+          return
+        }
+        setMargens(resposta)
+        setMargensCarregando(false)
+      })
+      .catch(() => {
+        if (!ativo) return
+        setMargensErro('não foi possível carregar o painel de margens')
+        setMargensCarregando(false)
+      })
+    return () => {
+      ativo = false
+    }
+  }, [margensAberto, margens, margensCarregando])
+
+  // Play do replay: um frame a cada 260 ms; para no último (o arquivo fechado).
+  useEffect(() => {
+    if (!tocando) return undefined
+    const total = replay?.frames?.length || 0
+    if (total === 0) return undefined
+    const relogio = setInterval(() => {
+      setIndiceReplay((atual) => {
+        if (atual >= total - 1) {
+          setTocando(false)
+          return total - 1
+        }
+        return atual + 1
+      })
+    }, 260)
+    return () => clearInterval(relogio)
+  }, [tocando, replay])
+
+  const frameReplay = useMemo(() => {
+    const frames = replay?.frames || []
+    if (!replayAberto || frames.length === 0) return null
+    const posicao = Math.min(Math.max(indiceReplay, 0), frames.length - 1)
+    return { frame: frames[posicao], base: replay.ufs_base || {} }
+  }, [replayAberto, replay, indiceReplay])
+
+  const alternarReplay = () => {
+    setReplayAberto((aberto) => {
+      if (aberto) setTocando(false)
+      return !aberto
+    })
+  }
+
 
   const selecionada = ufSelecionada ? ufs.get(ufSelecionada) : null
 
@@ -322,12 +431,55 @@ export default function MapWorkspace({
           onZoom={setZoom}
           onSelectMunicipio={selecionarMunicipio}
           onSelectLocal={setLocalSelecionado}
+          replay={frameReplay}
+          modoMargem={!replayAberto && margensAberto}
         />
         <PlacarBarra estados={estados} />
+        <div className="modos-mapa" role="group" aria-label="Modos de leitura do mapa">
+          <button
+            type="button"
+            className={`modos-btn${replayAberto ? ' is-ativo' : ''}`}
+            onClick={alternarReplay}
+            aria-pressed={replayAberto}
+            data-prova="modo-replay"
+          >
+            replay 2022
+          </button>
+          <button
+            type="button"
+            className={`modos-btn${margensAberto ? ' is-ativo' : ''}`}
+            onClick={() => setMargensAberto((valor) => !valor)}
+            aria-pressed={margensAberto}
+            data-prova="modo-margem"
+          >
+            margem
+          </button>
+        </div>
+        {replayAberto ? (
+          <ReplayBar
+            replay={replay}
+            indice={indiceReplay}
+            tocando={tocando}
+            carregando={replayCarregando}
+            erro={replayErro}
+            onIndice={setIndiceReplay}
+            onPlayPause={() => setTocando((valor) => !valor)}
+            onFechar={alternarReplay}
+          />
+        ) : null}
         <Legend zoom={zoom} />
       </main>
 
       <aside className="side-panel" ref={painelRef} aria-label="Painel da apuração">
+        {margensAberto ? (
+          <MargensCard
+            margens={margens}
+            carregando={margensCarregando}
+            erro={margensErro}
+            onFechar={() => setMargensAberto(false)}
+          />
+        ) : null}
+
         <NationalScoreboard estados={estados} variante="panel" />
 
         <div className="panel-divider" aria-hidden="true" />
@@ -422,6 +574,24 @@ export default function MapWorkspace({
             </>
           ) : null}
         </div>
+      </section>
+
+      <section
+        className={`bottom-sheet sheet-margens mobile-only${margensAberto ? ' is-open' : ''}`}
+        aria-label="De onde está ganhando"
+        aria-hidden={!margensAberto}
+      >
+        <div className="sheet-grip" aria-hidden="true" />
+        {margensAberto ? (
+          <div className="sheet-body sheet-body--margens">
+            <MargensCard
+              margens={margens}
+              carregando={margensCarregando}
+              erro={margensErro}
+              onFechar={() => setMargensAberto(false)}
+            />
+          </div>
+        ) : null}
       </section>
     </div>
   )

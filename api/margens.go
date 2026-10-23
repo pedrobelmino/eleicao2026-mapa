@@ -42,8 +42,10 @@ type margemUF struct {
 	MargemVotos  int64   `json:"margem_votos"`
 	MargemPontos float64 `json:"margem_pontos"`
 	ShareVotos   float64 `json:"share_votos"`
-	// Contribuicao é a margem da UF com sinal: positiva quando a UF entrega
-	// votos ao líder nacional, negativa quando entrega ao segundo colocado.
+	// Contribuicao é a margem NACIONAL (líder − segundo do país) restrita à UF:
+	// positiva quando a UF entrega margem ao líder nacional, negativa quando
+	// entrega ao segundo. Somada por UF fecha exatamente a margem do país —
+	// é o que faz o card "de onde está ganhando" bater com o placar.
 	Contribuicao int64 `json:"contribuicao_votos"`
 }
 
@@ -184,7 +186,10 @@ func montarMargens(pub *publico, municipais map[string]*dadosUF, dados2022 *elei
 		UFs:       []margemUF{},
 		Nota: "Margem = votos do líder menos votos do segundo colocado. " +
 			"Peso = fatia da área nos votos válidos do país. " +
-			"Índice de decisão = margem em pontos × peso.",
+			"Índice de decisão = margem em pontos × peso. " +
+			"A contribuição por UF é a margem nacional restrita à UF (líder do país − segundo do país naquela UF); " +
+			"como a base publica dois candidatos por UF, a soma das contribuições fecha com a margem medida nesse " +
+			"corte e fica ~0,6% abaixo do placar nacional, que usa a lista inteira.",
 	}
 
 	areaNacional := novoTotalArea()
@@ -249,11 +254,14 @@ func montarMargens(pub *publico, municipais map[string]*dadosUF, dados2022 *elei
 			MargemPontos: fechada.MargemPontos,
 			ShareVotos:   percentual(uf.VV, nacional.VV),
 		}
-		if fechada.Lider == resposta.Nacional.Lider {
-			item.Contribuicao = fechada.MargemVotos
-		} else {
-			item.Contribuicao = -fechada.MargemVotos
-		}
+		// Margem nacional restrita à UF: votos do líder do país menos votos do
+		// segundo do país NESTA UF, com sinal. Somada por UF, fecha a margem do
+		// país medida com os dois primeiros de cada UF (o corte que a base
+		// pública traz). O placar nacional oficial usa a lista inteira, então a
+		// diferença (~0,6%) é o voto de terceiro que não entra no corte — e ela
+		// está declarada na nota, não escondida.
+		// A margem local da UF continua em margem_votos/margem_pontos.
+		item.Contribuicao = area.votos[resposta.Nacional.Lider] - area.votos[resposta.Nacional.Segundo]
 		resposta.UFs = append(resposta.UFs, item)
 	}
 	sort.SliceStable(resposta.UFs, func(i, j int) bool {

@@ -243,6 +243,7 @@ export default function Fenomeno({ dados }) {
     tabela = (
       <details>
         <summary>Ver a conta por UF ({porUf.length} UFs)</summary>
+        <div className="rolagem-x">
         <table className="tabela">
           <thead>
             <tr>
@@ -267,6 +268,7 @@ export default function Fenomeno({ dados }) {
             ))}
           </tbody>
         </table>
+        </div>
         <p className="nota">
           A soma das UFs é a base da estimativa; UF sem seção apurada fica fora
           da conta.

@@ -1,14 +1,7 @@
 import { CORES_PARTIDO } from '../mapa.js'
 import { numero, percentual } from '../format.js'
-
-function acharCandidato(nacional, nome, partido) {
-  const candidatos = nacional?.candidatos || []
-  return (
-    candidatos.find((c) => c.nome === nome) ||
-    candidatos.find((c) => c.partido === partido) ||
-    null
-  )
-}
+import { acharCandidato } from '../placar.js'
+import Avatar from './Avatar.jsx'
 
 function LinhaPlacar({ nome, partido, candidato }) {
   const cor = CORES_PARTIDO[partido]
@@ -18,6 +11,12 @@ function LinhaPlacar({ nome, partido, candidato }) {
       style={{ '--party-color': cor }}
       data-partido={partido}
     >
+      <Avatar
+        nome={nome}
+        partido={partido}
+        tamanho={34}
+        className="score-avatar"
+      />
       <span className="score-party-bar" aria-hidden="true" />
       <div className="score-identity">
         <strong className="score-name">{nome}</strong>
