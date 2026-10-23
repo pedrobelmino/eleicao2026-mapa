@@ -24,10 +24,9 @@ const LINKS = [
   {
     chave: 'medium',
     titulo: 'Medium',
-    descricao: 'textos sobre engenharia e arquitetura — em breve',
-    href: '#',
-    rotulo: 'endereço a confirmar',
-    pendente: true,
+    descricao: 'textos sobre engenharia e arquitetura',
+    href: 'https://medium.com/@pedrobelmino',
+    rotulo: '@pedrobelmino',
   },
   {
     chave: 'youtube',
