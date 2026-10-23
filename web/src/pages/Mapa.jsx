@@ -51,6 +51,9 @@ export default function Mapa() {
   const [atalhos] = useState(lerAtalhosDaUrl)
   const [dados, setDados] = useState(ESTADO_INICIAL)
   const [tentativa, setTentativa] = useState(0)
+  // Passo do replay enquanto ele corre: o cabeçalho do site mostra o % e o
+  // carimbo DO PASSO (não o arquivo fechado). `null` = replay fechado.
+  const [aoVivo, setAoVivo] = useState(null)
 
   useEffect(() => {
     definirMeta({
@@ -86,7 +89,7 @@ export default function Mapa() {
 
   return (
     <div className="app">
-      <Header estados={dados.estados} erro={dados.erro} />
+      <Header estados={dados.estados} erro={dados.erro} aoVivo={aoVivo} />
 
       {dados.fase === 'loading' ? <StateViews tipo="loading" /> : null}
 
@@ -107,6 +110,7 @@ export default function Mapa() {
           zoomInicial={atalhos.zoomInicial}
           replayInicial={atalhos.replayInicial}
           margemInicial={atalhos.margemInicial}
+          onAoVivo={setAoVivo}
         />
       ) : null}
 

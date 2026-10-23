@@ -34,8 +34,13 @@ function LinhaPlacar({ nome, partido, candidato }) {
   )
 }
 
-export default function NationalScoreboard({ estados, variante = 'panel' }) {
-  const nacional = estados?.nacional
+// `aoVivo` (do replay) troca a fonte dos dois candidatos: com o replay tocando
+// o painel mostra os votos DO PASSO — os mesmos que a barra do replay mostra —
+// e o carimbo do passo. Sem replay (null) é o placar do arquivo fechado.
+export default function NationalScoreboard({ estados, variante = 'panel', aoVivo = null }) {
+  const nacional = aoVivo
+    ? { ...estados?.nacional, pct_apurado: aoVivo.pct, candidatos: aoVivo.candidatos }
+    : estados?.nacional
   const flavio = acharCandidato(nacional, 'FLAVIO BOLSONARO', 'PL')
   const lula = acharCandidato(nacional, 'LULA', 'PT')
 
@@ -43,6 +48,8 @@ export default function NationalScoreboard({ estados, variante = 'panel' }) {
     <section
       className={`scoreboard scoreboard--${variante}`}
       aria-label="Placar nacional"
+      data-fonte={aoVivo ? 'replay' : 'oficial'}
+      data-carimbo={aoVivo ? aoVivo.carimbo : null}
     >
       <div className="scoreboard-head">
         <span className="eyebrow">Placar nacional</span>

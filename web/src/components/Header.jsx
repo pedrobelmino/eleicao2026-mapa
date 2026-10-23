@@ -1,14 +1,19 @@
 import { apuracao, dataHora, rotuloTurno } from '../format.js'
 
-export default function Header({ estados, erro }) {
+// `aoVivo` chega do replay (MapWorkspace -> Mapa): enquanto ele corre, o
+// cabeçalho mostra o percentual e o carimbo DO PASSO, não o arquivo fechado.
+// Sem replay a prop é null e o texto volta ao valor oficial da apuração.
+export default function Header({ estados, erro, aoVivo = null }) {
   const carregado = Boolean(estados)
-  const meta = carregado
-    ? `${rotuloTurno(estados.turno)} · apuração ${apuracao(
-        estados.nacional?.pct_apurado,
-      )} · atualizado ${dataHora(estados.gerado_em)}`
-    : erro
-      ? 'apuração indisponível'
-      : 'carregando apuração…'
+  const meta = aoVivo
+    ? `${rotuloTurno(estados?.turno)} · replay ${apuracao(aoVivo.pct)} apurado · ${aoVivo.carimbo}`
+    : carregado
+      ? `${rotuloTurno(estados.turno)} · apuração ${apuracao(
+          estados.nacional?.pct_apurado,
+        )} · atualizado ${dataHora(estados.gerado_em)}`
+      : erro
+        ? 'apuração indisponível'
+        : 'carregando apuração…'
 
   return (
     <header className="site-header">
@@ -20,7 +25,9 @@ export default function Header({ estados, erro }) {
           <h1>
             Eleição 2026 <span className="dash">—</span> Presidente
           </h1>
-          <p className="header-meta">{meta}</p>
+          <p className="header-meta" data-prova="header-meta" data-fonte={aoVivo ? 'replay' : 'oficial'}>
+            {meta}
+          </p>
         </div>
       </div>
 

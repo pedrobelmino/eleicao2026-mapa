@@ -28,8 +28,14 @@ function Linha({ partido, nome, candidato }) {
   )
 }
 
-export default function PlacarBarra({ estados }) {
-  const duelo = dueloNacional(estados?.nacional)
+// `aoVivo` (replay tocando) põe os votos DO PASSO na barra do topo — no
+// celular ela é o placar visível enquanto o replay corre.
+export default function PlacarBarra({ estados, aoVivo = null }) {
+  const duelo = dueloNacional(
+    aoVivo
+      ? { ...estados?.nacional, pct_apurado: aoVivo.pct, candidatos: aoVivo.candidatos }
+      : estados?.nacional,
+  )
 
   return (
     <div

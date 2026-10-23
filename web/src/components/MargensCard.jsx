@@ -148,7 +148,11 @@ export default function MargensCard({
       )}
 
       {/* --------------------------------------------------------- NACIONAL */}
-      {carregando && !nacional ? (
+      {/* O texto de carregamento só existe quando o card NÃO tem dado nenhum:
+          com a lista de decisivos (ou o bloco nacional) na tela ele sai de
+          cena — era o defeito de mostrar "calculando margens…" embaixo de uma
+          lista de 10 municípios já renderizada. */}
+      {carregando && !nacional && decisivos.length === 0 ? (
         <p className="margem-carregando">calculando margens…</p>
       ) : null}
 

@@ -20,8 +20,12 @@ function Metrica({ rotulo, valor, detalhe }) {
   )
 }
 
-export default function PlacarGaveta({ estados, aberta = false, onToggle }) {
-  const duelo = dueloNacional(estados?.nacional)
+export default function PlacarGaveta({ estados, aberta = false, onToggle, aoVivo = null }) {
+  // Replay tocando: as métricas e o placar da gaveta seguem o PASSO também.
+  const fonte = aoVivo
+    ? { ...estados?.nacional, pct_apurado: aoVivo.pct, candidatos: aoVivo.candidatos }
+    : estados?.nacional
+  const duelo = dueloNacional(fonte)
   const lider = duelo.lider
 
   return (
@@ -82,7 +86,7 @@ export default function PlacarGaveta({ estados, aberta = false, onToggle }) {
       </button>
 
       <div className="sheet-body" id="gaveta-placar-corpo">
-        <NationalScoreboard estados={estados} variante="panel" />
+        <NationalScoreboard estados={estados} variante="panel" aoVivo={aoVivo} />
 
         <div className="panel-divider" aria-hidden="true" />
 

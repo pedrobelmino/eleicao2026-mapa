@@ -259,16 +259,21 @@ code {
   gap: 18px;
   border-left: 1px solid var(--line);
   background: rgba(250, 247, 240, 0.95);
-  scrollbar-width: thin;
-  scrollbar-color: rgba(28, 35, 43, 0.24) transparent;
+  /* O card de margem é mais alto que o painel: a nota metodológica só é
+     alcançável rolando, então a barra de rolagem tem de ser visível (era
+     0.24 de opacidade, quase invisível — o corte na print parecia texto
+     truncado). */
+  scrollbar-width: auto;
+  scrollbar-gutter: stable;
+  scrollbar-color: rgba(28, 35, 43, 0.55) transparent;
 }
 
 .side-panel::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
 }
 
 .side-panel::-webkit-scrollbar-thumb {
-  background: rgba(28, 35, 43, 0.18);
+  background: rgba(28, 35, 43, 0.45);
   border-radius: 99px;
 }
 
@@ -3118,6 +3123,19 @@ img.avatar {
   font-size: 10.5px;
   line-height: 1.4;
   color: var(--muted);
+}
+
+/* Defeito de print (itens 5/6): a nota metodológica terminava 17 px abaixo da
+   dobra do painel. Ela NÃO é clampada nem tem altura fixa — quebra linha e
+   cresce. `flex: 0 0 auto` impede o encolhimento dentro do card (que é uma
+   coluna flex) e `overflow-wrap: anywhere` quebra palavra longa em 390 px.
+   O acesso é por ROLAGEM do painel, com a barra de rolagem visível (abaixo). */
+.margem-nota {
+  flex: 0 0 auto;
+  max-height: none;
+  overflow: visible;
+  overflow-wrap: anywhere;
+  -webkit-line-clamp: unset;
 }
 
 .margem-erro {

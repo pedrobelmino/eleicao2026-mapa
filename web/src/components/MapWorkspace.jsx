@@ -9,7 +9,7 @@ import MunicipioCard from './MunicipioCard.jsx'
 import LocalCard from './LocalCard.jsx'
 import Legend, { ResumoLideres } from './Legend.jsx'
 import FallbackView from './FallbackView.jsx'
-import ReplayBar from './ReplayBar.jsx'
+import ReplayBar, { relogioDoArquivo } from './ReplayBar.jsx'
 import MargensCard from './MargensCard.jsx'
 import { indexarUFs, resumoLideres } from '../dados.js'
 import { API_BASE, fetchJSON } from '../api.js'
@@ -138,6 +138,7 @@ export default function MapWorkspace({
   zoomInicial,
   replayInicial,
   margemInicial,
+  onAoVivo,
 }) {
   const [webgl] = useState(suportaWebGL)
   const [mapaFalhou, setMapaFalhou] = useState(false)
@@ -240,8 +241,12 @@ export default function MapWorkspace({
     }
   }, [replayAberto, fonte, replays])
 
+  // O agregado nacional de margens (`/api/margens`) é o dado mais lento da
+  // tela: ele NÃO pode estar nas dependências, senão o cleanup cancela a
+  // própria requisição (`ativo=false`) e o fetch nunca conclui — era o defeito
+  // do "calculando margens…" eterno ao lado da lista já renderizada.
   useEffect(() => {
-    if (!margensAberto || margens || margensCarregando) return undefined
+    if (!margensAberto || margens) return undefined
     let ativo = true
     setMargensCarregando(true)
     setMargensErro(null)
@@ -264,7 +269,7 @@ export default function MapWorkspace({
     return () => {
       ativo = false
     }
-  }, [margensAberto, margens, margensCarregando])
+  }, [margensAberto, margens])
 
   // Item 6 — margens por município da UF aberta. Só busca com o modo MARGEM
   // ligado e uma UF selecionada (sem UF não há município para pintar).
@@ -350,6 +355,36 @@ export default function MapWorkspace({
       base: replay?.ufs_base || {},
     }
   }, [replayAberto, passos, indiceReplay, replay])
+
+  // O passo do replay sobe para a página: cabeçalho do site e placar do painel
+  // mostra o % e os VOTOS DO PASSO enquanto o replay corre. `null` com o
+  // replay fechado devolve os dois ao valor oficial (arquivo 100%).
+  const aoVivo = useMemo(() => {
+    if (!replayAberto || passos.length === 0) return null
+    const posicao = Math.min(Math.max(indiceReplay, 0), passos.length - 1)
+    const passo = passos[posicao]
+    if (!passo) return null
+    return {
+      pct: passo.pct,
+      indice: posicao,
+      total: passos.length,
+      carimbo: passo.t
+        ? relogioDoArquivo(passo.t)
+        : `passo ${posicao + 1}/${passos.length}`,
+      secoes: passo.secoes,
+      candidatos: passo.placar,
+    }
+  }, [replayAberto, passos, indiceReplay])
+
+  useEffect(() => {
+    if (typeof onAoVivo === 'function') onAoVivo(aoVivo)
+  }, [aoVivo, onAoVivo])
+
+  // Ao desmontar (navegar para fora do mapa), o cabeçalho não pode continuar
+  // em modo replay.
+  useEffect(() => () => {
+    if (typeof onAoVivo === 'function') onAoVivo(null)
+  }, [onAoVivo])
 
   const trocarFonte = (nova) => {
     setTocando(false)
@@ -652,7 +687,7 @@ export default function MapWorkspace({
           modoMargem={margensAberto}
           margensUf={margensUf}
         />
-        <PlacarBarra estados={estados} />
+        <PlacarBarra estados={estados} aoVivo={aoVivo} />
         <div className="modos-mapa" role="group" aria-label="Modos de leitura do mapa">
           <button
             type="button"
@@ -711,7 +746,7 @@ export default function MapWorkspace({
           />
         ) : null}
 
-        <NationalScoreboard estados={estados} variante="panel" />
+        <NationalScoreboard estados={estados} variante="panel" aoVivo={aoVivo} />
 
         <div className="panel-divider" aria-hidden="true" />
 
@@ -747,6 +782,7 @@ export default function MapWorkspace({
         estados={estados}
         aberta={gavetaAberta}
         onToggle={() => setGavetaAberta((valor) => !valor)}
+        aoVivo={aoVivo}
       />
 
       <section

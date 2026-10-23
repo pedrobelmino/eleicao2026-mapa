@@ -15,7 +15,7 @@ import { apuracao, numero } from '../format.js'
 // A barra não decide nada: recebe o passo corrente e devolve a posição
 // escolhida. Quem pinta o mapa é o MapView.
 
-function relogioDoArquivo(em) {
+export function relogioDoArquivo(em) {
   if (!em) return '—'
   // "2022-10-02T17:04:47" — hora de Brasília, sem fuso no arquivo.
   const texto = String(em)

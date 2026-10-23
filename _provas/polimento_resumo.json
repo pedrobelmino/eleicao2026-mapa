@@ -1,0 +1,476 @@
+{
+  "gerado": "2026-10-23T22:50:40.397Z",
+  "base": "http://127.0.0.1:8100",
+  "alvo_pct": 40,
+  "passo_medido": {
+    "indice": 24,
+    "carimbo": "25/61",
+    "pct": 40
+  },
+  "oficial": {
+    "pct": 100,
+    "candidatos": [
+      {
+        "nome": "FLAVIO BOLSONARO",
+        "votos": 56104503,
+        "pct": 47.03
+      },
+      {
+        "nome": "LULA",
+        "votos": 53879538,
+        "pct": 45.16
+      },
+      {
+        "nome": "ESCRITOR AUGUSTO CURY",
+        "votos": 3448569,
+        "pct": 2.89
+      },
+      {
+        "nome": "RENAN SANTOS",
+        "votos": 2675887,
+        "pct": 2.24
+      },
+      {
+        "nome": "RONALDO CAIADO",
+        "votos": 2605148,
+        "pct": 2.18
+      },
+      {
+        "nome": "ZEMA",
+        "votos": 326488,
+        "pct": 0.27
+      },
+      {
+        "nome": "SAMARA",
+        "votos": 122911,
+        "pct": 0.1
+      },
+      {
+        "nome": "HERTZ DIAS",
+        "votos": 43103,
+        "pct": 0.04
+      },
+      {
+        "nome": "CLARIANA BARAO",
+        "votos": 40043,
+        "pct": 0.03
+      },
+      {
+        "nome": "EDMILSON COSTA",
+        "votos": 22693,
+        "pct": 0.02
+      },
+      {
+        "nome": "VETERINÁRIO WILSON GRASSI",
+        "votos": 16881,
+        "pct": 0.01
+      },
+      {
+        "nome": "RUI COSTA PIMENTA",
+        "votos": 15024,
+        "pct": 0.01
+      }
+    ]
+  },
+  "cabecalho_replay": {
+    "desktop_1440x900": {
+      "durante": {
+        "texto": "1º turno · replay 40% apurado · passo 25/61",
+        "fonte": "replay"
+      },
+      "pct_durante": 40,
+      "pct_passo": 40,
+      "carimbo_esperado": "25/61",
+      "depois": {
+        "texto": "1º turno · apuração 100% · atualizado 22/10/2026 07:45",
+        "fonte": "oficial"
+      },
+      "pct_depois": 100,
+      "pct_oficial": 100,
+      "arquivo": "_provas/polimento_desktop_1440x900_replay40.png"
+    },
+    "mobile_390x844": {
+      "durante": {
+        "texto": "1º turno · replay 40% apurado · passo 25/61",
+        "fonte": "replay"
+      },
+      "pct_durante": 40,
+      "pct_passo": 40,
+      "carimbo_esperado": "25/61",
+      "depois": {
+        "texto": "1º turno · apuração 100% · atualizado 22/10/2026 07:45",
+        "fonte": "oficial"
+      },
+      "pct_depois": 100,
+      "pct_oficial": 100,
+      "arquivo": "_provas/polimento_mobile_390x844_replay40.png"
+    }
+  },
+  "placar_replay": {
+    "desktop_1440x900": {
+      "lateral_durante": {
+        "turno": "40% apurado",
+        "fonte": "replay",
+        "carimbo": "passo 25/61",
+        "linhas": [
+          {
+            "nome": "FLAVIO BOLSONARO",
+            "pct": "44,56%",
+            "votos": "21.213.342 votos"
+          },
+          {
+            "nome": "LULA",
+            "pct": "48,44%",
+            "votos": "23.059.156 votos"
+          }
+        ]
+      },
+      "turno_durante": "40% apurado",
+      "linhas": [
+        {
+          "nome": "FLAVIO BOLSONARO",
+          "votos_tela": 21213342,
+          "votos_passo": 21213342,
+          "votos_final": 56104503,
+          "bate_com_passo": true,
+          "difere_do_final": true
+        },
+        {
+          "nome": "LULA",
+          "votos_tela": 23059156,
+          "votos_passo": 23059156,
+          "votos_final": 53879538,
+          "bate_com_passo": true,
+          "difere_do_final": true
+        }
+      ],
+      "lateral_depois": [
+        {
+          "nome": "FLAVIO BOLSONARO",
+          "votos_tela": 56104503,
+          "votos_final": 56104503,
+          "igual_ao_final": true
+        },
+        {
+          "nome": "LULA",
+          "votos_tela": 53879538,
+          "votos_final": 53879538,
+          "igual_ao_final": true
+        }
+      ],
+      "barra_mobile_durante": [
+        {
+          "nome": "FLAVIO BOLSONARO",
+          "pct": "44,56%",
+          "votos": "21.213.342"
+        },
+        {
+          "nome": "LULA",
+          "pct": "48,44%",
+          "votos": "23.059.156"
+        }
+      ]
+    },
+    "mobile_390x844": {
+      "lateral_durante": {
+        "turno": null,
+        "fonte": null,
+        "carimbo": null,
+        "linhas": []
+      },
+      "turno_durante": null,
+      "linhas": [
+        {
+          "nome": "FLAVIO BOLSONARO",
+          "votos_tela": 21213342,
+          "votos_passo": 21213342,
+          "votos_final": 56104503,
+          "bate_com_passo": true,
+          "difere_do_final": true
+        },
+        {
+          "nome": "LULA",
+          "votos_tela": 23059156,
+          "votos_passo": 23059156,
+          "votos_final": 53879538,
+          "bate_com_passo": true,
+          "difere_do_final": true
+        }
+      ],
+      "lateral_depois": [
+        {
+          "nome": "FLAVIO BOLSONARO",
+          "votos_tela": 56104503,
+          "votos_final": 56104503,
+          "igual_ao_final": true
+        },
+        {
+          "nome": "LULA",
+          "votos_tela": 53879538,
+          "votos_final": 53879538,
+          "igual_ao_final": true
+        }
+      ],
+      "barra_mobile_durante": [
+        {
+          "nome": "FLAVIO BOLSONARO",
+          "pct": "44,56%",
+          "votos": "21.213.342"
+        },
+        {
+          "nome": "LULA",
+          "pct": "48,44%",
+          "votos": "23.059.156"
+        }
+      ]
+    }
+  },
+  "texto_calculando_ocorrencias": {
+    "desktop_1440x900": {
+      "natural": {
+        "dom": 0,
+        "visivel": 0,
+        "no_card": 0
+      },
+      "nacional_lento": {
+        "dom": 0,
+        "visivel": 0,
+        "no_card": 0
+      },
+      "depois_do_nacional": {
+        "dom": 0,
+        "visivel": 0,
+        "no_card": 0
+      },
+      "origens_no_nacional_lento": [],
+      "linhas_decisivos": 10,
+      "nacional_ja_na_tela": false,
+      "fetch_concluiu": true,
+      "cards_no_dom": 2,
+      "arquivo": "_provas/polimento_desktop_1440x900.png"
+    },
+    "mobile_390x844": {
+      "natural": {
+        "dom": 0,
+        "visivel": 0,
+        "no_card": 0
+      },
+      "nacional_lento": {
+        "dom": 0,
+        "visivel": 0,
+        "no_card": 0
+      },
+      "depois_do_nacional": {
+        "dom": 0,
+        "visivel": 0,
+        "no_card": 0
+      },
+      "origens_no_nacional_lento": [],
+      "linhas_decisivos": 10,
+      "nacional_ja_na_tela": false,
+      "fetch_concluiu": true,
+      "cards_no_dom": 2,
+      "arquivo": "_provas/polimento_mobile_390x844.png"
+    }
+  },
+  "paragrafo_ok": true,
+  "paragrafo_detalhe": {
+    "desktop_1440x900": {
+      "medidas": [
+        {
+          "texto": "Margem = votos do líder menos votos do segundo colocado. Peso = fatia da área nos votos válidos do país. Índice de decisão = margem em pontos × peso. A contribuição por UF é a margem nacional restrita à UF (líder do país − segundo do país naquela UF); como a base publica dois candidatos por UF, a soma das contribuições fecha com a margem medida nesse corte e fica ~0,6% abaixo do placar nacional, que usa a lista inteira.",
+          "scrollHeight": 118,
+          "clientHeight": 118,
+          "altura": 118,
+          "linhas_estimadas": 8,
+          "line_clamp": "none",
+          "overflow": "visible/visible",
+          "max_height": "none",
+          "height": "117.5px",
+          "display": "block",
+          "dentro_da_caixa_do_card": true,
+          "distancia_do_fundo_do_card": 142,
+          "ancestrais_com_overflow": [
+            {
+              "classe": "side-panel",
+              "overflow": "auto/auto",
+              "rola": true,
+              "altura": 708
+            },
+            {
+              "classe": "app",
+              "overflow": "hidden/hidden",
+              "rola": false,
+              "altura": 900
+            }
+          ],
+          "confere": true,
+          "motivo": null,
+          "api": "Margem = votos do líder menos votos do segundo colocado. Peso = fatia da área nos votos válidos do país. Índice de decis"
+        },
+        {
+          "texto": "Margem = votos do líder menos votos do segundo colocado no município; pontos = essa diferença sobre os votos válidos. Ordem = margem em votos × votos válidos (margem absoluta × peso), decrescente. virou_2022 compara o PARTIDO do líder de agora com o de 2022 (null quando o município não casa). delta_pp_2022 é a variação da vantagem do líder atual em pontos: negativo = a vantagem encolheu desde 2022.",
+          "scrollHeight": 118,
+          "clientHeight": 118,
+          "altura": 118,
+          "linhas_estimadas": 8,
+          "line_clamp": "none",
+          "overflow": "visible/visible",
+          "max_height": "none",
+          "height": "117.5px",
+          "display": "block",
+          "dentro_da_caixa_do_card": true,
+          "distancia_do_fundo_do_card": 15,
+          "ancestrais_com_overflow": [
+            {
+              "classe": "side-panel",
+              "overflow": "auto/auto",
+              "rola": true,
+              "altura": 708
+            },
+            {
+              "classe": "app",
+              "overflow": "hidden/hidden",
+              "rola": false,
+              "altura": 900
+            }
+          ],
+          "confere": true,
+          "motivo": null,
+          "api": "Margem = votos do líder menos votos do segundo colocado no município; pontos = essa diferença sobre os votos válidos. Or"
+        }
+      ],
+      "scroll": {
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      }
+    },
+    "mobile_390x844": {
+      "medidas": [
+        {
+          "texto": "Margem = votos do líder menos votos do segundo colocado. Peso = fatia da área nos votos válidos do país. Índice de decisão = margem em pontos × peso. A contribuição por UF é a margem nacional restrita à UF (líder do país − segundo do país naquela UF); como a base publica dois candidatos por UF, a soma das contribuições fecha com a margem medida nesse corte e fica ~0,6% abaixo do placar nacional, que usa a lista inteira.",
+          "scrollHeight": 88,
+          "clientHeight": 88,
+          "altura": 88,
+          "linhas_estimadas": 6,
+          "line_clamp": "none",
+          "overflow": "visible/visible",
+          "max_height": "none",
+          "height": "88.125px",
+          "display": "block",
+          "dentro_da_caixa_do_card": true,
+          "distancia_do_fundo_do_card": 97,
+          "ancestrais_com_overflow": [
+            {
+              "classe": "sheet-body sheet-body--margens",
+              "overflow": "auto/auto",
+              "rola": true,
+              "altura": 508
+            },
+            {
+              "classe": "bottom-sheet sheet-margens mobile-only is-open",
+              "overflow": "hidden/hidden",
+              "rola": false,
+              "altura": 523
+            },
+            {
+              "classe": "app",
+              "overflow": "hidden/hidden",
+              "rola": false,
+              "altura": 844
+            }
+          ],
+          "confere": true,
+          "motivo": null,
+          "api": "Margem = votos do líder menos votos do segundo colocado. Peso = fatia da área nos votos válidos do país. Índice de decis"
+        },
+        {
+          "texto": "Margem = votos do líder menos votos do segundo colocado no município; pontos = essa diferença sobre os votos válidos. Ordem = margem em votos × votos válidos (margem absoluta × peso), decrescente. virou_2022 compara o PARTIDO do líder de agora com o de 2022 (null quando o município não casa). delta_pp_2022 é a variação da vantagem do líder atual em pontos: negativo = a vantagem encolheu desde 2022.",
+          "scrollHeight": 88,
+          "clientHeight": 88,
+          "altura": 88,
+          "linhas_estimadas": 6,
+          "line_clamp": "none",
+          "overflow": "visible/visible",
+          "max_height": "none",
+          "height": "88.125px",
+          "display": "block",
+          "dentro_da_caixa_do_card": true,
+          "distancia_do_fundo_do_card": 0,
+          "ancestrais_com_overflow": [
+            {
+              "classe": "sheet-body sheet-body--margens",
+              "overflow": "auto/auto",
+              "rola": true,
+              "altura": 508
+            },
+            {
+              "classe": "bottom-sheet sheet-margens mobile-only is-open",
+              "overflow": "hidden/hidden",
+              "rola": false,
+              "altura": 523
+            },
+            {
+              "classe": "app",
+              "overflow": "hidden/hidden",
+              "rola": false,
+              "altura": 844
+            }
+          ],
+          "confere": true,
+          "motivo": null,
+          "api": "Margem = votos do líder menos votos do segundo colocado no município; pontos = essa diferença sobre os votos válidos. Or"
+        }
+      ],
+      "scroll": {
+        "scrollWidth": 390,
+        "clientWidth": 390
+      }
+    }
+  },
+  "console_erros": [],
+  "problemas": [],
+  "ok": true,
+  "nota_alcancavel": {
+    "desktop_1440x900": {
+      "ok": true,
+      "scroller": "side-panel",
+      "scroll_antes": 0,
+      "scroll_max": 1356,
+      "scroll_depois": 516,
+      "nota_alcancada_por_rolagem": true,
+      "nota_top": 372,
+      "nota_bottom": 489,
+      "scrollport_top": 76,
+      "scrollport_bottom": 784,
+      "nota_inteira_visivel": true,
+      "ultima_linha_bottom": 489,
+      "ultima_linha_inteira": true,
+      "linhas": 8,
+      "scrollHeight": 118,
+      "clientHeight": 118,
+      "scroll_no_fim": 1356,
+      "arquivo": "_provas/polimento_desktop_1440x900_nota.png"
+    },
+    "mobile_390x844": {
+      "ok": true,
+      "scroller": "sheet-body sheet-body--margens",
+      "scroll_antes": 0,
+      "scroll_max": 472,
+      "scroll_depois": 472,
+      "nota_alcancada_por_rolagem": true,
+      "nota_top": 532,
+      "nota_bottom": 620,
+      "scrollport_top": 223,
+      "scrollport_bottom": 732,
+      "nota_inteira_visivel": true,
+      "ultima_linha_bottom": 620,
+      "ultima_linha_inteira": true,
+      "linhas": 6,
+      "scrollHeight": 88,
+      "clientHeight": 88,
+      "scroll_no_fim": 472,
+      "arquivo": "_provas/polimento_mobile_390x844_nota.png"
+    }
+  }
+}
