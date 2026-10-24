@@ -73,6 +73,15 @@
       "origem": "STATE.md 23/10 — npm run build verde em 431 ms e go test -count=1 ./... PASS no 6493d46",
       "rapido": true,
       "timeout_s": 300
+    },
+    {
+      "id": "R09",
+      "regra": "no celular não existe caixa flutuante (tooltip) do mapa e a seleção continua funcionando",
+      "prova": "node scripts/provas/tooltip_mobile.mjs --base <base> --out <run> --prefix tooltip",
+      "criterio": "tooltip_relatorio.json com ok=true e falhas=0: .uf-tooltip-popup=0 depois do tap em zona, UF, município e local nas duas telas (390x844 e 390x700), seleção intacta (CE / município / local), hover no desktop=1 em zona, UF, município e local, console limpo e scrollWidth==clientWidth",
+      "origem": "24/10/2026 — print do Pedro: caixa 'Acopiara · zona 60' fixa em cima do mapa no celular. Correção em web/src/tooltip.js (podeMostrarTooltip, decisão única consultada pelos handlers de MapView.jsx). Refs: _provas/tooltip_relatorio.json (ok=true) e _provas/antes_tooltip/tooltip_antes_relatorio.json (ok=false — a prova acusa antes da correção, com o mesmo texto do print)",
+      "rapido": true,
+      "timeout_s": 560
     }
   ]
 }

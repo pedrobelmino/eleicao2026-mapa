@@ -31,6 +31,7 @@ import {
   prepararZonas,
 } from '../cidade.js'
 import { instalarControleDeMouse } from '../controle_mouse.js'
+import { podeMostrarTooltip } from '../tooltip.js'
 import { numero, percentual, pontos } from '../format.js'
 
 const FONTE = 'ufs'
@@ -1973,6 +1974,9 @@ export default function MapView({
       'top-right',
     )
 
+    // A caixa em si é criada sempre (o desktop precisa dela), mas só é
+    // adicionada ao mapa quando `podeMostrarTooltip()` libera — no celular o
+    // tap não desenha nada. Ver web/src/tooltip.js.
     const tooltipEl = document.createElement('div')
     tooltipEl.className = 'uf-tooltip'
     const tooltip = new maplibregl.Popup({
@@ -2220,6 +2224,7 @@ export default function MapView({
         }
 
         mapa.getCanvas().style.cursor = 'pointer'
+        if (!podeMostrarTooltip()) return
         preencherTooltipUf(tooltipEl, feature.properties || {})
         tooltip.setLngLat(evento.lngLat).addTo(mapa)
       })
@@ -2236,6 +2241,7 @@ export default function MapView({
 
         limparHover()
         mapa.getCanvas().style.cursor = 'pointer'
+        if (!podeMostrarTooltip()) return
         if (feature.layer.id === LAYER_MUN_FILL) {
           preencherTooltipMunicipio(
             tooltipEl,
@@ -2258,6 +2264,7 @@ export default function MapView({
         const feature = evento.features?.[0]
         if (!feature) return
         mapa.getCanvas().style.cursor = 'pointer'
+        if (!podeMostrarTooltip()) return
         preencherTooltipLocal(tooltipEl, feature.properties || {})
         tooltip.setLngLat(evento.lngLat).addTo(mapa)
       })
@@ -2284,12 +2291,15 @@ export default function MapView({
       if (!feature) return
       const propriedades = feature.properties || {}
 
-      preencherTooltipMunicipio(
-        tooltipEl,
-        propriedades,
-        indiceMargensRef.current.get(String(propriedades.codarea ?? '')),
-      )
-      tooltip.setLngLat(evento.lngLat).addTo(mapa)
+      // Só a caixa é condicional: o drill-down abaixo acontece igual no celular.
+      if (podeMostrarTooltip()) {
+        preencherTooltipMunicipio(
+          tooltipEl,
+          propriedades,
+          indiceMargensRef.current.get(String(propriedades.codarea ?? '')),
+        )
+        tooltip.setLngLat(evento.lngLat).addTo(mapa)
+      }
 
       onSelectMunicipioRef.current?.(
         propriedades.nome,
@@ -2315,6 +2325,9 @@ export default function MapView({
       // A partir do zoom municipal o preenchimento cobre os prismas e o
       // clique deve abrir o município, não a zona.
       if (mapa.getZoom() >= 6.6) return
+      // Zona não tem estado de seleção: a caixa era todo o retorno do toque.
+      // No celular ela não existe — quem quer o número desce ao município.
+      if (!podeMostrarTooltip()) return
       const feature = evento.features?.[0]
       if (!feature) return
 

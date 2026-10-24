@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # regressao.sh — regressão do eleicao2026.belmino.dev
 #
-#   bash scripts/regressao/regressao.sh --rapido     (padrão: 5 itens, ~3 min)
-#   bash scripts/regressao/regressao.sh --completo   (8 itens, ~10 min)
+#   bash scripts/regressao/regressao.sh --rapido     (padrão: 6 itens, ~8 min)
+#   bash scripts/regressao/regressao.sh --completo   (9 itens, ~15 min)
 #   bash scripts/regressao/regressao.sh --completo --base http://127.0.0.1:8100
 #
 # Cada item: RODA a prova que já existe em scripts/provas/, MEDE o artefato que a
@@ -218,8 +218,31 @@ prova_R08() {
   return 1
 }
 
+# ------------------------------------------------------------------- R09
+# no celular não existe caixa flutuante do mapa; no desktop o hover continua.
+# Le o tooltip_relatorio.json gravado por scripts/provas/tooltip_mobile.mjs.
+prova_R09() {
+  exigir_site || return 2
+  node scripts/provas/tooltip_mobile.mjs --base "$BASE" --out "$PASTA" --prefix tooltip \
+    >"$PASTA/R09-tooltip.log" 2>&1
+  local arq="$PASTA/tooltip_relatorio.json" ok gerado falhas pior cel
+  [ -f "$arq" ] || { echo "MEDIDA=nao medido: tooltip_relatorio.json nao foi gravado (ver R09-tooltip.log)"; return 2; }
+  gerado="$(jq -r '.gerado // ""' "$arq" 2>/dev/null)"
+  [ -n "$gerado" ] || { echo "MEDIDA=nao medido: relatorio sem 'gerado' (prova morreu no meio)"; return 2; }
+  ok="$(jq -r '.ok' "$arq" 2>/dev/null)"
+  falhas="$(jq -r '(.falhas // []) | length' "$arq" 2>/dev/null)"
+  # pior contagem de .uf-tooltip-popup no celular (zona/UF/município/local)
+  pior="$(jq -r '[.celular[] | ([.tooltipsDepoisDeTocarZona.total, .tooltipsDepoisDeTocarUf.total,
+      .tooltipsDepoisDeTocarMunicipio.total, .tooltipsDepoisDeTocarLocal.total] | max)] | max' "$arq" 2>/dev/null)"
+  cel="$(jq -r '[.desktop.tooltipsHoverZona.total, .desktop.tooltipsHoverUf.total,
+      .desktop.tooltipsHoverMunicipio.total, .desktop.tooltipsHoverLocal.total] | join("/")' "$arq" 2>/dev/null)"
+  echo "MEDIDA=celular_popups(pior)=$pior desktop_hover(zona/uf/municipio/local)=$cel falhas=$falhas ok=$ok"
+  [ "$ok" = "true" ] && [ "$falhas" = "0" ] && return 0
+  return 1
+}
+
 export -f exigir_site num_maior prova_R01 prova_R02 prova_R03 prova_R04
-export -f prova_R05 prova_R06 prova_R07 prova_R08
+export -f prova_R05 prova_R06 prova_R07 prova_R08 prova_R09
 
 # ------------------------------------------------------------------ execução
 IDS="$(jq -r --arg modo "$MODO" '.itens[] | select(if $modo == "rapido" then (.rapido == true) else true end) | .id' "$CHECKLIST")"
