@@ -3,13 +3,20 @@
 #
 # Uso:
 #   scripts/seguranca/teste_ataques.sh [BASE] [TOKEN]
-#     BASE         default http://127.0.0.1:8110 (site público, também o alvo
-#                  do túnel quando rodado com https://eleicao2026.belmino.dev)
-#     TOKEN        token do painel privado; se omitido, lê METRICAS_TOKEN de .env
-#     BASE_INTERNO default http://127.0.0.1:8112 (painel privado, só loopback)
+#     BASE          default http://127.0.0.1:8110 (site público, alvo do túnel)
+#     TOKEN         token do painel privado; se omitido, lê METRICAS_TOKEN de .env
+#     BASE_INTERNO  env, default http://127.0.0.1:8112 (painel, só loopback)
+#     PUB           env, default https://eleicao2026.belmino.dev (borda real)
 #
-# O caso [11] prova as duas coisas de uma vez: o painel responde 200 na porta
-# interna e 404 no site público, MESMO com token válido.
+# DECISÃO DE 24/10 (é o que o caso [11] mede): no 127.0.0.1:8112 — porta
+# publicada SÓ em loopback e fora do túnel — painel e métricas abrem SEM token.
+# A barreira deixou de ser a credencial e passou a ser PORTA + CAMINHO + a marca
+# X-Painel-Local que só aquele server block do nginx sabe escrever. O token
+# continua valendo onde sempre importou: fora do loopback, a API responde 401
+# sem a marca, MESMO com X-Real-IP/X-Forwarded-For forjados.
+#
+# O caso [11] prova as duas coisas de uma vez: 200 sem token no loopback e 404
+# no site público — inclusive com token válido, inclusive com cabeçalho forjado.
 #
 # Cada caso imprime PASS/FAIL com o motivo. Sai com código 1 se algo falhar.
 # Nada aqui altera estado: só dispara requisição e olha a resposta.
@@ -28,17 +35,27 @@ fi
 
 PASS=0
 FAIL=0
+PULADOS=0
 FALHAS=()
 
-cor() { case "$1" in ok) printf '\033[32m%s\033[0m' "$2";; ruim) printf '\033[31m%s\033[0m' "$2";; *) printf '%s' "$2";; esac; }
+cor() { case "$1" in ok) printf '\033[32m%s\033[0m' "$2";; ruim) printf '\033[31m%s\033[0m' "$2";; aviso) printf '\033[33m%s\033[0m' "$2";; *) printf '%s' "$2";; esac; }
 
 registra_ok()   { PASS=$((PASS+1)); printf '  %s  %-38s %s\n' "$(cor ok PASS)" "$1" "${2:-}"; }
 registra_falha(){ FAIL=$((FAIL+1)); FALHAS+=("$1: $2"); printf '  %s  %-38s %s\n' "$(cor ruim FAIL)" "$1" "$2"; }
+# Pular não é passar: o caso não foi medido (túnel fora, compose parado, sem
+# token no .env) e o número tem de aparecer no resumo para ninguém confundir
+# "não medido" com "defendido".
+pula()          { PULADOS=$((PULADOS+1)); printf '  %s  %-38s %s\n' "$(cor aviso SKIP)" "$1" "${2:-não medido}"; }
 
-# status <url> [extra curl...] → código HTTP
+# status <url> [extra curl...] → código HTTP (000 quando não há conexão)
 status() {
   local url="$1"; shift
-  curl -s -o /dev/null -m 8 -w '%{http_code}' "$@" "$url" 2>/dev/null || echo "000"
+  local codigo
+  # Sem `|| echo 000`: o curl já imprime 000 quando a conexão é recusada, e o
+  # OR concatenava os dois ("000000"), fazendo caso de recusa parecer resposta.
+  codigo="$(curl -s -o /dev/null -m 8 -w '%{http_code}' "$@" "$url" 2>/dev/null)"
+  printf '%s' "${codigo:0:3}"
+  [ -n "${codigo:0:3}" ] || printf '000'
 }
 
 # corpo <url> → corpo da resposta
@@ -222,49 +239,206 @@ for TERMO in goroutine "panic:" "/home/pedro" ".go:" "sql:"; do
   corpo_sem "404 sem $TERMO" "$TERMO" "$BASE/api/nao-existe"
 done
 
-# ------------------------------------------------------- 11. painel privado (token)
+# ------------------------------------- 11. painel de métricas: decisão de 24/10
 echo
-echo "[11] painel de métricas privado (token + porta fechada)"
-# O painel mora em 127.0.0.1:8112 (servidor nginx separado, fora do túnel).
-# No BASE (o site público) as rotas internas NÃO existem: 404 sempre, mesmo
-# com token válido — a credencial não é a única barreira, o caminho também não.
+echo "[11] painel de métricas: local SEM token, público sem rota"
+# Decisão do Pedro (24/10): em 127.0.0.1:8112 — porta publicada SÓ em loopback
+# (compose.yaml) e fora do túnel — painel e métricas abrem SEM token. A barreira
+# passou a ser PORTA + CAMINHO + a marca X-Painel-Local, que só aquele server
+# block do nginx escreve (proxy_set_header sobrescreve o que o cliente mandar).
+# O token continua valendo fora do loopback: a API pela rede do compose responde
+# 401 sem a marca — é o caso 11b, que substitui o antigo "8112 sem token → 401".
 INTERNO="${BASE_INTERNO:-http://127.0.0.1:8112}"
-if [ -z "$TOKEN" ]; then
-  registra_ok "token ausente no .env" "casos de token pulados (defina METRICAS_TOKEN em .env)"
+PUB="${PUB:-https://eleicao2026.belmino.dev}"
+FORJA=( -H 'X-Real-IP: 127.0.0.1' -H 'X-Forwarded-For: 127.0.0.1' )
+
+# 11a — a decisão, medida: loopback SEM token responde 200.
+espera_status "interno: métricas SEM token → 200"     "200" "$INTERNO/api/interno/metricas"
+espera_status "interno: painel SEM token → 200"       "200" "$INTERNO/api/interno/painel"
+espera_status "interno: token é irrelevante na 8112"  "200" "$INTERNO/api/interno/metricas?token=errado"
+espera_status "interno: rota inexistente → 404"       "404" "$INTERNO/api/interno/qualquer"
+corpo_sem     "interno: métricas sem IP de visitante" "189.4.1" "$INTERNO/api/interno/metricas"
+
+# 11b — fora do loopback o token continua obrigatório (401/403). Medido de
+# dentro da rede do compose: a marca não vem, e X-Real-IP/X-Forwarded-For
+# forjados não convencem o Go (só o proxy escreve a marca).
+if command -v docker >/dev/null 2>&1 \
+   && ID_API="$(docker compose -f "$RAIZ/compose.yaml" --project-directory "$RAIZ" ps -q api 2>/dev/null)" \
+   && [ -n "$ID_API" ] && [ "$(docker inspect -f '{{.State.Running}}' "$ID_API" 2>/dev/null)" = "true" ]; then
+  direto() { # [opções wget...] → status da API pela rede do compose
+    docker compose -f "$RAIZ/compose.yaml" --project-directory "$RAIZ" exec -T web \
+      wget -q -S -O /dev/null "$@" http://api:8080/api/interno/metricas 2>&1 \
+      | grep -m1 -o 'HTTP/1.1 [0-9]*' | awk '{print $2}'
+  }
+  checa_nao_local() { # nome, obtido
+    if [ "$2" = "401" ] || [ "$2" = "403" ]; then
+      registra_ok "$1" "HTTP $2"
+    else
+      registra_falha "$1" "HTTP ${2:-sem resposta} (esperado 401/403)"
+    fi
+  }
+  checa_nao_local "não-loopback: API sem marca → 401/403" "$(direto)"
+  checa_nao_local "não-loopback: X-Real-IP/XFF forjados" \
+    "$(direto --header='X-Real-IP: 127.0.0.1' --header='X-Forwarded-For: 127.0.0.1')"
 else
-  espera_status "interno: sem token → 401/403"    "401|403" "$INTERNO/api/interno/metricas"
-  espera_status "interno: token errado → 401/403" "401|403" "$INTERNO/api/interno/metricas?token=errado"
-  espera_status "interno: token certo → 200"      "200"     "$INTERNO/api/interno/metricas?token=$TOKEN"
-  espera_status "interno: painel HTML → 200"      "200"     "$INTERNO/api/interno/painel?token=$TOKEN"
-  corpo_sem     "interno: métricas sem IP claro"  "189.4.1" "$INTERNO/api/interno/metricas?token=$TOKEN"
+  pula "não-loopback: API sem marca" "compose/api fora do ar — não medido"
+  pula "não-loopback: X-Real-IP/XFF forjados" "compose/api fora do ar — não medido"
+fi
 
-  if [ "$INTERNO" != "$BASE" ]; then
-    espera_status "público: painel com token → 404"     "404" "$BASE/api/interno/painel?token=$TOKEN"
-    espera_status "público: métricas com token → 404"   "404" "$BASE/api/interno/metricas?token=$TOKEN"
-    espera_status "público: interno sem token → 404"    "404" "$BASE/api/interno/metricas"
-    espera_status "público: interno inexistente → 404"  "404" "$BASE/api/interno/qualquer"
-    corpo_sem     "público: painel não entrega HTML"    "Métricas · eleição 2026" "$BASE/api/interno/painel?token=$TOKEN"
-  else
-    registra_ok "público x interno" "mesma base: casos de isolamento pulados"
-  fi
+# 11c — BURLA pelo site público local (8110): o caminho não existe ali. 404
+# seco, sem token, com cabeçalho forjado e até com X-Painel-Local: 1 — a marca
+# que o Go exige não sobrevive ao server block público.
+espera_status "público local: métricas SEM token → 404"       "404" "$BASE/api/interno/metricas"
+espera_status "público local: painel SEM token → 404"         "404" "$BASE/api/interno/painel"
+espera_status "público local: X-Real-IP/XFF forjados → 404"   "404" "$BASE/api/interno/metricas" "${FORJA[@]}"
+espera_status "público local: X-Painel-Local forjado → 404"   "404" "$BASE/api/interno/metricas" -H 'X-Painel-Local: 1'
+espera_status "público local: rota interna inexistente → 404" "404" "$BASE/api/interno/qualquer"
 
-  # Painel novo: o gráfico tem de vir no HTML (SVG inline, sem CDN).
-  PAINEL_HTML="$(corpo "$INTERNO/api/interno/painel?token=$TOKEN")"
-  if printf '%s' "$PAINEL_HTML" | grep -q '<svg'; then
-    registra_ok "painel: gráfico SVG presente" "$(printf '%s' "$PAINEL_HTML" | grep -c '<svg') svg inline"
+# 11d — BURLA pela borda real (túnel). O pedido passa pela Cloudflare antes do
+# nginx: com CF-Connecting-IP forjado quem responde 403 é a própria borda
+# (medido: server: cloudflare) e o origem nem é tocado. Por isso o caso aceita
+# 403|404 — o que NÃO se aceita é 200.
+if [ "$(status "$PUB/")" = "200" ]; then
+  espera_status "borda: métricas SEM token → 404"        "404"     "$PUB/api/interno/metricas"
+  espera_status "borda: painel SEM token → 404"          "404"     "$PUB/api/interno/painel"
+  espera_status "borda: 3 cabeçalhos forjados → 403/404" "403|404" "$PUB/api/interno/metricas" \
+    -H 'X-Real-IP: 127.0.0.1' -H 'X-Forwarded-For: 127.0.0.1' -H 'CF-Connecting-IP: 127.0.0.1'
+  espera_status "borda: rota interna inexistente → 404"  "404"     "$PUB/api/interno/qualquer"
+  if [ -n "$TOKEN" ]; then
+    espera_status "borda: métricas COM token válido → 404" "404" "$PUB/api/interno/metricas?token=$TOKEN"
   else
-    registra_falha "painel: gráfico SVG presente" "nenhum <svg> no painel"
+    pula "borda: métricas COM token válido" "METRICAS_TOKEN ausente no .env"
   fi
-  if printf '%s' "$PAINEL_HTML" | grep -qE '<script|https?://[a-z]'; then
-    registra_falha "painel: sem script/CDN externo" "achou script ou URL externa"
+  corpo_sem "borda: painel não entrega HTML" "Métricas · eleição 2026" "$PUB/api/interno/painel"
+else
+  pula "borda: casos do túnel" "$PUB não respondeu 200 em / — túnel fora?"
+fi
+
+# Painel novo: o gráfico tem de vir no HTML (SVG inline, sem CDN).
+PAINEL_HTML="$(corpo "$INTERNO/api/interno/painel")"
+if printf '%s' "$PAINEL_HTML" | grep -q '<svg'; then
+  registra_ok "painel: gráfico SVG presente" "$(printf '%s' "$PAINEL_HTML" | grep -c '<svg') svg inline"
+else
+  registra_falha "painel: gráfico SVG presente" "nenhum <svg> no painel"
+fi
+if printf '%s' "$PAINEL_HTML" | grep -qE '<script|https?://[a-z]'; then
+  registra_falha "painel: sem script/CDN externo" "achou script ou URL externa"
+else
+  registra_ok "painel: sem script/CDN externo" "self-contained"
+fi
+
+# ------------------------------------------- 11e. portas: 8112 só em loopback
+echo
+echo "[11e] portas publicadas só em loopback"
+if command -v ss >/dev/null 2>&1; then
+  for PORTA in 8110 8112; do
+    LINHA_PORTA="$(ss -ltnp 2>/dev/null | grep -E ":$PORTA " | head -1)"
+    if printf '%s' "$LINHA_PORTA" | grep -q "127.0.0.1:$PORTA"; then
+      registra_ok "porta $PORTA só em 127.0.0.1" "$(printf '%s' "$LINHA_PORTA" | awk '{print $4}')"
+    else
+      registra_falha "porta $PORTA só em 127.0.0.1" "não está só em loopback: ${LINHA_PORTA:-ausente}"
+    fi
+  done
+fi
+# Prova por requisição, não só por ss: o IP de LAN desta máquina tem de dar
+# recusa de conexão (000). Se responder, o painel está exposto na rede local.
+IP_LAN="$(hostname -I 2>/dev/null | awk '{print $1}')"
+if [ -n "$IP_LAN" ]; then
+  COD_LAN="$(status "http://$IP_LAN:8112/api/interno/metricas")"
+  if [ "$COD_LAN" = "000" ]; then
+    registra_ok "8112 inalcançável pelo IP de LAN" "$IP_LAN: recusa de conexão"
   else
-    registra_ok "painel: sem script/CDN externo" "self-contained"
+    registra_falha "8112 inalcançável pelo IP de LAN" "HTTP $COD_LAN em http://$IP_LAN:8112 (esperado 000)"
   fi
 fi
 
-# ------------------------------------------------ 11b. defesa automática (vigia)
+# ------------------------------------- 11f. borda Cloudflare: nunca bloqueada
 echo
-echo "[11b] defesa automática (vigia de ataques)"
+echo "[11f] borda Cloudflare: fora do bloqueio automático e do escore"
+# Trava ip_borda. O defeito medido em 24/10: 2a06:98c0:3600::103 (a borda) virou
+# "suspeito 35". IP de borda não é visitante, é o caminho do visitante: bloquear
+# ou acusar a borda derruba o site para todo mundo. Aqui se prova, com o próprio
+# módulo: (a) reconhece a faixa, (b) decidir() não devolve a borda nem com surto
+# absurdo, (c) o escore registra a borda à parte e não a avalia, (d) --bloquear
+# recusa e não escreve na lista.
+PROVA_BORDA="$(mktemp)"
+VIGIA="$RAIZ/scripts/defesa/vigia_ataques.py"
+cat > "$PROVA_BORDA" <<'PY'
+import importlib.util
+import os
+import sys
+import tempfile
+from datetime import datetime, timedelta, timezone
+
+caminho = sys.argv[1]
+# Log do vigia durante a prova vai para arquivo temporário: prova não suja journal.
+os.environ.setdefault("DEFESA_LOG", os.path.join(tempfile.mkdtemp(), "prova.log"))
+espec = importlib.util.spec_from_file_location("vigia", caminho)
+vigia = importlib.util.module_from_spec(espec)
+espec.loader.exec_module(vigia)
+
+BORDA = "2a06:98c0:3600::103"     # a linha real de 24/10 em belmino.dev
+VISITANTE = "191.31.15.133"       # controle: IP público de visitante
+falhas = []
+
+if not vigia.ip_borda(BORDA):
+    falhas.append(f"ip_borda({BORDA}) = False")
+if vigia.ip_borda(VISITANTE):
+    falhas.append(f"visitante {VISITANTE} tratado como borda")
+
+# decidir(): surto absurdo da borda não vira bloqueio; o visitante vira.
+resumo = {
+    BORDA: {"req60": 99999, "c429": 900, "suspeitos": 900, "exemplo": "GET /wp-admin/install.php", "metodo": "GET"},
+    VISITANTE: {"req60": 99999, "c429": 0, "suspeitos": 0, "exemplo": "", "metodo": "GET"},
+}
+decididos = [d["ip"] for d in vigia.decidir(resumo)]
+if BORDA in decididos:
+    falhas.append("decidir() bloquearia a borda")
+if VISITANTE not in decididos:
+    falhas.append("decidir() não bloqueou o visitante (controle)")
+
+# Escore: a borda fica registrada à parte e nunca é avaliada.
+estado: dict = {}
+linhas = [
+    f'{BORDA} 2026-10-24T12:34:31-03:00 404 GET /.env belmino.dev 0 "GET /.env HTTP/1.1" curl',
+    f'{BORDA} 2026-10-24T12:34:33-03:00 404 GET /wp-admin/install.php belmino.dev 0 "GET /wp-admin/install.php HTTP/1.1" curl',
+    f'{VISITANTE} 2026-10-24T12:35:10+00:00 404 GET /.env - -',
+]
+agora = datetime(2026, 10, 24, 15, 40, tzinfo=timezone(timedelta(hours=-3)))
+avaliados = vigia.acumular_suspeitas(linhas, estado, agora)
+if BORDA in avaliados:
+    falhas.append("borda entrou no escore de suspeita")
+if VISITANTE not in avaliados:
+    falhas.append("visitante não entrou no escore (controle)")
+if BORDA not in ((estado.get("borda") or {}).get("ips") or {}):
+    falhas.append("borda não ficou registrada à parte no estado")
+
+print(" · ".join(falhas) if falhas else "ok")
+sys.exit(1 if falhas else 0)
+PY
+SAIDA_BORDA="$(python3 "$PROVA_BORDA" "$VIGIA" 2>&1)" && COD_BORDA=0 || COD_BORDA=$?
+if [ "$COD_BORDA" -eq 0 ]; then
+  registra_ok "borda CF: trava ip_borda (decisão + escore)" "fora do bloqueio e do escore"
+else
+  registra_falha "borda CF: trava ip_borda (decisão + escore)" "${SAIDA_BORDA:-sem saída}"
+fi
+rm -f "$PROVA_BORDA"
+
+ANTES_BLOQ="$(sha256sum "$RAIZ/var/defesa/bloqueios.conf" 2>/dev/null | awk '{print $1}')"
+SAIDA_CLI="$(python3 "$VIGIA" --bloquear 2a06:98c0:3600::103 --motivo 'prova automatizada' 2>&1)" && COD_CLI=0 || COD_CLI=$?
+DEPOIS_BLOQ="$(sha256sum "$RAIZ/var/defesa/bloqueios.conf" 2>/dev/null | awk '{print $1}')"
+if [ "$COD_CLI" -ne 0 ] \
+   && printf '%s' "$SAIDA_CLI" | grep -qi 'BORDA' \
+   && [ "$ANTES_BLOQ" = "$DEPOIS_BLOQ" ] \
+   && ! grep -q '2a06:98c0:3600::103' "$RAIZ/var/defesa/bloqueios.conf" 2>/dev/null; then
+  registra_ok "borda CF: --bloquear recusa" "exit $COD_CLI · lista intacta"
+else
+  registra_falha "borda CF: --bloquear recusa" "exit $COD_CLI · $(printf '%s' "$SAIDA_CLI" | tr '\n' ' ' | head -c 120)"
+fi
+
+# ------------------------------------------------ 11g. defesa automática (vigia)
+echo
+echo "[11g] defesa automática (vigia de ataques)"
 VIGIA="$RAIZ/scripts/defesa/vigia_ataques.py"
 AUTOTESTE="$(mktemp)"
 if python3 "$VIGIA" --autoteste >"$AUTOTESTE" 2>&1; then
@@ -279,16 +453,6 @@ if grep -Ev '^[[:space:]]*#' "$RAIZ/var/defesa/bloqueios.conf" 2>/dev/null \
   registra_falha "lista de bloqueio sem faixa privada" "lista em vigor tem IP privado/loopback"
 else
   registra_ok "lista de bloqueio sem faixa privada" "só IP público (ou vazia)"
-fi
-
-# porta do painel publicada só em loopback
-if command -v ss >/dev/null 2>&1; then
-  LINHA_PAINEL="$(ss -ltnp 2>/dev/null | grep -E ':8112 ' | head -1)"
-  if printf '%s' "$LINHA_PAINEL" | grep -q '127.0.0.1:8112'; then
-    registra_ok "painel em 127.0.0.1:8112" "$(printf '%s' "$LINHA_PAINEL" | awk '{print $4}')"
-  else
-    registra_falha "painel em 127.0.0.1:8112" "não está escutando só em loopback: ${LINHA_PAINEL:-ausente}"
-  fi
 fi
 
 # ------------------------------------------------------------------ 12. flood
@@ -322,7 +486,7 @@ fi
 # ------------------------------------------------------------------- resumo
 echo
 echo "=============================================================="
-printf ' resumo: %s passaram · %s falharam\n' "$PASS" "$FAIL"
+printf ' resumo: %s passaram · %s falharam · %s pulados\n' "$PASS" "$FAIL" "$PULADOS"
 if [ "$FAIL" -gt 0 ]; then
   echo " falhas:"
   for LINHA in "${FALHAS[@]}"; do echo "   - $LINHA"; done

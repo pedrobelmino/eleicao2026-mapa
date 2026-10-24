@@ -349,16 +349,23 @@ simultâneas e 24 por IP, validação de URI/parâmetros (414/400), whitelist de
 **Bateria de ataque** (não altera estado; sai 1 se algo falhar):
 
 ```bash
-scripts/seguranca/teste_ataques.sh                       # contra 127.0.0.1:8110 (71 casos)
+scripts/seguranca/teste_ataques.sh                       # contra 127.0.0.1:8110 (83 casos)
 scripts/seguranca/teste_ataques.sh http://127.0.0.1:8100 # contra a stack de teste
 scripts/seguranca/teste_ataques.sh https://eleicao2026.belmino.dev   # pela internet, como o mundo vê
 ```
 
 Cobre flood (429), injeção SQL/JS em caminho e parâmetro, path traversal, injeção de cabeçalho por
 CRLF, payload de 2 MB, métodos não permitidos, acesso direto a arquivo de dados, listagem de
-diretório, 404 sem stack, o painel privado (200 só na porta interna, 404 no público **com token
-válido**) e a defesa (autoteste do vigia + lista de bloqueio sem faixa privada). O flood é o último
-caso de propósito: ele satura o balde do próprio IP.
+diretório, 404 sem stack, e o painel de métricas nas três frentes: **200 sem token** em
+`127.0.0.1:8112` (a decisão de 24/10), **401/403 fora do loopback** (API direto pela rede do
+compose, sem a marca, inclusive com `X-Real-IP`/`X-Forwarded-For` forjados) e **404 no site público**
+— local e pela borda real — com ou sem token válido e com `X-Real-IP`/`X-Forwarded-For`/
+`CF-Connecting-IP`/`X-Painel-Local` forjados. Prova também as portas (8110 e 8112 só em loopback,
+8112 inalcançável pelo IP de LAN) e a trava `ip_borda`: IP de faixa Cloudflare nunca entra no escore
+de suspeita nem na lista de bloqueio (`--bloquear` recusa). A defesa entra pelo autoteste do vigia e
+pela lista de bloqueio sem faixa privada. O flood é o último caso de propósito: ele satura o balde
+do próprio IP. Caso que não pôde ser medido (túnel fora, compose parado) sai como `SKIP` e conta no
+resumo — pular não é passar.
 
 **Painel privado de métricas** — acessos, latência p50/p95/p99, erros, recusas do limitador, saúde
 da stack, visitas anônimas, série temporal com gráfico e o estado da defesa:
