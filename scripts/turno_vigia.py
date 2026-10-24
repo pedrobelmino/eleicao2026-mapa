@@ -28,8 +28,10 @@ regra no próprio script, sem segundo timer.
 
 JANELA DE VIRADA
 ----------------
-Só vira entre 18:00 e 23:59 (horário local, FUSO -03) de 25/10/2026, definido em
+Só vira entre 17:00 e 23:59 (horário local, FUSO -03) de 25/10/2026, definido em
 `janela_virada`; fora dela não toca em .env nem em containers, mesmo com vap>0.
+A janela vem ANTES da cadência no caminho de decisão: fora dela o log diz "fora
+da janela de virada", não "dentro da janela de 60 min".
 `VIGIA_AGORA` (ISO 8601) congela o relógio; `--ensaio=janela` prova os 4 casos.
 
 ENSAIO (o que se prova sem tocar em produção)
@@ -81,7 +83,7 @@ CONFIG_PADRAO = {
     # Dia do 2º turno: dentro dele a checagem é a cada 10 min.
     "dia_eleicao": "2026-10-25",
     # Fora desta janela o vigia não vira nada, por hora (horário local -03).
-    "janela_virada": {"data": "2026-10-25", "de": "18:00", "ate": "23:59"},
+    "janela_virada": {"data": "2026-10-25", "de": "17:00", "ate": "23:59"},
     "tse_base": "https://resultados.tse.jus.br/oficial/ele2026",
     # Rota pública que a validação usa (passa pelo nginx da web, como o usuário).
     "api_base": "http://127.0.0.1:8110",
@@ -336,7 +338,7 @@ def dentro_da_janela(config: dict, momento: datetime | None = None) -> tuple[boo
         if not isinstance(janela, dict):
             raise TypeError("janela_virada não é um objeto")
         data = janela.get("data") or config.get("dia_eleicao")
-        de = janela.get("de") or "18:00"
+        de = janela.get("de") or "17:00"
         ate = janela.get("ate") or "23:59"
         if not data:
             raise ValueError("data da janela ausente")
@@ -582,6 +584,9 @@ def _prepara_sandbox(nome: str, base_tmp: Path, env_real: Path, toca_flag: bool)
 
 def _config_ensaio(porta: int) -> dict:
     config = dict(CONFIG_PADRAO)
+    # A janela provada é a do config.json de PRODUÇÃO (não só o default do código):
+    # se o arquivo disser 18:00 e o código 17:00, o ensaio tem de acusar.
+    config.update(carrega_config())
     config.update({
         "tse_base": f"http://127.0.0.1:{porta}",
         "api_base": f"http://127.0.0.1:{porta}",
@@ -696,6 +701,32 @@ def roda_ensaio_janela(caso: str, momento: str, espera_virar: bool, base_tmp: Pa
     return 0 if ok else 2
 
 
+# --------------------------------------------------------------- rodar/decidir
+def executa(config: dict, forcar: bool = False) -> int:
+    """Caminho ÚNICO de decisão do timer: estado -> JANELA -> cadência -> virada.
+
+    A janela vem antes da cadência de propósito: em 24/10 o log tem de dizer
+    "fora da janela de virada", não "dentro da janela de 60 min". `forcar`
+    ignora a cadência, nunca a janela — virar antes das 17:00 não é opção.
+    """
+    estado = le_json(ESTADO_PATH)
+    if estado.get("virado_em"):
+        logar(f"já virado em {estado['virado_em']} — nada a fazer")
+        return 0
+
+    na_janela, rotulo = dentro_da_janela(config)
+    if not na_janela:
+        logar(f"fora da janela de virada ({rotulo}) — não vira "
+              f"(agora {agora().strftime('%Y-%m-%d %H:%M')})")
+        return 0
+
+    pode, motivo = cadencia_vencida(config, estado, forcar)
+    if not pode:
+        logar(f"cadência: {motivo} — sem checagem agora")
+        return 0
+    return virada(config, estado)     # virada() repete a trava (defesa em profundidade)
+
+
 # ----------------------------------------------------------------------- main
 def main(argv: list[str] | None = None) -> int:
     global CONFIG
@@ -711,10 +742,10 @@ def main(argv: list[str] | None = None) -> int:
         base_tmp = Path(tempfile.mkdtemp(prefix="ensaio-vigia-"))
         if args.ensaio == "janela":
             casos = [
-                ("a", "2026-10-25T12:00:00-03:00", False),
-                ("b", "2026-10-25T18:30:00-03:00", True),
-                ("c", "2026-10-26T00:05:00-03:00", False),
-                ("d", "2026-10-24T22:00:00-03:00", False),
+                ("a", "2026-10-25T16:59:00-03:00", False),   # antes das 17:00
+                ("b", "2026-10-25T17:00:00-03:00", True),    # 17:00 em ponto (abre)
+                ("c", "2026-10-26T00:00:00-03:00", False),   # depois das 23:59
+                ("d", "2026-10-24T22:00:00-03:00", False),   # hoje, 24/10
             ]
             pior = 0
             for caso, momento, espera_virar in casos:
@@ -742,11 +773,7 @@ def main(argv: list[str] | None = None) -> int:
         logar(f"já virado em {estado['virado_em']} — nada a fazer")
         return 0
 
-    pode, motivo = cadencia_vencida(CONFIG, estado, args.forcar)
-    if not pode:
-        logar(f"fora da janela: {motivo} — sem checagem agora")
-        return 0
-    return virada(CONFIG, estado)
+    return executa(CONFIG, args.forcar)
 
 
 if __name__ == "__main__":
