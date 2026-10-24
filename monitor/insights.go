@@ -9,6 +9,7 @@ package main
 import (
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 )
 
@@ -138,6 +139,34 @@ func gerarInsights(snap *snapshot, refs referencias) []insight {
 			saida = append(saida, insight{
 				Nivel: "atencao",
 				Texto: fmt.Sprintf("%d IP(s) bloqueados na borda pelo vigia agora", ativos),
+			})
+		}
+	}
+
+	// 9b) Suspeitos por escore. Não é bloqueio: o painel avisa e o bloqueio é
+	// decisão manual (bloquear.sh). O visitante que fica conectado não entra
+	// aqui, porque volume nenhum pontua.
+	if len(snap.Suspeitos) > 0 {
+		maliciosos, suspeitos := 0, 0
+		for _, s := range snap.Suspeitos {
+			switch s.Nivel {
+			case NivelMalicioso:
+				maliciosos++
+			case NivelSuspeito:
+				suspeitos++
+			}
+		}
+		if maliciosos > 0 {
+			primeiro := snap.Suspeitos[0]
+			saida = append(saida, insight{
+				Nivel: "alerta",
+				Texto: fmt.Sprintf("%d IP(s) malicioso(s) e %d suspeito(s) por escore — o maior é %s com %d/100 (%s)",
+					maliciosos, suspeitos, primeiro.IP, primeiro.Escore, strings.Join(primeiro.Rotulos, ", ")),
+			})
+		} else if suspeitos > 0 {
+			saida = append(saida, insight{
+				Nivel: "atencao",
+				Texto: fmt.Sprintf("%d IP(s) em observação/suspeita por escore; nenhum malicioso agora", suspeitos),
 			})
 		}
 	}

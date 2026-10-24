@@ -1,0 +1,15 @@
+# /home/pedro/.config/systemd/user/hermes-eleicao-defesa.timer
+# Um ciclo por minuto: é a granularidade que o limiar de 120 req/min pede.
+# Persistent=false: ciclo perdido com a máquina desligada não precisa rodar
+# atrasado (o log de defesa continua no lugar; o próximo ciclo lê o que houver).
+[Unit]
+Description=Eleições 2026: vigia de ataques a cada 1 min
+
+[Timer]
+OnCalendar=*:0/1
+AccuracySec=5s
+Persistent=false
+Unit=hermes-eleicao-defesa.service
+
+[Install]
+WantedBy=timers.target

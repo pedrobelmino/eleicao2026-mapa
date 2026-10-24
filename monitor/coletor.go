@@ -239,6 +239,8 @@ type snapshot struct {
 	Insights   []insight         `json:"insights"`
 	Feed       []feedItem        `json:"feed"`
 	Vigia      map[string]any    `json:"vigia"`
+	Suspeitos  []suspeito        `json:"suspeitos"`
+	Suspeita   map[string]int    `json:"suspeita_resumo"`
 	Parcial24h bool              `json:"parcial_24h"`
 }
 
@@ -281,6 +283,22 @@ func (c *coletor) foto() snapshot {
 
 	snap.SerieMin = c.serieMinutos(agora, time.Minute)
 	snap.SerieDia = c.serieDias(agora)
+	// Escore de suspeita: uma passada, todos os IPs, e a lista exibida começa
+	// em "observar" (limpo não interessa a ninguém).
+	todos := calcularSuspeitos(c.eventos, agora, 0)
+	snap.Suspeita = map[string]int{NivelLimpo: 0, NivelObservar: 0, NivelSuspeito: 0, NivelMalicioso: 0}
+	for i := range todos {
+		snap.Suspeita[todos[i].Nivel]++
+	}
+	snap.Suspeitos = make([]suspeito, 0, 8)
+	for i := range todos {
+		if todos[i].Escore >= escoreObservar {
+			snap.Suspeitos = append(snap.Suspeitos, todos[i])
+		}
+		if len(snap.Suspeitos) >= 20 {
+			break
+		}
+	}
 	refs := referencias{}
 	refs.taxaAnterior, refs.temTaxa = c.taxaAnterior(25 * time.Minute)
 	refs.ultimoAtaque, refs.temAtaque = c.ultimoAtaque()

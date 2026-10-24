@@ -26,7 +26,9 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/exec"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"sync"
 	"syscall"
@@ -44,6 +46,7 @@ type servidor struct {
 	coletor *coletor
 	rede    *net.IPNet
 	inicio  time.Time
+	raiz    string // raiz do projeto (para achar scripts/defesa/bloquear.sh)
 }
 
 func main() {
@@ -53,6 +56,7 @@ func main() {
 		caminho   = flag.String("log", envOu("MONITOR_LOG", "var/defesa/acessos.log"), "log de defesa do nginx")
 		serie     = flag.String("serie", envOu("MONITOR_SERIE", "var/defesa/monitor_serie_dia.json"), "agregado diário persistido")
 		estado    = flag.String("estado", envOu("MONITOR_ESTADO", "var/defesa/estado.json"), "estado do vigia (bloqueios)")
+		raiz      = flag.String("raiz", envOu("MONITOR_RAIZ", "."), "raiz do projeto (scripts/defesa/bloquear.sh)")
 	)
 	flag.Parse()
 
@@ -68,7 +72,7 @@ func main() {
 		log.Printf("semeadura: %d linha(s) já no log", linhas)
 	}
 
-	srv := &servidor{coletor: coletor, rede: redeAutorizada, inicio: time.Now()}
+	srv := &servidor{coletor: coletor, rede: redeAutorizada, inicio: time.Now(), raiz: *raiz}
 
 	go func() {
 		for {
@@ -140,6 +144,7 @@ func (s *servidor) rotas() http.Handler {
 	mux.Handle("/", http.FileServer(http.FS(estatico)))
 	mux.HandleFunc("/api/monitor/estado", s.handleEstado)
 	mux.HandleFunc("/api/monitor/eventos", s.handleSSE)
+	mux.HandleFunc("/api/monitor/bloquear", s.handleBloquear)
 	mux.HandleFunc("/saude", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		_, _ = w.Write([]byte("ok\n"))
@@ -274,6 +279,89 @@ func assinaturaDe(foto *snapshot) string {
 	}
 	fmt.Fprintf(&sb, "%d", foto.Lidos)
 	return sb.String()
+}
+
+// handleBloquear é o botão de bloqueio MANUAL do painel. Não existe bloqueio
+// automático por acúmulo de sinais: quem decide é o Pedro, aqui ou na linha de
+// comando (scripts/defesa/bloquear.sh). O pedido só chega por causa do filtro
+// de socket (loopback/LAN) aplicado em toda rota.
+func (s *servidor) handleBloquear(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		fmt.Fprintln(w, "405 — use POST com {\"ip\":\"...\",\"motivo\":\"...\"}")
+		return
+	}
+
+	var pedido struct {
+		IP     string `json:"ip"`
+		Motivo string `json:"motivo"`
+	}
+	corpo := http.MaxBytesReader(w, r.Body, 4096)
+	if err := json.NewDecoder(corpo).Decode(&pedido); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintln(w, "400 — JSON inválido")
+		return
+	}
+
+	ip := net.ParseIP(strings.TrimSpace(pedido.IP))
+	if ip == nil || ip.IsUnspecified() {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, "400 — IP inválido: %q\n", pedido.IP)
+		return
+	}
+	motivo := resumirMotivo(pedido.Motivo)
+
+	script := filepath.Join(s.raiz, "scripts", "defesa", "bloquear.sh")
+	if _, err := os.Stat(script); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(w, "500 — script ausente: %s (%v)\n", script, err)
+		return
+	}
+
+	ctx, cancelar := context.WithTimeout(r.Context(), 40*time.Second)
+	defer cancelar()
+	comando := exec.CommandContext(ctx, "/usr/bin/env", "bash", script, ip.String(), motivo)
+	comando.Dir = s.raiz
+	saida, err := comando.CombinedOutput()
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	codificador := json.NewEncoder(w)
+	codificador.SetIndent("", " ")
+	if err != nil {
+		log.Printf("bloqueio manual %s FALHOU: %v · %s", ip, err, strings.TrimSpace(string(saida)))
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = codificador.Encode(map[string]any{
+			"ok": false, "ip": ip.String(), "motivo": motivo,
+			"erro": err.Error(), "saida": strings.TrimSpace(string(saida)),
+		})
+		return
+	}
+	log.Printf("BLOQUEIO MANUAL pelo painel: %s · %s", ip, motivo)
+	_ = codificador.Encode(map[string]any{
+		"ok": true, "ip": ip.String(), "motivo": motivo,
+		"saida": strings.TrimSpace(string(saida)),
+	})
+}
+
+// resumirMotivo corta o que não pode ir para a linha de comando e mantém o
+// texto legível no Telegram e no estado.
+func resumirMotivo(motivo string) string {
+	limpo := strings.Join(strings.Fields(motivo), " ")
+	limpo = strings.Map(func(r rune) rune {
+		if r < 32 || r == '"' || r == '\'' || r == ';' || r == '$' || r == '`' {
+			return ' '
+		}
+		return r
+	}, limpo)
+	limpo = strings.TrimSpace(limpo)
+	if limpo == "" {
+		return "manual pelo painel"
+	}
+	if len(limpo) > 120 {
+		limpo = limpo[:120]
+	}
+	return limpo
 }
 
 // vigiarEstadoVigia relê o estado do vigia de ataques (bloqueios por IP).

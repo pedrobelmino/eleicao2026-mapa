@@ -96,6 +96,7 @@ function desenhar(foto) {
   const janela = foto.janelas[estado.janela];
   desenharCards(janela, foto);
   desenharInsights(foto.insights || []);
+  desenharSuspeitos(foto);
   desenharAtaques(janela);
   desenharHosts(janela);
   desenharTop('#tabela-ips', janela.top_ips, 'IP');
@@ -110,12 +111,20 @@ function desenharCards(j, foto) {
   const totalClasse = Object.entries(j.por_classe || {})
     .map(([chave, valor]) => chave + ' ' + num(valor)).join(' · ');
   const ataques = j.ataques || 0;
+  const suspeita = foto.suspeita_resumo || {};
+  const emSuspeita = (suspeita.malicioso || 0) + (suspeita.suspeito || 0);
 
   const cards = [
     { rotulo: 'req/s (' + j.nome + ')', valor: (j.req_s || 0).toFixed(2), detalhe: num(j.total) + ' req na janela' },
     { rotulo: 'visitantes 1 min', valor: num((j.unicos || {}).minuto), detalhe: 'IPs humanos' },
     { rotulo: 'visitantes 1 h', valor: num((j.unicos || {}).hora), detalhe: 'IPs humanos' },
     { rotulo: 'bots ativos', valor: num(j.bots_ativos), detalhe: 'últimos 5 min' },
+    {
+      rotulo: 'suspeitos (escore)',
+      valor: num(emSuspeita),
+      detalhe: num(suspeita.observar || 0) + ' em observação · nada bloqueado sozinho',
+      classe: suspeita.malicioso ? 'alerta' : '',
+    },
     {
       rotulo: 'ataques (' + j.nome + ')',
       valor: num(ataques),
@@ -142,6 +151,77 @@ function desenharInsights(lista) {
     return;
   }
   alvo.innerHTML = lista.map((i) => `<li class="${esc(i.nivel)}">${esc(i.texto)}</li>`).join('');
+}
+
+/* Suspeitos: escore por sinais, nunca por volume. Nada é bloqueado sozinho —
+ * o botão e o comando na linha existem para a decisão ser do Pedro. */
+function desenharSuspeitos(foto) {
+  const corpo = $('#tabela-suspeitos').querySelector('tbody');
+  const lista = foto.suspeitos || [];
+  const resumo = foto.suspeita_resumo || {};
+  const nota = $('#suspeita-nota');
+
+  const partes = [];
+  if (resumo.malicioso) partes.push(resumo.malicioso + ' malicioso(s)');
+  if (resumo.suspeito) partes.push(resumo.suspeito + ' suspeito(s)');
+  if (resumo.observar) partes.push(resumo.observar + ' em observação');
+  nota.textContent = partes.length ? partes.join(' · ') : 'nenhum IP com sinal';
+
+  if (!lista.length) {
+    corpo.innerHTML = '<tr><td colspan="9" class="vazio">ninguém acima de 20 no escore</td></tr>';
+    return;
+  }
+
+  corpo.innerHTML = lista.map((s) => {
+    const motivo = (s.rotulos || s.sinais || []).join(', ');
+    const primeiro = (s.primeiro || '').replace('T', ' ').slice(0, 19);
+    const ultimo = (s.ultimo || '').replace('T', ' ').slice(0, 19);
+    const comando = 'bash scripts/defesa/bloquear.sh ' + s.ip + ' "' + (motivo || s.nivel) + '"';
+    return `
+    <tr class="linha-suspeita nivel-${esc(s.nivel)}">
+      <td><span class="selo-nivel ${esc(s.nivel)}">${esc(s.nivel)}</span></td>
+      <td class="num escore">${num(s.escore)}</td>
+      <td class="mono">${esc(s.ip)}</td>
+      <td class="mono">${esc(s.host || '?')}</td>
+      <td class="sinais">${esc(motivo)}</td>
+      <td class="mono">${esc(primeiro)}</td>
+      <td class="mono">${esc(ultimo)}</td>
+      <td class="num">${num(s.eventos)}</td>
+      <td class="acao">
+        <button class="bloquear" data-ip="${esc(s.ip)}" data-motivo="${esc(motivo || s.nivel)}"
+                title="${esc(comando)}">Bloquear 30 min</button>
+        <code class="comando">${esc(comando)}</code>
+      </td>
+    </tr>`;
+  }).join('');
+
+  corpo.querySelectorAll('button.bloquear').forEach((botao) => {
+    botao.addEventListener('click', () => bloquear(botao));
+  });
+}
+
+async function bloquear(botao) {
+  const ip = botao.dataset.ip;
+  const motivo = 'escore de suspeita no painel: ' + (botao.dataset.motivo || '');
+  const antes = botao.textContent;
+  botao.disabled = true;
+  botao.textContent = 'bloqueando…';
+  try {
+    const resposta = await fetch('/api/monitor/bloquear', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ip, motivo }),
+    });
+    const dados = await resposta.json().catch(() => ({}));
+    if (!resposta.ok || dados.ok === false) throw new Error(dados.saida || dados.erro || ('HTTP ' + resposta.status));
+    botao.textContent = 'bloqueado (30 min)';
+    selo(estado.modoPolling ? 'online' : 'sse', (estado.modoPolling ? 'polling 2 s' : 'ao vivo (SSE)') + ' · bloqueou ' + ip);
+  } catch (erro) {
+    botao.textContent = 'falhou — ver journal';
+    selo('offline', 'bloqueio manual de ' + ip + ' falhou: ' + erro.message);
+    botao.disabled = false;
+    setTimeout(() => { botao.textContent = antes; }, 6000);
+  }
 }
 
 function desenharAtaques(j) {

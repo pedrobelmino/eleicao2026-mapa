@@ -1,0 +1,19 @@
+# /home/pedro/.config/systemd/user/hermes-eleicao-defesa.service
+# Defesa automática do eleicao2026.belmino.dev: um ciclo por minuto.
+# O binário real é scripts/defesa/vigia_ataques.py; o ExecStart aponta para o
+# wrapper de caminho fixo (~/.hermes/scripts/eleicao_defesa_vigia.sh), porque
+# mover o alvo do systemd quebra em silêncio.
+[Unit]
+Description=Eleições 2026: vigia de ataques (bloqueia IP abusivo na borda do nginx e avisa no Telegram)
+Documentation=file:///home/pedro/eleicao2026-mapa/scripts/defesa/vigia_ataques.py
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/pedro/eleicao2026-mapa
+ExecStart=/home/pedro/.hermes/scripts/eleicao_defesa_vigia.sh
+# systemd não herda o PATH do shell: docker, python3 e nginx -t via container.
+Environment=HOME=/home/pedro
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+TimeoutStartSec=120

@@ -34,6 +34,25 @@
       <ul class="insights" id="insights"><li class="vazio">aguardando dados…</li></ul>
     </section>
 
+    <section class="bloco">
+      <h2>Suspeitos por escore <span class="nota" id="suspeita-nota"></span></h2>
+      <p class="explica-suspeita">
+        Escore de <b>0 a 100</b> somando sinais explícitos — caminho sensível, payload de injeção,
+        método anômalo, rota interna sondada, UA de bot/falsificado, regularidade de máquina e
+        reincidência após 403/404. <b>Volume de requisição não pontua:</b> quem fica com o painel
+        aberto faz centenas de chamadas e continua limpo. Nada aqui é bloqueado sozinho — a última
+        coluna mostra o comando pronto e o botão para você decidir.
+      </p>
+      <div class="tabela-rolagem">
+        <table class="tabela" id="tabela-suspeitos">
+          <thead>
+            <tr><th>Nível</th><th>Escore</th><th>IP</th><th>Host</th><th>Sinais</th><th>Primeiro</th><th>Último</th><th>Eventos</th><th>Ação (manual)</th></tr>
+          </thead>
+          <tbody><tr><td colspan="9" class="vazio">ninguém acima de 20 no escore</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
     <div class="duas">
       <section class="bloco">
         <h2>Ataques na janela <span class="nota" id="ataques-nota"></span></h2>

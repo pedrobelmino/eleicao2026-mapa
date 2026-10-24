@@ -483,32 +483,64 @@ CDN, zero requisição externa — a CSP do nginx continua fechada e o painel é
 
 **Defesa automática contra ataque** (`hermes-eleicao-defesa.timer`, systemd --user, 1 min):
 
-| limiar | padrão | env |
+Só **volume/surto** bloqueia sozinho — todo o resto virou escore de suspeita, que identifica e avisa.
+
+| limiar que BLOQUEIA sozinho | padrão | env |
 |---|---|---|
 | requisições do mesmo IP em 60 s | 120 | `LIMITE_REQ_MIN` |
 | respostas 429 em 60 s | 20 | `LIMITE_429` |
-| varredura (traversal, `.env`, `.git`, `wp-admin`…) ou 5xx em 5 min | 15 | `LIMITE_SUSPEITOS` |
 | janela do bloqueio (renovável) | 30 min | `DURACAO_MIN` |
+
+**Escore de suspeita por IP** (`monitor/suspeita.go` e `scripts/defesa/suspeita.py`, espelhos
+conferidos contra o mesmo fixture `scripts/defesa/suspeita_fixture.json`): 0 a 100, cada sinal vale
+**uma vez** por IP — quantidade de requisição nunca pontua.
+
+| sinal | peso | o que é |
+|---|---|---|
+| `caminho_sensivel` | 35 | `/admin`, `/.env`, `/.git`, `/wp-login`, `/phpmyadmin`, `/etc/passwd`… |
+| `injecao` | 40 | SQLi, path traversal, XSS no alvo (caminho + query) |
+| `metodo_anomalo` | 15 | PROPFIND, PUT, TRACE, DELETE… |
+| `sondagem_interna` | 35 | `/api/interno/*` (rota de administração do site) |
+| `ua_anomalo` | 15 | UA vazio, UA de scanner (sqlmap, nikto…) ou falsificado (iOS/MSIE antigo) |
+| `regularidade` | 15 | intervalo quase fixo (desvio/média ≤ 0,15) por >30 min **sem UA de navegador** |
+| `reincidencia` | 15 | 3+ respostas 403/404 e voltou depois da primeira recusa |
+
+Faixas: `limpo` < 20 ≤ `observar` < 60 ≤ `suspeito` < 80 ≤ `malicioso`. A partir de **60** o vigia
+manda **um** aviso no Telegram — e **não bloqueia**: o aviso traz o comando `bloquear.sh` e a decisão
+é do Pedro. O painel 8113 mostra a lista "Suspeitos por escore" com os sinais de cada IP.
+
+**O que NÃO conta** (é o que protege o visitante legítimo de amanhã): `/`, `/index.html`, `/mapa`,
+`/eleicao`, `/api/home`, `/api/estados`, `/api/visita`, `/healthz`, `/assets/*` e estáticos
+(`.js`, `.css`, `.png`, `.jpg`, `.woff2`) não geram sinal de caminho; e `regularidade` é desligada
+para qualquer IP com UA de navegador real. Volume puro também não conta: 300 requisições em 10 min
+do mesmo IP dão escore **0**.
+
+**Anti-spam do aviso**: 1 mensagem por IP a cada **6 h**; mais de 3 suspeitos novos no mesmo ciclo
+saem em **uma** mensagem consolidada (no máximo a cada 30 min); no máximo 3 avisos individuais por
+ciclo.
 
 Como funciona, por ciclo:
 
 1. lê o que é novo em `var/defesa/acessos.log` (log do nginx no formato
    `IP instante status método caminho` — sem query string, para o token nunca entrar em log);
-2. agrega por IP e aplica os limiares. **IP privado, loopback, link-local ou reservado nunca é
-   bloqueado** — é a trava que mantém o túnel, o nginx e o painel de pé, e tem teste próprio
-   (`vigia_ataques.py --autoteste`, 22 casos);
-3. escreve `var/defesa/bloqueios.conf` (`<ip> 1;`), roda `nginx -t` e recarrega o container `web`;
+2. agrega por IP e aplica os limiares de surto. **IP privado, loopback, link-local ou reservado
+   nunca é bloqueado** — é a trava que mantém o túnel, o nginx e o painel de pé, e tem teste próprio
+   (`vigia_ataques.py --autoteste`, incluindo o fixture do escore);
+3. acumula o escore de suspeita das mesmas linhas e decide os avisos (anti-spam), sem bloquear;
+4. escreve `var/defesa/bloqueios.conf` (`<ip> 1;`), roda `nginx -t` e recarrega o container `web`;
    o `geo $bloqueado_ip` do nginx devolve **403 só para aquele IP**. Todo o resto continua 200;
-4. grava o estado em `var/defesa/estado.json` (o painel lê daí) e conta os bloqueios;
-5. avisa no Telegram com IP, motivo, contagem e horário (renovação avisa no máximo a cada 10 min);
-6. ao vencer a janela, o IP sai da lista sozinho e o nginx recarrega.
+5. grava o estado em `var/defesa/estado.json` (o painel lê daí) e conta os bloqueios;
+6. avisa no Telegram com IP, motivo, contagem e horário (renovação avisa no máximo a cada 10 min);
+7. ao vencer a janela, o IP sai da lista sozinho e o nginx recarrega.
 
 Operação:
 
 ```bash
 python3 scripts/defesa/vigia_ataques.py --status          # bloqueios ativos, contador, última execução
-python3 scripts/defesa/vigia_ataques.py --autoteste      # prova que faixa privada nunca é bloqueada
+python3 scripts/defesa/vigia_ataques.py --suspeitos       # escore por IP agora (não envia nada)
+python3 scripts/defesa/vigia_ataques.py --autoteste      # faixa privada + fixture do escore
 python3 scripts/defesa/vigia_ataques.py --ensaio         # decide e imprime, sem tocar em nada
+bash scripts/defesa/bloquear.sh 45.22.33.44 "escore 100 no painel"   # bloqueio MANUAL
 bash scripts/defesa/desbloquear.sh 45.22.33.44           # desbloqueio manual (um IP)
 bash scripts/defesa/desbloquear.sh --todos               # lista inteira
 bash scripts/defesa/prova_bloqueio.sh                    # prova ponta a ponta (ataca e desbloqueia)
@@ -516,6 +548,9 @@ systemctl --user list-timers hermes-eleicao-defesa.timer # cadência
 journalctl --user -u hermes-eleicao-defesa -n 50         # ciclos
 tail -20 ~/.hermes/logs/eleicao-defesa.log               # bloqueios, renovações, desbloqueios
 ```
+
+`bloquear.sh <ip> "<motivo>" [--minutos N]` (padrão 240 min): recusa IP não público com exit 65,
+testa o nginx antes do reload e a janela expira sozinha.
 
 Desligar a defesa (o site continua no ar, com o rate limit do nginx):
 
