@@ -165,6 +165,14 @@ function desenharSuspeitos(foto) {
   if (resumo.malicioso) partes.push(resumo.malicioso + ' malicioso(s)');
   if (resumo.suspeito) partes.push(resumo.suspeito + ' suspeito(s)');
   if (resumo.observar) partes.push(resumo.observar + ' em observação');
+  const infra = foto.infra_local || {};
+  if (infra.ips) {
+    const detalhe = (infra.lista || [])
+      .slice(0, 3)
+      .map((i) => i.ip + ' ' + num(i.eventos))
+      .join(', ');
+    partes.push('infra local fora da contagem: ' + num(infra.ips) + ' IP(s) / ' + num(infra.eventos) + ' req' + (detalhe ? ' (' + detalhe + ')' : ''));
+  }
   nota.textContent = partes.length ? partes.join(' · ') : 'nenhum IP com sinal';
 
   if (!lista.length) {

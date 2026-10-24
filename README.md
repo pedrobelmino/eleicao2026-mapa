@@ -509,6 +509,23 @@ Faixas: `limpo` < 20 ≤ `observar` < 60 ≤ `suspeito` < 80 ≤ `malicioso`. A 
 manda **um** aviso no Telegram — e **não bloqueia**: o aviso traz o comando `bloquear.sh` e a decisão
 é do Pedro. O painel 8113 mostra a lista "Suspeitos por escore" com os sinais de cada IP.
 
+**Infra local NUNCA pontua** (corrigido em 24/10/2026, defeito medido em produção): loopback
+(`127.0.0.0/8`, `::1`), faixas privadas (`10/8`, `172.16/12` — onde ficam os gateways do docker,
+`172.17.0.1`…`172.31.255.254` — e `192.168/16`), link-local, multicast, reservado e o rótulo
+`não resolvido` (400 antes do `real_ip`) ficam **fora do escore**, pela mesma regra que já protege o
+bloqueio (`ip_publico` no vigia). O painel mostra essa parte à parte, em `infra_local`
+(`ips`, `eventos`, `lista`), nunca na contagem de suspeitos. Motivo: as nossas próprias provas de
+ataque saem do host e chegam ao nginx pelo gateway do docker — sem essa trava, o `172.19.0.1`
+aparecia como `malicioso 100` (`caminho_sensivel` + `injecao`) por causa de linhas de teste nossas
+(`/.env`, `/.git`, `/api/interno`, `OR 1=1`), e o `127.0.0.1` idem.
+
+**Leitura do log** (`monitor/logwatch.go`, `suspeita._extrair_linha`): o formato tem 7 colunas fixas,
+a requisição crua entre aspas e o UA com espaços; a coluna `$uri` **pode vir vazia** (400 antes do
+`real_ip`) e **pode conter espaço** (o `escape=default` não escapa espaço). Por isso a leitura ancora
+nas colunas previsíveis — as duas colunas à esquerda do campo entre aspas são host e bloqueado — em
+vez de contar token na posição. Três gerações de linha convivem no arquivo (5 colunas; sem aspas;
+atual) e cada uma tem caso de teste com **linha real** em `monitor/infra_local_test.go`.
+
 **O que NÃO conta** (é o que protege o visitante legítimo de amanhã): `/`, `/index.html`, `/mapa`,
 `/eleicao`, `/api/home`, `/api/estados`, `/api/visita`, `/healthz`, `/assets/*` e estáticos
 (`.js`, `.css`, `.png`, `.jpg`, `.woff2`) não geram sinal de caminho; e `regularidade` é desligada

@@ -28,6 +28,7 @@ package main
 
 import (
 	"math"
+	"net"
 	"regexp"
 	"sort"
 	"strings"
@@ -152,6 +153,30 @@ func limparAlvo(bruto string) string {
 	alvo = reHTTPFim.ReplaceAllString(alvo, "")
 	alvo = reMetodo.ReplaceAllString(alvo, "")
 	return strings.TrimSpace(alvo)
+}
+
+// ipInfraLocal diz se o IP é da NOSSA infraestrutura: loopback, RFC1918
+// (10/8, 172.16/12 — onde moram os gateways do docker, 172.17.0.1 …
+// 172.31.255.254 — e 192.168/16), link-local, multicast, reservado e
+// não especificado. Também cai aqui o rótulo "não resolvido" (400 antes do
+// real_ip: o IP do socket é sempre o gateway do docker).
+//
+// Essa é a MESMA regra que já protege o bloqueio (`ip_publico` no vigia):
+// o que não pode ser bloqueado não pode ser acusado. Sem ela, as nossas
+// próprias provas de ataque (que saem do host e chegam ao nginx pelo gateway
+// 172.19.0.1) viravam "malicioso 100" no painel — infra nossa, não visitante.
+func ipInfraLocal(texto string) bool {
+	bruto := strings.TrimSpace(texto)
+	if bruto == "" || bruto == ipNaoResolvido {
+		return true
+	}
+	endereco := net.ParseIP(strings.Trim(bruto, "[]"))
+	if endereco == nil {
+		return false // não é IP: segue o fluxo normal, não é infra declarada
+	}
+	return endereco.IsLoopback() || endereco.IsPrivate() ||
+		endereco.IsLinkLocalUnicast() || endereco.IsLinkLocalMulticast() ||
+		endereco.IsMulticast() || endereco.IsUnspecified()
 }
 
 // resolverPontos serve só para decidir se o caminho é benigno; as regexes
@@ -284,6 +309,12 @@ func calcularSuspeitos(eventos []evento, agora time.Time, minimo int) []suspeito
 		ev := &eventos[i]
 		ip := strings.TrimSpace(ev.IP)
 		if ip == "" || ip == ipNaoResolvido {
+			continue
+		}
+		// Infra local (loopback, RFC1918, gateway do docker) NUNCA entra no
+		// escore: não é visitante, não pode ser bloqueada e não pode ser
+		// acusada. O painel mostra o volume dela fora da contagem.
+		if ipInfraLocal(ip) {
 			continue
 		}
 		est := estados[ip]
@@ -490,4 +521,64 @@ func nivelDe(escore int) string {
 		return NivelObservar
 	}
 	return NivelLimpo
+}
+
+// infraLocal é o retrato da infra nossa no ring: mostrado no painel FORA da
+// contagem de suspeitos (loopback, RFC1918/gateway do docker, não resolvido).
+type infraLocal struct {
+	IPs     int             `json:"ips"`
+	Eventos int             `json:"eventos"`
+	Lista   []contagemInfra `json:"lista"`
+}
+
+type contagemInfra struct {
+	IP      string `json:"ip"`
+	Eventos int    `json:"eventos"`
+	Rotulo  string `json:"rotulo"`
+}
+
+// resumoInfraLocal conta o que ficou de fora do escore, sem esconder o volume:
+// se o gateway do docker aparece com 1497 eventos, o painel diz isso — o que
+// ele não faz é chamar isso de suspeito.
+// NÃO trava: quem chama (foto) já está com c.mu.RLock preso.
+func resumoInfraLocal(eventos []evento) infraLocal {
+	contagem := map[string]int{}
+	for i := range eventos {
+		ip := strings.TrimSpace(eventos[i].IP)
+		if ipInfraLocal(ip) {
+			contagem[ip]++
+		}
+	}
+	saida := infraLocal{IPs: len(contagem), Lista: make([]contagemInfra, 0, len(contagem))}
+	for ip, n := range contagem {
+		saida.Eventos += n
+		saida.Lista = append(saida.Lista, contagemInfra{IP: ip, Eventos: n, Rotulo: rotuloInfra(ip)})
+	}
+	sort.Slice(saida.Lista, func(a, b int) bool {
+		if saida.Lista[a].Eventos != saida.Lista[b].Eventos {
+			return saida.Lista[a].Eventos > saida.Lista[b].Eventos
+		}
+		return saida.Lista[a].IP < saida.Lista[b].IP
+	})
+	if len(saida.Lista) > 8 {
+		saida.Lista = saida.Lista[:8]
+	}
+	return saida
+}
+
+func rotuloInfra(ip string) string {
+	if ip == ipNaoResolvido {
+		return "não resolvido (400 antes do real_ip)"
+	}
+	endereco := net.ParseIP(strings.Trim(ip, "[]"))
+	switch {
+	case endereco != nil && endereco.IsLoopback():
+		return "loopback"
+	case endereco != nil && endereco.IsPrivate():
+		if strings.HasPrefix(ip, "172.") {
+			return "rede privada (gateway do docker)"
+		}
+		return "rede privada (RFC1918)"
+	}
+	return "infra local"
 }

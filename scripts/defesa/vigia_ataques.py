@@ -805,6 +805,27 @@ def autoteste() -> int:
         print(f"  {'PASS' if ok else 'FAIL'}  {rotulo}")
         falhas += 0 if ok else 1
 
+    print("\n[7] infra local nunca entra no escore (o defeito do 172.19.0.1)")
+    # Linha real do acessos.log: prova de injeção NOSSA, que chega ao nginx
+    # pelo gateway do docker. Pode ter .env e OR 1=1 — e não pode pontuar.
+    linhas_infra = [
+        "172.19.0.1 2026-10-24T13:24:24+00:00 404 GET /.env - -",
+        "172.19.0.1 2026-10-24T13:24:24+00:00 404 GET /.git/config - -",
+        "172.19.0.1 2026-10-24T13:24:24+00:00 404 GET /api/uf/SP' OR 1=1/municipios - -",
+        "172.19.0.1 2026-10-24T13:24:24+00:00 404 GET /api/interno/painel - -",
+        "127.0.0.1 2026-10-24T13:25:19+00:00 404 GET /api/interno/painel",
+    ]
+    acumulado: dict[str, dict] = {}
+    registrados = sum(1 for linha in linhas_infra if suspeita.registrar_linha(acumulado, linha))
+    ok = registrados == 0 and not acumulado
+    print(f"  {'PASS' if ok else 'FAIL'}  {len(linhas_infra)} linhas de ataque da infra → registrados={registrados} (esperado 0)")
+    falhas += 0 if ok else 1
+    linha_publica = "191.31.15.133 2026-10-24T13:25:19+00:00 404 GET /.env - -"
+    acumulado2: dict[str, dict] = {}
+    ok2 = suspeita.registrar_linha(acumulado2, linha_publica) and "191.31.15.133" in acumulado2
+    print(f"  {'PASS' if ok2 else 'FAIL'}  191.31.15.133 público segue registrado (não é descartado)")
+    falhas += 0 if ok2 else 1
+
     print(f"\nresumo: {'todos os casos passaram' if falhas == 0 else str(falhas) + ' falha(s)'}")
     return 0 if falhas == 0 else 1
 

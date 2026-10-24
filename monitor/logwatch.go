@@ -48,58 +48,123 @@ const hospedeiroDesconhecido = "?"
 const ipNaoResolvido = "não resolvido"
 
 // parseLinha interpreta uma linha crua. ok=false para linha vazia/lixo.
+//
+// O formato tem 7 colunas fixas + a requisição crua entre aspas + UA (que tem
+// espaço). A coluna $uri PODE ter espaço (o nginx não escapa espaço com
+// escape=default), então contar token na posição 5 é o que errava: numa linha
+// `… 404 GET /api/uf/SP' OR 1=1/municipios …` o "host" virava "OR". A leitura
+// agora ANCORA nas colunas que têm forma previsível: o campo entre aspas
+// delimita o alvo, e as duas colunas à esquerda dele são host e bloqueado.
 func parseLinha(linha string) (evento, bool) {
 	linha = strings.TrimRight(linha, "\r\n")
 	if strings.TrimSpace(linha) == "" {
 		return evento{}, false
 	}
 
-	// 7 campos fixos + o resto (alvo entre aspas e UA, ambos com espaço).
-	campos := strings.SplitN(linha, " ", 8)
+	var (
+		campos []string // colunas fixas, antes da requisição crua
+		alvo   string
+		ua     string
+	)
+
+	if aspa := strings.IndexByte(linha, '"'); aspa >= 0 {
+		// formato atual: alvo entre aspas, UA depois do fechamento
+		alvo, ua = separarCampoCitado(linha[aspa:])
+		campos = strings.Split(strings.TrimSuffix(linha[:aspa], " "), " ")
+		if n := len(campos); n >= 6 && ehCampoBloqueado(campos[n-1]) {
+			// URI pode ter engolido espaço: host/bloqueado são as duas últimas
+			uri := campos[4 : n-2]
+			ev := evento{
+				IP:      campos[0],
+				Metodo:  campos[3],
+				Caminho: strings.Join(uri, " "),
+				Host:    campos[n-2],
+				Alvo:    alvo,
+				UA:      ua,
+			}
+			ev.Bloqueado = campos[n-1] == "1"
+			if codigo, err := strconv.Atoi(campos[2]); err == nil {
+				ev.Status = codigo
+			}
+			if instante, err := time.Parse(time.RFC3339, campos[1]); err == nil {
+				ev.Quando = instante
+			}
+			return finalizarEvento(ev)
+		}
+	} else {
+		campos = strings.Split(linha, " ")
+		// geração sem aspas, com host/bloqueado: 8ª coluna é o alvo, o resto é UA
+		if n := len(campos); n >= 8 && ehCampoBloqueado(campos[6]) {
+			alvo = campos[7]
+			ua = strings.Join(campos[8:], " ")
+			ev := evento{
+				IP:      campos[0],
+				Metodo:  campos[3],
+				Caminho: campos[4],
+				Host:    campos[5],
+				Alvo:    alvo,
+				UA:      ua,
+			}
+			ev.Bloqueado = campos[6] == "1"
+			if codigo, err := strconv.Atoi(campos[2]); err == nil {
+				ev.Status = codigo
+			}
+			if instante, err := time.Parse(time.RFC3339, campos[1]); err == nil {
+				ev.Quando = instante
+			}
+			return finalizarEvento(ev)
+		}
+	}
+
+	// geração antiga (5 colunas: IP TS STATUS METODO URI), podendo haver
+	// espaço dentro da URI: aí tudo depois do método é caminho.
+	campos = strings.Split(linha, " ")
+	// as gerações antigas fecham a linha com "- -" (host/bloqueado ausentes):
+	// não fazem parte do caminho.
+	for len(campos) > 5 && campos[len(campos)-1] == "-" {
+		campos = campos[:len(campos)-1]
+	}
 	if len(campos) < 5 {
 		return evento{}, false
 	}
-
-	codigo, err := strconv.Atoi(campos[2])
-	if err != nil {
-		return evento{}, false
-	}
-	instante, err := time.Parse(time.RFC3339, campos[1])
-	if err != nil {
-		return evento{}, false
-	}
-
 	ev := evento{
 		IP:      campos[0],
-		Quando:  instante,
-		Status:  codigo,
 		Metodo:  campos[3],
-		Caminho: campos[4],
-		Host:    hospedeiroDesconhecido,
+		Caminho: strings.Join(campos[4:], " "),
 	}
+	if codigo, err := strconv.Atoi(campos[2]); err == nil {
+		ev.Status = codigo
+	}
+	if instante, err := time.Parse(time.RFC3339, campos[1]); err == nil {
+		ev.Quando = instante
+	}
+	return finalizarEvento(ev)
+}
 
-	if len(campos) >= 6 {
-		ev.Host = campos[5]
+// ehCampoBloqueado: a 7ª coluna é 0, 1 ou "-" (linha anterior ao campo).
+func ehCampoBloqueado(texto string) bool {
+	return texto == "0" || texto == "1" || texto == "-"
+}
+
+// finalizarEvento aplica os valores padrão e a classificação comum.
+func finalizarEvento(ev evento) (evento, bool) {
+	// status não numérico ou instante inválido = linha lixo, não evento.
+	if ev.Quando.IsZero() || ev.Status == 0 {
+		return evento{}, false
 	}
-	if len(campos) >= 7 {
-		ev.Bloqueado = campos[6] == "1"
-	}
-	if len(campos) == 8 {
-		alvo, ua := separarCampoCitado(campos[7])
-		ev.Alvo = alvo
-		ev.UA = ua
-	}
-	if ev.Host == "" {
+	if ev.Host == "" || ev.Host == "-" {
 		ev.Host = hospedeiroDesconhecido
 	}
 	if ev.Alvo == "" {
 		ev.Alvo = ev.Caminho
 	}
 
-	// 400 com caminho vazio e server_name "_": o nginx recusou a linha de
-	// requisição antes do real_ip. O IP que sobrou no log é o do socket
-	// (gateway do docker), não o do visitante.
-	if ev.Caminho == "" && ev.Host == "_" {
+	// 400 com caminho vazio: o nginx recusou a linha de requisição antes do
+	// real_ip (a URI vira o campo vazio e o host cai no default "_" ou no
+	// "-" das linhas antigas). O IP que sobrou no log é o do socket — o
+	// gateway do docker —, não o do visitante: o painel diz "não resolvido"
+	// em vez de culpar a infra.
+	if ev.Caminho == "" && (ev.Host == "_" || ev.Host == hospedeiroDesconhecido) {
 		ev.IPNaoResolvido = true
 		ev.IP = ipNaoResolvido
 	}
@@ -115,7 +180,16 @@ func parseLinha(linha string) (evento, bool) {
 func separarCampoCitado(resto string) (string, string) {
 	resto = strings.TrimLeft(resto, " ")
 	if !strings.HasPrefix(resto, "\"") {
-		// formato antigo/sem aspas: campo inteiro é o alvo
+		// Geração antiga, sem aspas no campo da requisição: o alvo é o
+		// PRIMEIRO token e o UA é o resto. Ler o campo inteiro como alvo
+		// jogava o UA para dentro do alvo e deixava o UA vazio — o que
+		// gerava "ua_anomalo" em linha que tinha navegador de verdade.
+		if resto == "" || resto == "-" {
+			return "", ""
+		}
+		if i := strings.IndexByte(resto, ' '); i >= 0 {
+			return resto[:i], strings.TrimSpace(resto[i+1:])
+		}
 		return resto, ""
 	}
 

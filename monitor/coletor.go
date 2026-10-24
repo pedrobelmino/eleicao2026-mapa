@@ -241,6 +241,7 @@ type snapshot struct {
 	Vigia      map[string]any    `json:"vigia"`
 	Suspeitos  []suspeito        `json:"suspeitos"`
 	Suspeita   map[string]int    `json:"suspeita_resumo"`
+	Infra      infraLocal        `json:"infra_local"`
 	Parcial24h bool              `json:"parcial_24h"`
 }
 
@@ -284,8 +285,10 @@ func (c *coletor) foto() snapshot {
 	snap.SerieMin = c.serieMinutos(agora, time.Minute)
 	snap.SerieDia = c.serieDias(agora)
 	// Escore de suspeita: uma passada, todos os IPs, e a lista exibida começa
-	// em "observar" (limpo não interessa a ninguém).
+	// em "observar" (limpo não interessa a ninguém). Infra local (loopback,
+	// RFC1918, gateway do docker) fica FORA do escore e é retratada à parte.
 	todos := calcularSuspeitos(c.eventos, agora, 0)
+	snap.Infra = resumoInfraLocal(c.eventos)
 	snap.Suspeita = map[string]int{NivelLimpo: 0, NivelObservar: 0, NivelSuspeito: 0, NivelMalicioso: 0}
 	for i := range todos {
 		snap.Suspeita[todos[i].Nivel]++

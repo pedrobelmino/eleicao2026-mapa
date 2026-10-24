@@ -410,8 +410,11 @@ def _extrair_linha(linha: str) -> tuple[str, str, int, str, str, str, str, str] 
     else:
         partes = texto.split()
         prefixo = partes[:7]
-        bruto = ""
-        ua = " ".join(partes[7:]) if len(partes) > 7 else ""
+        # Geração antiga sem aspas: alvo é o 8º campo (um token) e o UA é o
+        # resto. Ler tudo como alvo jogava o UA dentro do alvo e deixava o UA
+        # vazio (o que virava "ua_anomalo" falso).
+        bruto = partes[7] if len(partes) > 7 else ""
+        ua = " ".join(partes[8:]) if len(partes) > 8 else ""
 
     if len(prefixo) < 5:
         return None

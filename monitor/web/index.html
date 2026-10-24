@@ -40,7 +40,10 @@
         Escore de <b>0 a 100</b> somando sinais explícitos — caminho sensível, payload de injeção,
         método anômalo, rota interna sondada, UA de bot/falsificado, regularidade de máquina e
         reincidência após 403/404. <b>Volume de requisição não pontua:</b> quem fica com o painel
-        aberto faz centenas de chamadas e continua limpo. Nada aqui é bloqueado sozinho — a última
+        aberto faz centenas de chamadas e continua limpo. <b>Infra local nunca pontua:</b> loopback
+        (127.0.0.0/8, ::1) e faixas privadas (10/8, 172.16/12 — inclusive o gateway do docker
+        172.17–172.31 —, 192.168/16) ficam fora da contagem e aparecem à parte, porque é o nosso
+        próprio nginx/painel/testes falando com o site. Nada aqui é bloqueado sozinho — a última
         coluna mostra o comando pronto e o botão para você decidir.
       </p>
       <div class="tabela-rolagem">
