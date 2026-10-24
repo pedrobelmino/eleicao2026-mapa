@@ -26,6 +26,12 @@ O timer chama a cada 10 min. Fora do dia da eleição (e fora das 36 h seguintes
 janela em que a apuração pode atrasar) ele só faz a checagem de hora em hora —
 regra no próprio script, sem segundo timer.
 
+JANELA DE VIRADA
+----------------
+Só vira entre 18:00 e 23:59 (horário local, FUSO -03) de 25/10/2026, definido em
+`janela_virada`; fora dela não toca em .env nem em containers, mesmo com vap>0.
+`VIGIA_AGORA` (ISO 8601) congela o relógio; `--ensaio=janela` prova os 4 casos.
+
 ENSAIO (o que se prova sem tocar em produção)
 ---------------------------------------------
 `--ensaio` roda a SEQUÊNCIA COMPLETA contra um TSE e uma API de mentira
@@ -40,6 +46,7 @@ Uso:
     python3 scripts/turno_vigia.py --forcar        # ignora a cadência
     python3 scripts/turno_vigia.py --ensaio        # os dois cenários, sandbox
     python3 scripts/turno_vigia.py --ensaio=falha  # só o cenário de falha
+    python3 scripts/turno_vigia.py --ensaio=janela # os 4 casos da janela de virada
 """
 
 from __future__ import annotations
@@ -73,6 +80,8 @@ CONFIG_PADRAO = {
     "turno_alvo": "2",
     # Dia do 2º turno: dentro dele a checagem é a cada 10 min.
     "dia_eleicao": "2026-10-25",
+    # Fora desta janela o vigia não vira nada, por hora (horário local -03).
+    "janela_virada": {"data": "2026-10-25", "de": "18:00", "ate": "23:59"},
     "tse_base": "https://resultados.tse.jus.br/oficial/ele2026",
     # Rota pública que a validação usa (passa pelo nginx da web, como o usuário).
     "api_base": "http://127.0.0.1:8110",
@@ -90,6 +99,17 @@ UA = "Mozilla/5.0 (compatível; painel-eleicao-vigia)"
 
 # --------------------------------------------------------------------------- log
 def agora() -> datetime:
+    """Relógio local; VIGIA_AGORA (ISO 8601) permite congelá-lo nos ensaios."""
+    override = os.environ.get("VIGIA_AGORA")
+    if override:
+        try:
+            momento = datetime.fromisoformat(override.strip())
+        except (TypeError, ValueError):
+            pass
+        else:
+            if momento.tzinfo is None:
+                momento = momento.replace(tzinfo=FUSO)
+            return momento.astimezone(FUSO)
     return datetime.now(FUSO)
 
 
@@ -306,6 +326,34 @@ def url_nacional(config: dict) -> str:
             f"br-c0001-e{codigo:06d}-u.json")
 
 
+# ------------------------------------------------------------- janela de virada
+def dentro_da_janela(config: dict, momento: datetime | None = None) -> tuple[bool, str]:
+    """Trava explícita: só vira dentro de janela_virada. Config inválida = fecha."""
+    try:
+        janela = config.get("janela_virada")
+        if janela is None:
+            janela = {}
+        if not isinstance(janela, dict):
+            raise TypeError("janela_virada não é um objeto")
+        data = janela.get("data") or config.get("dia_eleicao")
+        de = janela.get("de") or "18:00"
+        ate = janela.get("ate") or "23:59"
+        if not data:
+            raise ValueError("data da janela ausente")
+        inicio = datetime.strptime(f"{data} {de}", "%Y-%m-%d %H:%M").replace(tzinfo=FUSO)
+        fim = datetime.strptime(f"{data} {ate}", "%Y-%m-%d %H:%M").replace(
+            tzinfo=FUSO, second=59, microsecond=999999)
+        rotulo = f"{de}–{ate} de {inicio.strftime('%d/%m/%Y')}"
+    except (TypeError, ValueError) as exc:
+        return False, f"janela_virada inválida em config ({type(exc).__name__}: {exc})"
+
+    if momento is None:
+        momento = agora()
+    elif momento.tzinfo is None:
+        momento = momento.replace(tzinfo=FUSO)
+    return (inicio <= momento <= fim), rotulo
+
+
 # --------------------------------------------------------------------- cadência
 def cadencia_vencida(config: dict, estado: dict, forcar: bool) -> tuple[bool, str]:
     if forcar:
@@ -339,6 +387,12 @@ def virada(config: dict, estado: dict) -> int:
 
     if estado.get("virado_em"):
         logar(f"já virado em {estado['virado_em']} — nada a fazer")
+        return 0
+
+    na_janela, rotulo = dentro_da_janela(config)
+    if not na_janela:
+        logar(f"fora da janela de virada ({rotulo}) — não vira "
+              f"(agora {agora().strftime('%Y-%m-%d %H:%M')})")
         return 0
 
     linhas_env = le_env(env_path)
@@ -497,14 +551,9 @@ class Stub(BaseHTTPRequestHandler):
         return self._json(404, {"erro": "não encontrado"})
 
 
-def roda_ensaio(cenario: str, base_tmp: Path) -> int:
-    """Roda a sequência real contra o stub. Nunca toca no .env de produção."""
-    global CONFIG, PROJETO, ESTADO_PATH, LOG_PATH
-    config_antigo, projeto_antigo, estado_antigo, log_antigo = CONFIG, PROJETO, ESTADO_PATH, LOG_PATH
-    env_real = PROJETO / ".env"
-    hash_antes = hash_arquivo(env_real)
-
-    sandbox = Path(tempfile.mkdtemp(prefix=f"vigia-ensaio-{cenario}-", dir=base_tmp))
+def _prepara_sandbox(nome: str, base_tmp: Path, env_real: Path, toca_flag: bool) -> dict:
+    """Sandbox de ensaio: .env falso, stub de compose e TSE/API de mentira."""
+    sandbox = Path(tempfile.mkdtemp(prefix=f"vigia-ensaio-{nome}-", dir=base_tmp))
     env_falso = sandbox / ".env"
     shutil.copy2(env_real, env_falso)
     env_falso.chmod(0o600)
@@ -515,7 +564,7 @@ def roda_ensaio(cenario: str, base_tmp: Path) -> int:
         "#!/usr/bin/env bash\n"
         f'echo "[stub compose] docker compose $*"\n'
         f'echo "docker compose $*" >> "{sandbox}/compose.log"\n'
-        + ("touch \"%s\"\n" % flag if cenario == "sucesso" else "")
+        + (f'touch "{flag}"\n' if toca_flag else "")
         + "exit 0\n",
         encoding="utf-8",
     )
@@ -527,22 +576,44 @@ def roda_ensaio(cenario: str, base_tmp: Path) -> int:
     servidor = ThreadingHTTPServer(("127.0.0.1", 0), Stub)
     porta = servidor.server_address[1]
     threading.Thread(target=servidor.serve_forever, daemon=True).start()
+    return {"sandbox": sandbox, "env_falso": env_falso, "stub_api": stub_api,
+            "fixture": fixture, "servidor": servidor, "porta": porta}
 
-    CONFIG = dict(CONFIG_PADRAO)
-    CONFIG.update({
+
+def _config_ensaio(porta: int) -> dict:
+    config = dict(CONFIG_PADRAO)
+    config.update({
         "tse_base": f"http://127.0.0.1:{porta}",
         "api_base": f"http://127.0.0.1:{porta}",
         "espera_api_s": 12,
     })
+    return config
+
+
+def roda_ensaio(cenario: str, base_tmp: Path) -> int:
+    """Roda a sequência real contra o stub. Nunca toca no .env de produção."""
+    global CONFIG, PROJETO, ESTADO_PATH, LOG_PATH
+    config_antigo, projeto_antigo, estado_antigo, log_antigo = CONFIG, PROJETO, ESTADO_PATH, LOG_PATH
+    env_real = PROJETO / ".env"
+    hash_antes = hash_arquivo(env_real)
+
+    ensaio = _prepara_sandbox(cenario, base_tmp, env_real, cenario == "sucesso")
+    sandbox = ensaio["sandbox"]
+    env_falso = ensaio["env_falso"]
+    servidor = ensaio["servidor"]
+    porta = ensaio["porta"]
+
+    CONFIG = _config_ensaio(porta)
     PROJETO = sandbox
     ESTADO_PATH = sandbox / "estado.json"
     LOG_PATH = sandbox / "vigia.log"      # ensaio não suja o log de produção
-    os.environ["VIGIA_COMPOSE_CMD"] = str(stub_api)
+    os.environ["VIGIA_COMPOSE_CMD"] = str(ensaio["stub_api"])
     os.environ["VIGIA_ENSAIO"] = "1"
+    os.environ["VIGIA_AGORA"] = "2026-10-25T20:00:00-03:00"   # dentro da janela
 
     print(f"\n===== ENSAIO ({cenario}) — TSE/API de mentira em 127.0.0.1:{porta}; "
           f".env de mentira em {env_falso} =====")
-    print(f"[ensaio] vap_total da fixture = {vap_total(fixture)}")
+    print(f"[ensaio] vap_total da fixture = {vap_total(ensaio['fixture'])}")
     estado_ensaio = sandbox / "estado.json"
     try:
         codigo = virada(CONFIG, {})
@@ -550,6 +621,7 @@ def roda_ensaio(cenario: str, base_tmp: Path) -> int:
         servidor.shutdown()
         os.environ.pop("VIGIA_COMPOSE_CMD", None)
         os.environ.pop("VIGIA_ENSAIO", None)
+        os.environ.pop("VIGIA_AGORA", None)
         CONFIG, PROJETO, ESTADO_PATH = config_antigo, projeto_antigo, estado_antigo
         LOG_PATH = log_antigo
 
@@ -568,18 +640,90 @@ def roda_ensaio(cenario: str, base_tmp: Path) -> int:
     return codigo
 
 
+def roda_ensaio_janela(caso: str, momento: str, espera_virar: bool, base_tmp: Path) -> int:
+    """Um caso da trava de janela, em sandbox próprio e com VIGIA_AGORA fixo."""
+    global CONFIG, PROJETO, ESTADO_PATH, LOG_PATH
+    config_antigo, projeto_antigo, estado_antigo, log_antigo = CONFIG, PROJETO, ESTADO_PATH, LOG_PATH
+    env_real = PROJETO / ".env"
+    hash_antes = hash_arquivo(env_real)
+
+    ensaio = _prepara_sandbox(f"janela-{caso}", base_tmp, env_real, espera_virar)
+    sandbox = ensaio["sandbox"]
+    env_falso = ensaio["env_falso"]
+    servidor = ensaio["servidor"]
+    porta = ensaio["porta"]
+    hash_env_antes = hash_arquivo(env_falso)
+
+    CONFIG = _config_ensaio(porta)
+    PROJETO = sandbox
+    ESTADO_PATH = sandbox / "estado.json"
+    LOG_PATH = sandbox / "vigia.log"
+    os.environ["VIGIA_COMPOSE_CMD"] = str(ensaio["stub_api"])
+    os.environ["VIGIA_ENSAIO"] = "1"
+    os.environ["VIGIA_AGORA"] = momento
+
+    print(f"\n===== ENSAIO JANELA ({caso}) — VIGIA_AGORA={momento}; sandbox {sandbox} =====")
+    try:
+        codigo = virada(CONFIG, {})
+    finally:
+        servidor.shutdown()
+        os.environ.pop("VIGIA_COMPOSE_CMD", None)
+        os.environ.pop("VIGIA_ENSAIO", None)
+        os.environ.pop("VIGIA_AGORA", None)
+        CONFIG, PROJETO, ESTADO_PATH = config_antigo, projeto_antigo, estado_antigo
+        LOG_PATH = log_antigo
+
+    compose_log = sandbox / "compose.log"
+    compose_chamado = compose_log.exists() and bool(compose_log.read_text().strip())
+    env_intacto = hash_arquivo(env_falso) == hash_env_antes
+    turno_depois = valor_env(le_env(env_falso), "TURNO")
+    estado_existe = (sandbox / "estado.json").exists()
+    env_real_intacto = hash_arquivo(env_real) == hash_antes
+
+    if espera_virar:
+        veredito = "VIRA"
+        ok = codigo == 0 and turno_depois == "2" and compose_chamado
+        detalhe = f"rc={codigo} TURNO={turno_depois} compose={'sim' if compose_chamado else 'nao'}"
+    else:
+        veredito = "NAO VIRA"
+        ok = codigo == 0 and env_intacto and not compose_chamado and not estado_existe
+        detalhe = (f"rc={codigo} .env={'intacto' if env_intacto else 'MUDOU'} "
+                   f"compose={'sim' if compose_chamado else 'nao'} "
+                   f"estado={'sim' if estado_existe else 'nao'}")
+    ok = ok and env_real_intacto
+    detalhe += f" .env_real={'intacto' if env_real_intacto else 'MUDOU'}"
+    print(f"[janela] ({caso}) {momento[:16]} -> {veredito} {detalhe} {'OK' if ok else 'FALHOU'}")
+    return 0 if ok else 2
+
+
 # ----------------------------------------------------------------------- main
 def main(argv: list[str] | None = None) -> int:
     global CONFIG
     parser = argparse.ArgumentParser(description="Vigia de turno do painel eleições 2026")
     parser.add_argument("--forcar", action="store_true", help="ignora a cadência de 10/60 min")
-    parser.add_argument("--ensaio", nargs="?", const="todos", choices=["todos", "sucesso", "falha"],
+    parser.add_argument("--ensaio", nargs="?", const="todos",
+                        choices=["todos", "sucesso", "falha", "janela"],
                         help="ensaia a virada contra um TSE/API de mentira, sem tocar no .env real")
     args = parser.parse_args(argv)
 
     CONFIG = carrega_config()
     if args.ensaio:
         base_tmp = Path(tempfile.mkdtemp(prefix="ensaio-vigia-"))
+        if args.ensaio == "janela":
+            casos = [
+                ("a", "2026-10-25T12:00:00-03:00", False),
+                ("b", "2026-10-25T18:30:00-03:00", True),
+                ("c", "2026-10-26T00:05:00-03:00", False),
+                ("d", "2026-10-24T22:00:00-03:00", False),
+            ]
+            pior = 0
+            for caso, momento, espera_virar in casos:
+                pior = max(pior, roda_ensaio_janela(caso, momento, espera_virar, base_tmp))
+            print(f"\nENSAIO JANELA {'OK' if pior == 0 else 'PROBLEMA'}: "
+                  f"fora da janela não vira; dentro dela vira")
+            shutil.rmtree(base_tmp, ignore_errors=True)
+            return pior
+
         cenarios = ["sucesso", "falha"] if args.ensaio == "todos" else [args.ensaio]
         pior = 0
         for cenario in cenarios:
