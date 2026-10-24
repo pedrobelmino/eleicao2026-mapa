@@ -436,6 +436,17 @@ scanner batendo no IP. As linhas antigas (sem host) continuam válidas e aparece
 domínios nunca apareceriam. O log é truncado em 5 MB pelo vigia; por isso a janela de 24 h pode
 aparecer como **parcial** — o painel diz o que está vendo, não estima.
 
+**Borda Cloudflare no painel** — `GET /api/monitor/estado` traz o campo `borda`
+(`{"ips":1,"eventos":3,"lista":[{"ip":"2a06:98c0:3600::103","eventos":3,"rotulo":"borda Cloudflare"}]}`).
+Esses IPs **não** aparecem em `suspeitos`: a faixa de borda é o caminho de todo visitante, e um IP
+dela no log é sintoma de `real_ip` quebrado (ver "Segurança e observabilidade"). A tela mostra a
+linha "borda Cloudflare (nunca suspeita, nunca bloqueada)" acima da lista de suspeitos.
+
+**Trocar o binário exige restart** (lição de 24/10/2026): `go build -o monitor/bin/monitor-ataques
+./monitor` grava no disco, mas o processo antigo continua com o código velho em memória — a API só
+passa a devolver o campo novo depois de `systemctl --user restart hermes-eleicao-monitor.service`.
+Confira com `ps -o pid,lstart -C monitor-ataques` (a hora de início tem de ser posterior ao build).
+
 **Como desligar** (o site público não depende dele):
 
 ```bash
@@ -509,6 +520,21 @@ Faixas: `limpo` < 20 ≤ `observar` < 60 ≤ `suspeito` < 80 ≤ `malicioso`. A 
 manda **um** aviso no Telegram — e **não bloqueia**: o aviso traz o comando `bloquear.sh` e a decisão
 é do Pedro. O painel 8113 mostra a lista "Suspeitos por escore" com os sinais de cada IP.
 
+**Como ajustar os limiares** (o vigia é `python` chamado pelo timer a cada 1 min: mudar constante
+vale no ciclo seguinte, **não precisa reiniciar nada**):
+
+| limiar | onde vive | como mexer |
+|---|---|---|
+| surto / 429 / janela do bloqueio | topo de `scripts/defesa/vigia_ataques.py` e env do timer | `LIMITE_REQ_MIN` (120), `LIMITE_429` (20), `DURACAO_MIN` (30 min), `MANUAL_DURACAO_MIN` (240 min) — os 4 leem `os.environ`, então `Environment=` em `scripts/defesa/systemd/hermes-eleicao-defesa.service` também vale |
+| faixas de nível do escore | `ESCORE_SUSPEITO` (60), `ESCORE_MALICIOSO` (80) | mudar aqui; o painel usa os mesmos cortes em `monitor/suspeita.go` (conferir os dois) |
+| pesos dos sinais | `scripts/defesa/suspeita.py` **e** `monitor/suspeita.go` | são espelhos conferidos contra `suspeita_fixture.json`: mude nos dois, rode `--autoteste` (caso [5]) e `go test ./...` |
+| anti-spam do Telegram | ver a tabela de anti-spam acima | `AVISO_IP_JANELA_S`, `AVISO_RENOVACAO_S` (6 h), `RESUMO_INTERVALO_S` (30 min), `RESUMO_MIN_SUSPEITOS` (4), `MAX_AVISOS_POR_CICLO` (3) |
+| retenção do log | `LIMITE_LOG_BYTES` (5 MB) | env do timer |
+
+Depois de qualquer ajuste, a prova é a mesma de sempre: `python3 scripts/defesa/vigia_ataques.py
+--autoteste`, `python3 scripts/defesa/prova_antispam.py` e (se mexeu no painel) `cd monitor && go
+test -count=1 ./...`.
+
 **Infra local NUNCA pontua** (corrigido em 24/10/2026, defeito medido em produção): loopback
 (`127.0.0.0/8`, `::1`), faixas privadas (`10/8`, `172.16/12` — onde ficam os gateways do docker,
 `172.17.0.1`…`172.31.255.254` — e `192.168/16`), link-local, multicast, reservado e o rótulo
@@ -518,6 +544,29 @@ bloqueio (`ip_publico` no vigia). O painel mostra essa parte à parte, em `infra
 ataque saem do host e chegam ao nginx pelo gateway do docker — sem essa trava, o `172.19.0.1`
 aparecia como `malicioso 100` (`caminho_sensivel` + `injecao`) por causa de linhas de teste nossas
 (`/.env`, `/.git`, `/api/interno`, `OR 1=1`), e o `127.0.0.1` idem.
+
+**Borda Cloudflare NUNCA é suspeita nem pode ser bloqueada** (corrigido em 24/10/2026, defeito
+medido em produção): as 22 faixas oficiais (`https://www.cloudflare.com/ips-v4` + `/ips-v6` — as
+mesmas do `set_real_ip_from` em `web/nginx.conf`) ficam **fora do escore** e **fora da lista de
+bloqueio**, pela função `ip_borda()` do vigia e `ipBorda()` do painel. Motivo: é por ali que todo
+visitante entra — bloquear a borda derruba o site inteiro, e acusar a borda é acusar o correio.
+Um IP de borda no log é **sintoma, não ataque**: significa que o `real_ip` não entregou o IP do
+visitante e o scanner ficou invisível atrás do IP da Cloudflare. O painel mostra esses IPs em
+campo próprio (`borda`: `ips`, `eventos`, `lista` com rótulo `borda Cloudflare`), separado dos
+suspeitos e da infra local. O caso real: `2a06:98c0:3600::103` (faixa `2a06:98c0::/29`) apareceu
+com escore 35 em `belmino.dev` porque o `set_real_ip_from` não tinha as faixas IPv6 da borda.
+Conferir a lista oficial contra a do código:
+
+```bash
+curl -s https://www.cloudflare.com/ips-v4 https://www.cloudflare.com/ips-v6   # fonte oficial
+grep -c 'set_real_ip_from' web/nginx.conf                                      # 4 locais + 22 borda
+python3 scripts/defesa/vigia_ataques.py --autoteste                            # caso [8] prova a trava
+```
+
+Se a Cloudflare publicar faixa nova, ela entra nos **três** lugares na mesma mudança:
+`web/nginx.conf` (`set_real_ip_from`), `FAIXAS_BORDA` do `vigia_ataques.py` e `faixasBorda` do
+`monitor/suspeita.go`. Divergir é o defeito: o nginx passa a confiar numa faixa que o escore não
+conhece (ou o contrário) e o IP da borda volta a virar "suspeito".
 
 **Leitura do log** (`monitor/logwatch.go`, `suspeita._extrair_linha`): o formato tem 7 colunas fixas,
 a requisição crua entre aspas e o UA com espaços; a coluna `$uri` **pode vir vazia** (400 antes do
@@ -532,9 +581,25 @@ atual) e cada uma tem caso de teste com **linha real** em `monitor/infra_local_t
 para qualquer IP com UA de navegador real. Volume puro também não conta: 300 requisições em 10 min
 do mesmo IP dão escore **0**.
 
-**Anti-spam do aviso**: 1 mensagem por IP a cada **6 h**; mais de 3 suspeitos novos no mesmo ciclo
-saem em **uma** mensagem consolidada (no máximo a cada 30 min); no máximo 3 avisos individuais por
-ciclo.
+**Anti-spam do aviso** (uma mensagem por IP a cada **6 h**, valendo para suspeita, bloqueio e
+renovação — um único ledger em `estado.json`, campo `suspeita.avisos`):
+
+| o que sai no Telegram | regra | constante | ajuste |
+|---|---|---|---|
+| suspeita de um IP (escore ≥ 60) | 1 por IP / 6 h | `AVISO_IP_JANELA_S` | `= 6 * 3600` |
+| bloqueio e renovação de um IP | 1 por IP / 6 h, contando os dois juntos | `AVISO_RENOVACAO_S` | `= 6 * 3600` |
+| consolidado de suspeitos | mais de 3 novos no mesmo ciclo, no máximo a cada 30 min | `RESUMO_MIN_SUSPEITOS`, `RESUMO_INTERVALO_S` | `4`, `1800` |
+| avisos individuais num ciclo | teto de 3 | `MAX_AVISOS_POR_CICLO` | `= 3` |
+
+O **bloqueio nunca é adiado** pelo anti-spam: ele acontece sempre (a lista é a defesa). O que é
+suprimido é a mensagem — fica no log (`~/.hermes/logs/eleicao-defesa.log`, linha
+`aviso ... SUPRIMIDO`), no `--status` e no painel. Defeito medido em 24/10/2026: com
+`AVISO_RENOVACAO_S = 600`, o 2º surto do mesmo IP em 10 min reenviava "segue bloqueado" — um
+scanner que repica a cada 5 min virava metralhadora no canal. Prova: `scripts/defesa/prova_antispam.py`
+roda o `ciclo()` real com relógio injetado (2 surtos em 10 min = 1 mensagem; o mesmo IP em +6h01 =
+1 mensagem nova) e o caso [9] do `--autoteste` cobre a mesma regra sem tocar em nginx nem canal.
+Para mudar a janela, altere a constante e rode os dois — o `--autoteste` reprova se o valor sair de
+21600.
 
 Como funciona, por ciclo:
 
@@ -547,7 +612,8 @@ Como funciona, por ciclo:
 4. escreve `var/defesa/bloqueios.conf` (`<ip> 1;`), roda `nginx -t` e recarrega o container `web`;
    o `geo $bloqueado_ip` do nginx devolve **403 só para aquele IP**. Todo o resto continua 200;
 5. grava o estado em `var/defesa/estado.json` (o painel lê daí) e conta os bloqueios;
-6. avisa no Telegram com IP, motivo, contagem e horário (renovação avisa no máximo a cada 10 min);
+6. avisa no Telegram com IP, motivo, contagem e horário — bloqueio e renovação juntos, no máximo
+   **1 mensagem por IP a cada 6 h** (`AVISO_RENOVACAO_S`);
 7. ao vencer a janela, o IP sai da lista sozinho e o nginx recarrega.
 
 Operação:
@@ -555,19 +621,28 @@ Operação:
 ```bash
 python3 scripts/defesa/vigia_ataques.py --status          # bloqueios ativos, contador, última execução
 python3 scripts/defesa/vigia_ataques.py --suspeitos       # escore por IP agora (não envia nada)
-python3 scripts/defesa/vigia_ataques.py --autoteste      # faixa privada + fixture do escore
+python3 scripts/defesa/vigia_ataques.py --autoteste      # faixa privada + fixture + borda + anti-spam
 python3 scripts/defesa/vigia_ataques.py --ensaio         # decide e imprime, sem tocar em nada
 bash scripts/defesa/bloquear.sh 45.22.33.44 "escore 100 no painel"   # bloqueio MANUAL
 bash scripts/defesa/desbloquear.sh 45.22.33.44           # desbloqueio manual (um IP)
 bash scripts/defesa/desbloquear.sh --todos               # lista inteira
 bash scripts/defesa/prova_bloqueio.sh                    # prova ponta a ponta (ataca e desbloqueia)
+python3 scripts/defesa/prova_antispam.py                 # anti-spam: 2 surtos em 10 min = 1 aviso
 systemctl --user list-timers hermes-eleicao-defesa.timer # cadência
 journalctl --user -u hermes-eleicao-defesa -n 50         # ciclos
 tail -20 ~/.hermes/logs/eleicao-defesa.log               # bloqueios, renovações, desbloqueios
 ```
 
-`bloquear.sh <ip> "<motivo>" [--minutos N]` (padrão 240 min): recusa IP não público com exit 65,
-testa o nginx antes do reload e a janela expira sozinha.
+`bloquear.sh <ip> "<motivo>" [--minutos N]` (padrão 240 min): recusa IP não público **e IP de borda
+Cloudflare** com exit 65 (`RECUSADO: <ip> é faixa de BORDA...`), testa o nginx antes do reload e a
+janela expira sozinha. Bloquear a borda derruba o site para todo mundo — por isso a recusa está no
+script, no vigia, no `escrever_bloqueios()` e no `decidir()`, não só na boa vontade de quem chama:
+
+```bash
+bash scripts/defesa/bloquear.sh 2a06:98c0:3600::103 "teste"
+# RECUSADO: 2a06:98c0:3600::103 é faixa de BORDA da Cloudflare (2a06:98c0::/29 e as outras
+# oficiais) — bloquear a borda derrubaria o site inteiro.        (exit 65)
+```
 
 Desligar a defesa (o site continua no ar, com o rate limit do nginx):
 

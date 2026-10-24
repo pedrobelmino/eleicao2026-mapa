@@ -80,7 +80,16 @@ JANELA_RATE_S = 60
 JANELA_SUSPEITA_S = 300
 MAX_BYTES_POR_CICLO = 4 * 1024 * 1024
 LIMITE_LOG_BYTES = int(os.environ.get("LIMITE_LOG_BYTES", str(5 * 1024 * 1024)))
-AVISO_RENOVACAO_S = 600  # não repetir Telegram de renovação antes disso
+# --- anti-spam do Telegram -------------------------------------------------
+# Uma mensagem por IP a cada 6 h, QUALQUER que seja o motivo (suspeita,
+# bloqueio ou renovação). O ledger é `estado["suspeita"]["avisos"]`: um único
+# lugar decide se fala ou cala, e é por isso que não existe caminho que fure.
+#
+# Defeito medido em 24/10: `AVISO_RENOVACAO_S = 600` só olhava a renovação
+# anterior, então o 2º surto do MESMO IP em 10 min reenviava "segue bloqueado".
+# Um scanner que repica a cada 5 min virava metralhadora no canal. Agora a
+# janela é a mesma do aviso de suspeita (6 h) e vale para bloqueio E renovação.
+AVISO_RENOVACAO_S = 6 * 3600   # 1 aviso de bloqueio/renovação por IP a cada 6 h
 
 # Escore de suspeita (identifica e avisa; NÃO bloqueia).
 ESCORE_SUSPEITO = 60          # >= 60 avisa
@@ -141,6 +150,43 @@ def gravar_estado(estado: dict) -> None:
     temporario = ARQ_ESTADO.with_suffix(".tmp")
     temporario.write_text(json.dumps(estado, ensure_ascii=False, indent=2), encoding="utf-8")
     os.replace(temporario, ARQ_ESTADO)
+
+
+# ---------------------------------------------------------------------- borda
+# Faixas OFICIAIS da Cloudflare (https://www.cloudflare.com/ips-v4 e /ips-v6) —
+# as MESMAS do `set_real_ip_from` do web/nginx.conf. Um IP que caia aqui é a
+# BORDA, não o visitante: é por onde TODO mundo entra. Consequências, nesta
+# ordem de importância:
+#   * nunca entra no escore de suspeita (acusar a borda é acusar o correio);
+#   * nunca entra na lista de bloqueio (bloquear a borda derruba o site);
+#   * aparece separado no status e no painel como "borda Cloudflare".
+# Foi o defeito medido em 24/10: 2a06:98c0:3600::103 (Cloudflare) virou
+# "suspeito 35" porque o nginx não confiava nas faixas IPv6 da borda e gravava
+# o IP dela no lugar do visitante.
+FAIXAS_BORDA = (
+    # IPv4 (15)
+    "173.245.48.0/20", "103.21.244.0/22", "103.22.200.0/22", "103.31.4.0/22",
+    "141.101.64.0/18", "108.162.192.0/18", "190.93.240.0/20", "188.114.96.0/20",
+    "197.234.240.0/22", "198.41.128.0/17", "162.158.0.0/15", "104.16.0.0/13",
+    "104.24.0.0/14", "172.64.0.0/13", "131.0.72.0/22",
+    # IPv6 (7)
+    "2400:cb00::/32", "2606:4700::/32", "2803:f800::/32", "2405:b500::/32",
+    "2405:8100::/32", "2a06:98c0::/29", "2c0f:f248::/32",
+)
+REDES_BORDA = tuple(ipaddress.ip_network(faixa) for faixa in FAIXAS_BORDA)
+
+
+def ip_borda(texto: str) -> bool:
+    """True só para IP dentro das faixas oficiais da Cloudflare (a borda).
+
+    Trava simétrica à de `ip_publico`: o que NÃO pode ser bloqueado também não
+    pode ser acusado. Faixa de borda não é visitante, é o caminho do visitante.
+    """
+    try:
+        endereco = ipaddress.ip_address((texto or "").strip().strip("[]"))
+    except ValueError:
+        return False
+    return any(endereco in rede for rede in REDES_BORDA)
 
 
 def ip_publico(texto: str) -> bool:
@@ -246,10 +292,14 @@ def analisar(linhas: list[str], agora_ts: datetime) -> dict:
 
 
 def decidir(resumo: dict) -> list[dict]:
-    """Aplica os limiares. Devolve só IP PÚBLICO: faixa privada nunca entra."""
+    """Aplica os limiares. Devolve só IP PÚBLICO e de VISITANTE.
+
+    Faixa privada e faixa de borda Cloudflare nunca entram: as duas derrubariam
+    o site (o loopback é o túnel; a borda é por onde todo mundo chega).
+    """
     decisoes = []
     for ip, dados in resumo.items():
-        if not ip_publico(ip):
+        if not ip_publico(ip) or ip_borda(ip):
             continue
         motivo = detalhe = ""
         contagem = 0
@@ -278,6 +328,9 @@ def escrever_bloqueios(bloqueios: dict) -> bool:
         "# Formato (geo): <ip> 1;",
     ]
     for ip in sorted(bloqueios):
+        if ip_borda(ip):
+            logar(f"RECUSADO: {ip} é BORDA Cloudflare — bloquear derrubaria o site inteiro")
+            continue
         if not ip_publico(ip):
             logar(f"RECUSADO: {ip} não é IP público — não entra na lista de bloqueio")
             continue
@@ -330,6 +383,34 @@ def setor_suspeita(estado: dict) -> dict:
     return setor
 
 
+def aviso_liberado(ledger: dict, ip: str, agora_ts: datetime, janela_s: float) -> bool:
+    """True quando já passou `janela_s` desde a última mensagem sobre este IP.
+
+    Fonte única do anti-spam: quem fala (suspeita, bloqueio, renovação) pergunta
+    aqui antes e marca aqui depois. Estado com data torta conta como "nunca
+    avisado" — na dúvida, avisar é melhor do que engolir o aviso.
+    """
+    ultimo = ledger.get(ip)
+    if not ultimo:
+        return True
+    try:
+        return (agora_ts - datetime.fromisoformat(ultimo)).total_seconds() >= janela_s
+    except (ValueError, TypeError):
+        return True
+
+
+def podar_avisos(ledger: dict, agora_ts: datetime, retencao_s: int = 7 * 24 * 3600) -> None:
+    """Esquece avisos com mais de 7 dias: o ledger não cresce sem limite."""
+    for ip in list(ledger):
+        try:
+            velho = (agora_ts - datetime.fromisoformat(ledger[ip])).total_seconds()
+        except (ValueError, TypeError):
+            del ledger[ip]
+            continue
+        if velho > retencao_s:
+            del ledger[ip]
+
+
 def acumular_suspeitas(linhas: list[str], estado: dict, agora_ts: datetime) -> dict[str, dict]:
     """Registra as linhas novas no acumulado e devolve {ip: avaliação}."""
     setor = setor_suspeita(estado)
@@ -342,8 +423,28 @@ def acumular_suspeitas(linhas: list[str], estado: dict, agora_ts: datetime) -> d
     suspeita.podar(acumulado, carimbo(agora_ts))
 
     avaliacoes = {}
+    borda = {
+        ip: int(reg.get("eventos", 0))
+        for ip, reg in acumulado.items()
+        if ip_borda(ip)
+    }
+    if borda:
+        # Borda fica registrada SEPARADA: aparece no status/painel como "borda
+        # Cloudflare" e nunca vira escore. Se a borda está aparecendo aqui, o
+        # real_ip não está entregando o IP do visitante — é sinal de defeito na
+        # borda do nginx, não de ataque.
+        retrato = estado.setdefault("borda", {})
+        registrados = retrato.setdefault("ips", {})
+        for ip, eventos in borda.items():
+            registrados[ip] = {"eventos": eventos, "visto": carimbo(agora_ts)}
+        retrato["quando"] = carimbo(agora_ts)
+        logar(
+            "borda Cloudflare (não é suspeito e não pode ser bloqueada): "
+            + ", ".join(f"{ip}({n} eventos)" for ip, n in sorted(borda.items()))
+        )
+
     for ip, reg in acumulado.items():
-        if not ip_publico(ip):
+        if not ip_publico(ip) or ip_borda(ip):
             continue
         avaliacoes[ip] = suspeita.avaliar(reg)
     return avaliacoes
@@ -428,18 +529,13 @@ def avisos_de_suspeita(estado: dict, agora_ts: datetime) -> list[str]:
 
     candidatos: list[tuple[str, dict, dict]] = []
     for ip, reg in acumulado.items():
-        if not ip_publico(ip):
+        if not ip_publico(ip) or ip_borda(ip):
             continue
         avaliacao = suspeita.avaliar(reg)
         if avaliacao["escore"] < ESCORE_SUSPEITO:
             continue
-        ultimo = avisos.get(ip)
-        if ultimo:
-            try:
-                if (agora_ts - datetime.fromisoformat(ultimo)).total_seconds() < AVISO_IP_JANELA_S:
-                    continue
-            except ValueError:
-                pass  # estado torto: trata como "nunca avisado"
+        if not aviso_liberado(avisos, ip, agora_ts, AVISO_IP_JANELA_S):
+            continue
         candidatos.append((ip, avaliacao, reg))
 
     if not candidatos:
@@ -474,13 +570,35 @@ def avisos_de_suspeita(estado: dict, agora_ts: datetime) -> list[str]:
 
 
 # ----------------------------------------------------------------- ciclos
+def _mensagem_renovacao(ip: str, decisao: dict, renovado: datetime) -> str:
+    """Aviso de bloqueio renovado — só sai se o anti-spam liberar (6 h por IP)."""
+    return (
+        f"🛡️ eleição 2026 · defesa\n"
+        f"IP {ip} segue bloqueado (renovado até {renovado.strftime('%d/%m %H:%M')})\n"
+        f"motivo: {decisao['motivo']} — {decisao['detalhe']}"
+    )
+
+
 def aplicar(decisoes: list[dict], estado: dict, ensaio: bool, agora_ts: datetime) -> list[str]:
-    """Bloqueia/renova e devolve as linhas de aviso do Telegram."""
+    """Bloqueia/renova e devolve as linhas de aviso do Telegram.
+
+    O bloqueio em si SEMPRE acontece (a lista é a defesa). O que passa pelo
+    anti-spam é a MENSAGEM: no máximo uma por IP a cada 6 h (`AVISO_RENOVACAO_S`),
+    contando bloqueio e renovação juntos, no mesmo ledger do aviso de suspeita.
+    Silêncio aqui não é falha: o bloqueio fica no log, no `--status` e no painel.
+    """
     avisos = []
     bloqueios = estado["bloqueios"]
+    ledger = setor_suspeita(estado)["avisos"]
+    podar_avisos(ledger, agora_ts)
 
     for decisao in decisoes:
         ip = decisao["ip"]
+        if ip_borda(ip):
+            # Cinto e suspensório: `decidir` já filtra, mas nenhum caminho novo
+            # pode transformar a borda em bloqueio e derrubar o site.
+            logar(f"RECUSADO: {ip} é BORDA Cloudflare — decisão de bloqueio descartada")
+            continue
         registro = bloqueios.get(ip)
         if registro is None:
             ate = agora_ts + timedelta(minutes=DURACAO_MIN)
@@ -498,13 +616,17 @@ def aplicar(decisoes: list[dict], estado: dict, ensaio: bool, agora_ts: datetime
                 f"BLOQUEIO {ip} · {decisao['motivo']} · {decisao['detalhe']} · "
                 f"até {bloqueios[ip]['ate']}"
             )
-            avisos.append(
-                f"🛡️ eleição 2026 · defesa\n"
-                f"IP {ip} BLOQUEADO por {DURACAO_MIN} min\n"
-                f"motivo: {decisao['motivo']} — {decisao['detalhe']}\n"
-                f"horário: {agora_ts.strftime('%d/%m %H:%M')}\n"
-                f"site segue no ar para os outros · bloqueios ativos: {len(bloqueios)}"
-            )
+            if aviso_liberado(ledger, ip, agora_ts, AVISO_RENOVACAO_S):
+                avisos.append(
+                    f"🛡️ eleição 2026 · defesa\n"
+                    f"IP {ip} BLOQUEADO por {DURACAO_MIN} min\n"
+                    f"motivo: {decisao['motivo']} — {decisao['detalhe']}\n"
+                    f"horário: {agora_ts.strftime('%d/%m %H:%M')}\n"
+                    f"site segue no ar para os outros · bloqueios ativos: {len(bloqueios)}"
+                )
+                ledger[ip] = carimbo(agora_ts)
+            else:
+                logar(f"aviso de bloqueio de {ip} SUPRIMIDO (já avisado há menos de {AVISO_RENOVACAO_S // 3600} h)")
         else:
             renovado = max(
                 datetime.fromisoformat(registro["ate"]),
@@ -516,14 +638,11 @@ def aplicar(decisoes: list[dict], estado: dict, ensaio: bool, agora_ts: datetime
             if mudou:
                 registro["renovacoes"] = int(registro.get("renovacoes", 0)) + 1
                 logar(f"RENOVAÇÃO {ip} · {decisao['motivo']} · até {registro['ate']}")
-                ultimo_aviso = datetime.fromisoformat(registro.get("avisado_em") or registro["desde"])
-                if (agora_ts - ultimo_aviso).total_seconds() >= AVISO_RENOVACAO_S:
-                    registro["avisado_em"] = carimbo(agora_ts)
-                    avisos.append(
-                        f"🛡️ eleição 2026 · defesa\n"
-                        f"IP {ip} segue bloqueado (renovado até {renovado.strftime('%d/%m %H:%M')})\n"
-                        f"motivo: {decisao['motivo']} — {decisao['detalhe']}"
-                    )
+                if aviso_liberado(ledger, ip, agora_ts, AVISO_RENOVACAO_S):
+                    avisos.append(_mensagem_renovacao(ip, decisao, renovado))
+                    ledger[ip] = carimbo(agora_ts)
+                else:
+                    logar(f"aviso de renovação de {ip} SUPRIMIDO (já avisado há menos de {AVISO_RENOVACAO_S // 3600} h)")
 
     # Desbloqueio automático no fim da janela.
     for ip in list(bloqueios):
@@ -642,7 +761,7 @@ def status() -> int:
     if acumulado:
         avaliados = []
         for ip, reg in acumulado.items():
-            if not ip_publico(ip):
+            if not ip_publico(ip) or ip_borda(ip):
                 continue
             avaliados.append((ip, suspeita.avaliar(reg), reg))
         avaliados.sort(key=lambda item: (-item[1]["escore"], item[0]))
@@ -655,6 +774,15 @@ def status() -> int:
             )
     else:
         print("suspeita: sem acumulado ainda (o vigia preenche a cada ciclo)")
+
+    # Borda Cloudflare: NÃO é suspeito e NÃO pode ser bloqueada. Aparece aqui de
+    # propósito — se um IP de borda estiver no log, o real_ip não está entregando
+    # o IP do visitante, e isso é defeito a corrigir no nginx, não ataque.
+    borda = estado.get("borda") or {}
+    ips_borda = (borda or {}).get("ips") or {}
+    print(f"borda Cloudflare: {len(ips_borda)} IP(s) de borda no log (nunca suspeito, nunca bloqueado)")
+    for ip, registro in sorted(ips_borda.items(), key=lambda item: -int(item[1].get("eventos", 0))):
+        print(f"  {ip:28} {registro.get('eventos', 0):5} eventos · visto {registro.get('visto', '?')}")
     return 0
 
 
@@ -668,7 +796,7 @@ def listar_suspeitos() -> int:
 
     linhas = []
     for ip, reg in acumulado.items():
-        if not ip_publico(ip):
+        if not ip_publico(ip) or ip_borda(ip):
             continue
         avaliacao = suspeita.avaliar(reg)
         linhas.append((ip, avaliacao, reg))
@@ -684,8 +812,15 @@ def listar_suspeitos() -> int:
 
 
 def bloquear(alvo: str, motivo: str, minutos: int) -> int:
-    """Bloqueio MANUAL: só entra IP público, e a janela expira sozinha."""
+    """Bloqueio MANUAL: só entra IP público de visitante, e a janela expira sozinha."""
     ip = (alvo or "").strip()
+    if ip_borda(ip):
+        print(
+            f"RECUSADO: {ip} é faixa de BORDA da Cloudflare (2a06:98c0::/29 e as "
+            "outras oficiais) — bloquear a borda derrubaria o site inteiro.",
+            file=sys.stderr,
+        )
+        return 65
     if not ip_publico(ip):
         print(f"RECUSADO: {ip!r} não é IP público — não entra na lista de bloqueio", file=sys.stderr)
         return 65
@@ -707,6 +842,9 @@ def bloquear(alvo: str, motivo: str, minutos: int) -> int:
         "origem": "manual",
     }
     estado["total_bloqueios"] = int(estado.get("total_bloqueios", 0)) + 1
+    # Bloqueio manual também entra no ledger do anti-spam: o Pedro já sabe deste
+    # IP, então uma renovação automática nos próximos 6 h não repete o assunto.
+    setor_suspeita(estado)["avisos"][ip] = carimbo(agora_ts)
     mudou = escrever_bloqueios(bloqueios)
     ok, resposta = (True, "lista igual")
     if mudou:
@@ -798,6 +936,7 @@ def autoteste() -> int:
         ("suspeito aos 60", ESCORE_SUSPEITO == 60),
         ("malicioso aos 80", ESCORE_MALICIOSO == 80),
         ("aviso por IP a cada 6 h", AVISO_IP_JANELA_S == 21600),
+        ("bloqueio/renovação por IP a cada 6 h", AVISO_RENOVACAO_S == 21600),
         ("resumo a cada 30 min", RESUMO_INTERVALO_S == 1800),
         ("consolidado com mais de 3", RESUMO_MIN_SUSPEITOS == 4),
     ]
@@ -825,6 +964,114 @@ def autoteste() -> int:
     ok2 = suspeita.registrar_linha(acumulado2, linha_publica) and "191.31.15.133" in acumulado2
     print(f"  {'PASS' if ok2 else 'FAIL'}  191.31.15.133 público segue registrado (não é descartado)")
     falhas += 0 if ok2 else 1
+
+    print("\n[8] borda Cloudflare: nunca suspeita, nunca bloqueada (defeito de 24/10)")
+    casos_borda = [
+        "2a06:98c0:3600::103",   # a linha real de 24/10 em belmino.dev
+        "2606:4700:3033::6815:1e4a",
+        "2400:cb00::1",
+        "104.16.0.1",
+        "172.64.0.1",
+        "162.158.0.5",
+        "198.41.128.7",
+    ]
+    for ip in casos_borda:
+        ok = ip_borda(ip) and ip_publico(ip) is True
+        print(f"  {'PASS' if ok else 'FAIL'}  {ip:26} borda={ip_borda(ip)} (público={ip_publico(ip)})")
+        falhas += 0 if ok else 1
+
+    # Visitante brasileiro real (Vivo/Claro) e público genérico: NÃO é borda.
+    casos_visitante = [
+        "2804:18:6041:aebd:b826:3443:9e3f:a5ef",
+        "2804:14d:5c32:8b3a::1",
+        "177.92.10.5",
+        "191.31.15.133",
+        "2c0f:f248:ffff::1",  # dentro de 2c0f:f248::/32 → borda; caso de controle abaixo
+    ]
+    for ip in casos_visitante[:-1]:
+        ok = not ip_borda(ip)
+        print(f"  {'PASS' if ok else 'FAIL'}  {ip:38} borda={ip_borda(ip)} (esperado False)")
+        falhas += 0 if ok else 1
+    ok = ip_borda(casos_visitante[-1])
+    print(f"  {'PASS' if ok else 'FAIL'}  {casos_visitante[-1]:38} borda={ip_borda(casos_visitante[-1])} (esperado True)")
+    falhas += 0 if ok else 1
+
+    # Surto absurdo da borda: decidir() não pode devolver bloqueio nenhum.
+    resumo_borda = {
+        "2a06:98c0:3600::103": {"req60": 99999, "c429": 900, "suspeitos": 900, "exemplo": "GET /wp-admin/install.php", "metodo": "GET"},
+        "104.16.0.1": {"req60": 5000, "c429": 0, "suspeitos": 50, "exemplo": "GET /wp-login.php", "metodo": "GET"},
+        "191.31.15.133": {"req60": 300, "c429": 0, "suspeitos": 0, "exemplo": "", "metodo": "GET"},
+    }
+    decisoes_borda = decidir(resumo_borda)
+    ips_borda_decididos = [d["ip"] for d in decisoes_borda]
+    ok = ips_borda_decididos == ["191.31.15.133"]
+    print(f"  {'PASS' if ok else 'FAIL'}  surto de borda: decididos={ips_borda_decididos} (esperado só o visitante)")
+    falhas += 0 if ok else 1
+
+    # Lista de bloqueio: mesmo que alguém escreva a borda no estado à mão, o
+    # arquivo gerado não pode conter a borda.
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as tmp:
+        global ARQ_BLOQUEIOS
+        anterior_arq = ARQ_BLOQUEIOS
+        ARQ_BLOQUEIOS = Path(tmp) / "bloqueios.conf"
+        try:
+            mudou = escrever_bloqueios({"2a06:98c0:3600::103": {}, "191.31.15.133": {}})
+            conteudo = ARQ_BLOQUEIOS.read_text(encoding="utf-8") if mudou else ""
+        finally:
+            ARQ_BLOQUEIOS = anterior_arq
+        ok = mudou and "2a06:98c0:3600::103" not in conteudo and "191.31.15.133 1;" in conteudo
+        print(f"  {'PASS' if ok else 'FAIL'}  lista de bloqueio recusa a borda e aceita o visitante")
+        falhas += 0 if ok else 1
+
+    # Escore: acumular a borda não pode gerar avaliação nenhuma.
+    estado_prova: dict = {}
+    linhas_borda = [
+        "2a06:98c0:3600::103 2026-10-24T12:34:31-03:00 404 GET /wp-admin/install.php belmino.dev 0 \"GET /wp-admin/install.php?step=1 HTTP/1.1\" curl",
+        "2a06:98c0:3600::103 2026-10-24T12:34:33-03:00 404 GET /.env belmino.dev 0 \"GET /.env HTTP/1.1\" curl",
+        "172.19.0.1 2026-10-24T12:35:00+00:00 404 GET /.env - -",
+        "191.31.15.133 2026-10-24T12:35:10+00:00 404 GET /.env - -",
+    ]
+    avaliacoes_borda = acumular_suspeitas(linhas_borda, estado_prova, agora())
+    ok = (
+        "2a06:98c0:3600::103" not in avaliacoes_borda
+        and "191.31.15.133" in avaliacoes_borda
+        and "2a06:98c0:3600::103" in ((estado_prova.get("borda") or {}).get("ips") or {})
+    )
+    print(f"  {'PASS' if ok else 'FAIL'}  escore separa borda: avaliados={sorted(avaliacoes_borda)}")
+    falhas += 0 if ok else 1
+
+    print("\n[9] anti-spam do aviso de bloqueio: 1 mensagem por IP a cada 6 h")
+    # Relógio injetado: o bloqueio em si acontece nas 3 rodadas; o que se mede
+    # aqui é só quantas MENSAGENS saem. Ensaio=True: nada toca nginx nem canal.
+    t0 = datetime(2026, 10, 24, 18, 0, tzinfo=FUSO)
+    estado_aviso: dict = {"bloqueios": {}, "total_bloqueios": 0}
+    decisao_surto = {
+        "ip": "45.22.33.44",
+        "motivo": "surto",
+        "detalhe": "130 req em 60s (limite 120/min)",
+        "contagem": 130,
+    }
+    rodada_1 = aplicar([decisao_surto], estado_aviso, True, t0)
+    rodada_2 = aplicar([decisao_surto], estado_aviso, True, t0 + timedelta(minutes=10))
+    rodada_3 = aplicar([decisao_surto], estado_aviso, True, t0 + timedelta(hours=6, minutes=1))
+    ok = len(rodada_1) == 1
+    print(f"  {'PASS' if ok else 'FAIL'}  1º surto ........................ {len(rodada_1)} mensagem (esperado 1)")
+    falhas += 0 if ok else 1
+    ok = len(rodada_2) == 0
+    print(f"  {'PASS' if ok else 'FAIL'}  2º surto em +10 min .............. {len(rodada_2)} mensagem (esperado 0)")
+    falhas += 0 if ok else 1
+    ok = len(rodada_3) == 1
+    print(f"  {'PASS' if ok else 'FAIL'}  mesmo IP em +6h01 ................ {len(rodada_3)} mensagem (esperado 1)")
+    falhas += 0 if ok else 1
+    ok = estado_aviso["bloqueios"]["45.22.33.44"]["renovacoes"] == 2
+    print(f"  {'PASS' if ok else 'FAIL'}  bloqueio renovado nas 3 rodadas ... renovacoes={estado_aviso['bloqueios']['45.22.33.44']['renovacoes']} (esperado 2)")
+    falhas += 0 if ok else 1
+    total = len(rodada_1) + len(rodada_2) + len(rodada_3)
+    ok = total == 2
+    print(f"  {'PASS' if ok else 'FAIL'}  total de mensagens em 6 h ......... {total} (esperado 2)")
+    falhas += 0 if ok else 1
 
     print(f"\nresumo: {'todos os casos passaram' if falhas == 0 else str(falhas) + ' falha(s)'}")
     return 0 if falhas == 0 else 1

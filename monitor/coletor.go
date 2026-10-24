@@ -242,6 +242,7 @@ type snapshot struct {
 	Suspeitos  []suspeito        `json:"suspeitos"`
 	Suspeita   map[string]int    `json:"suspeita_resumo"`
 	Infra      infraLocal        `json:"infra_local"`
+	Borda      infraLocal        `json:"borda"`
 	Parcial24h bool              `json:"parcial_24h"`
 }
 
@@ -289,6 +290,7 @@ func (c *coletor) foto() snapshot {
 	// RFC1918, gateway do docker) fica FORA do escore e é retratada à parte.
 	todos := calcularSuspeitos(c.eventos, agora, 0)
 	snap.Infra = resumoInfraLocal(c.eventos)
+	snap.Borda = resumoBorda(c.eventos)
 	snap.Suspeita = map[string]int{NivelLimpo: 0, NivelObservar: 0, NivelSuspeito: 0, NivelMalicioso: 0}
 	for i := range todos {
 		snap.Suspeita[todos[i].Nivel]++

@@ -155,6 +155,52 @@ func limparAlvo(bruto string) string {
 	return strings.TrimSpace(alvo)
 }
 
+// ipBorda diz se o IP é da BORDA (Cloudflare) e não de um visitante.
+//
+// São as faixas OFICIAIS https://www.cloudflare.com/ips-v4 e /ips-v6 — as
+// mesmas do `set_real_ip_from` do web/nginx.conf. É por onde TODO visitante
+// entra: um IP de borda no log quer dizer que o real_ip não entregou o IP do
+// cliente (defeito a corrigir no nginx), nunca que a Cloudflare está atacando.
+// Por isso borda não entra no escore, não é acusada e não pode ser bloqueada:
+// bloquear a borda derruba o site inteiro. Fica retratada à parte, com rótulo.
+func ipBorda(texto string) bool {
+	bruto := strings.Trim(strings.TrimSpace(texto), "[]")
+	endereco := net.ParseIP(bruto)
+	if endereco == nil {
+		return false
+	}
+	for _, rede := range faixasBorda {
+		if rede.Contains(endereco) {
+			return true
+		}
+	}
+	return false
+}
+
+// faixasBorda é a lista oficial, copiada de propósito (não há include remoto).
+var faixasBorda = redesDe([]string{
+	// IPv4 (15)
+	"173.245.48.0/20", "103.21.244.0/22", "103.22.200.0/22", "103.31.4.0/22",
+	"141.101.64.0/18", "108.162.192.0/18", "190.93.240.0/20", "188.114.96.0/20",
+	"197.234.240.0/22", "198.41.128.0/17", "162.158.0.0/15", "104.16.0.0/13",
+	"104.24.0.0/14", "172.64.0.0/13", "131.0.72.0/22",
+	// IPv6 (7)
+	"2400:cb00::/32", "2606:4700::/32", "2803:f800::/32", "2405:b500::/32",
+	"2405:8100::/32", "2a06:98c0::/29", "2c0f:f248::/32",
+})
+
+func redesDe(cidrs []string) []*net.IPNet {
+	redes := make([]*net.IPNet, 0, len(cidrs))
+	for _, cidr := range cidrs {
+		_, rede, err := net.ParseCIDR(cidr)
+		if err != nil {
+			panic("faixa de borda inválida: " + cidr)
+		}
+		redes = append(redes, rede)
+	}
+	return redes
+}
+
 // ipInfraLocal diz se o IP é da NOSSA infraestrutura: loopback, RFC1918
 // (10/8, 172.16/12 — onde moram os gateways do docker, 172.17.0.1 …
 // 172.31.255.254 — e 192.168/16), link-local, multicast, reservado e
@@ -315,6 +361,11 @@ func calcularSuspeitos(eventos []evento, agora time.Time, minimo int) []suspeito
 		// escore: não é visitante, não pode ser bloqueada e não pode ser
 		// acusada. O painel mostra o volume dela fora da contagem.
 		if ipInfraLocal(ip) {
+			continue
+		}
+		// Borda Cloudflare idem: é o caminho por onde todo visitante entra.
+		// Acusar a borda é acusar o correio — e bloqueá-la derruba o site.
+		if ipBorda(ip) {
 			continue
 		}
 		est := estados[ip]
@@ -553,6 +604,35 @@ func resumoInfraLocal(eventos []evento) infraLocal {
 	for ip, n := range contagem {
 		saida.Eventos += n
 		saida.Lista = append(saida.Lista, contagemInfra{IP: ip, Eventos: n, Rotulo: rotuloInfra(ip)})
+	}
+	sort.Slice(saida.Lista, func(a, b int) bool {
+		if saida.Lista[a].Eventos != saida.Lista[b].Eventos {
+			return saida.Lista[a].Eventos > saida.Lista[b].Eventos
+		}
+		return saida.Lista[a].IP < saida.Lista[b].IP
+	})
+	if len(saida.Lista) > 8 {
+		saida.Lista = saida.Lista[:8]
+	}
+	return saida
+}
+
+// resumoBorda conta os IPs de borda Cloudflare no ring. Nunca entram no escore:
+// aparecem no painel como "borda Cloudflare", separados dos suspeitos e da infra
+// local. Borda com volume é SINTOMA (real_ip quebrado), não ataque.
+// NÃO trava: quem chama (foto) já está com c.mu.RLock preso.
+func resumoBorda(eventos []evento) infraLocal {
+	contagem := map[string]int{}
+	for i := range eventos {
+		ip := strings.TrimSpace(eventos[i].IP)
+		if ipBorda(ip) {
+			contagem[ip]++
+		}
+	}
+	saida := infraLocal{IPs: len(contagem), Lista: make([]contagemInfra, 0, len(contagem))}
+	for ip, n := range contagem {
+		saida.Eventos += n
+		saida.Lista = append(saida.Lista, contagemInfra{IP: ip, Eventos: n, Rotulo: "borda Cloudflare"})
 	}
 	sort.Slice(saida.Lista, func(a, b int) bool {
 		if saida.Lista[a].Eventos != saida.Lista[b].Eventos {

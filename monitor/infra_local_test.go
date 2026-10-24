@@ -191,6 +191,62 @@ func TestInfraLocalNuncaPontua(t *testing.T) {
 	}
 }
 
+// O caso de 24/10: a conexão veio da borda Cloudflare por IPv6 e o log gravou
+// o IP DELA no lugar do visitante. Um IP de borda nunca pode ser suspeito (e
+// nunca pode ser bloqueado: derrubaria o site). Ele aparece à parte, rotulado.
+func TestBordaCloudflareNuncaSuspeita(t *testing.T) {
+	bordas := []string{
+		"2a06:98c0:3600::103", // a linha real de 24/10
+		"2606:4700:3033::6815:1e4a", "2400:cb00::1", "104.16.0.1",
+		"172.64.0.1", "162.158.0.5", "198.41.128.7",
+	}
+	for _, ip := range bordas {
+		if !ipBorda(ip) {
+			t.Fatalf("%q deveria ser borda Cloudflare", ip)
+		}
+		if ipInfraLocal(ip) {
+			t.Fatalf("%q é borda e não infra local", ip)
+		}
+	}
+	visitantes := []string{
+		"2804:18:6041:aebd:b826:3443:9e3f:a5ef", // Vivo, visitante real
+		"2804:14d:5c32:8b3a::1",                 // Claro, visitante real
+		"191.31.15.133", "45.22.33.44", "8.8.8.8",
+	}
+	for _, ip := range visitantes {
+		if ipBorda(ip) {
+			t.Fatalf("%q é visitante e foi tratado como borda", ip)
+		}
+	}
+
+	linhas := []string{
+		"2a06:98c0:3600::103 2026-10-24T12:34:31-03:00 404 GET /wp-admin/install.php belmino.dev 0 /wp-admin/install.php?step=1 curl",
+		"2a06:98c0:3600::103 2026-10-24T12:34:33-03:00 404 GET /.env belmino.dev 0 /.env curl",
+		"2804:18:6041:aebd:b826:3443:9e3f:a5ef 2026-10-24T12:36:00-03:00 404 GET /.env belmino.dev 0 /.env Mozilla/5.0",
+	}
+	eventos := make([]evento, 0, len(linhas))
+	for _, linha := range linhas {
+		ev, ok := parseLinha(linha)
+		if !ok {
+			t.Fatalf("linha não parseia: %q", linha)
+		}
+		eventos = append(eventos, ev)
+	}
+
+	for _, s := range calcularSuspeitos(eventos, time.Now(), 0) {
+		if ipBorda(s.IP) {
+			t.Fatalf("borda no escore de suspeita: %+v", s)
+		}
+	}
+	borda := resumoBorda(eventos)
+	if borda.IPs != 1 || borda.Eventos != 2 {
+		t.Fatalf("resumo de borda: esperado 1 IP / 2 eventos, veio %d / %d", borda.IPs, borda.Eventos)
+	}
+	if borda.Lista[0].Rotulo != "borda Cloudflare" {
+		t.Fatalf("rótulo errado: %q", borda.Lista[0].Rotulo)
+	}
+}
+
 // Com o log real em disco, nenhum IP privado/loopback pode aparecer como
 // suspeito — é a prova do defeito medido em produção.
 func TestLogRealSemInfraNosSuspeitos(t *testing.T) {

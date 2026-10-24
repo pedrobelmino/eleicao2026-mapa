@@ -173,6 +173,16 @@ function desenharSuspeitos(foto) {
       .join(', ');
     partes.push('infra local fora da contagem: ' + num(infra.ips) + ' IP(s) / ' + num(infra.eventos) + ' req' + (detalhe ? ' (' + detalhe + ')' : ''));
   }
+  // Borda Cloudflare: NÃO é suspeita e não pode ser bloqueada (bloquear a borda
+  // derruba o site). Se aparecer aqui, o real_ip não entregou o IP do visitante.
+  const borda = foto.borda || {};
+  if (borda.ips) {
+    const detalheBorda = (borda.lista || [])
+      .slice(0, 3)
+      .map((i) => i.ip + ' ' + num(i.eventos))
+      .join(', ');
+    partes.push('borda Cloudflare (nunca suspeita, nunca bloqueada): ' + num(borda.ips) + ' IP(s) / ' + num(borda.eventos) + ' req' + (detalheBorda ? ' (' + detalheBorda + ')' : ''));
+  }
   nota.textContent = partes.length ? partes.join(' · ') : 'nenhum IP com sinal';
 
   if (!lista.length) {
