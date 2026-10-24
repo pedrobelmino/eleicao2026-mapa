@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Monitor · *.belmino.dev</title>
+  <link rel="stylesheet" href="/estilo.css">
+</head>
+<body>
+  <header class="topo">
+    <div class="marca">
+      <h1>Monitor de acessos · *.belmino.dev</h1>
+      <p class="sub">borda nginx 8110 · só rede interna 192.168.5.0/24 e loopback</p>
+    </div>
+    <div class="controles">
+      <div class="vivo" id="vivo" data-estado="conectando">
+        <span class="ponto"></span><span id="vivo-texto">conectando…</span>
+      </div>
+      <div class="grupo" role="group" aria-label="Janela">
+        <button class="janela" data-janela="5m">5 min</button>
+        <button class="janela ativo" data-janela="1h">1 h</button>
+        <button class="janela" data-janela="24h">24 h</button>
+      </div>
+      <button id="pausar" class="pausar" aria-pressed="false">Pausar</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="cards" id="cards" aria-label="Números da janela"></section>
+
+    <section class="bloco">
+      <h2>Insights <span class="nota">(regras, sem LLM)</span></h2>
+      <ul class="insights" id="insights"><li class="vazio">aguardando dados…</li></ul>
+    </section>
+
+    <div class="duas">
+      <section class="bloco">
+        <h2>Ataques na janela <span class="nota" id="ataques-nota"></span></h2>
+        <div class="tabela-rolagem">
+          <table class="tabela" id="tabela-ataques">
+            <thead>
+              <tr><th>Tipo</th><th>IP</th><th>Host</th><th>N</th><th>Primeiro</th><th>Último</th><th>Alvo</th><th>Bloq.</th></tr>
+            </thead>
+            <tbody><tr><td colspan="8" class="vazio">nenhum ataque na janela</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="bloco">
+        <h2>Por host</h2>
+        <div class="tabela-rolagem">
+          <table class="tabela" id="tabela-hosts">
+            <thead><tr><th>Host</th><th>Humano</th><th>Bot</th><th>Ataque</th><th>Total</th></tr></thead>
+            <tbody><tr><td colspan="5" class="vazio">sem dados</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <div class="tres">
+      <section class="bloco"><h2>Top IPs</h2><table class="tabela compacta" id="tabela-ips"></table></section>
+      <section class="bloco"><h2>Top caminhos</h2><table class="tabela compacta" id="tabela-caminhos"></table></section>
+      <section class="bloco"><h2>Top user-agents</h2><table class="tabela compacta" id="tabela-uas"></table></section>
+    </div>
+
+    <section class="bloco">
+      <h2>Últimos 60 min <span class="nota">(humano · bot · ataque, por minuto)</span></h2>
+      <div class="serie" id="serie-min"></div>
+      <div class="legenda">
+        <span><i class="cor humano"></i>humano</span>
+        <span><i class="cor bot"></i>bot</span>
+        <span><i class="cor ataque"></i>ataque</span>
+      </div>
+    </section>
+
+    <section class="bloco">
+      <h2>Últimos 7 dias <span class="nota">(por dia)</span></h2>
+      <div class="serie" id="serie-dia"></div>
+    </section>
+
+    <section class="bloco">
+      <h2>Fluxo ao vivo <span class="nota">(25 mais recentes)</span></h2>
+      <div class="tabela-rolagem alta">
+        <table class="tabela" id="tabela-feed">
+          <thead><tr><th>Hora</th><th>IP</th><th>Host</th><th>Mét.</th><th>Alvo</th><th>Status</th><th>Tipo</th></tr></thead>
+          <tbody><tr><td colspan="7" class="vazio">sem eventos</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="bloco rodape-bloco">
+      <h2>Como ler isto</h2>
+      <ul class="explica">
+        <li><b>Humano</b> × <b>bot</b> sai da assinatura do user-agent — o mesmo filtro da contagem anônima do site. Requisição sem UA cai em "desconhecido".</li>
+        <li><b>Ataque</b> é classificatório por regra: arquivo sensível, path traversal, SQLi, scanner, método não permitido e flood/429. Cada evento recebe um tipo só, o mais específico.</li>
+        <li>O <b>IP é o real do visitante</b> (CF-Connecting-IP já resolvido pelo nginx na borda), não o do Cloudflare. É por isso que bloquear um IP não derruba o site.</li>
+        <li><b>Bloq.</b> = o IP estava na lista do vigia ou recebeu 403 nesta janela.</li>
+        <li><b>Canário</b> (<code>/healthz</code> do docker) não entra em nenhuma contagem.</li>
+        <li><b>Janela parcial</b> aparece quando o log foi truncado em 5 MB e já não cobre o período inteiro — o painel mostra o que existe, não estima.</li>
+      </ul>
+      <p class="assinatura">somente 192.168.5.0/24 e loopback · filtro no servidor (socket), não em JS · nenhum CDN, nenhuma requisição externa</p>
+    </section>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>

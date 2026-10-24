@@ -1,0 +1,37 @@
+[Unit]
+# Painel de monitoramento dos acessos *.belmino.dev — servido SÓ na rede
+# interna (192.168.5.0/24) e no loopback. Nenhum hostname público aponta para
+# cá: o túnel Cloudflare do belmino.dev não tem regra para a 8113.
+#
+# Independência do site: este processo não fala com o container do nginx nem
+# com o Go da API. Ele lê o log que o nginx já grava. Derrubar o painel não
+# derruba a 8110, e reiniciar o site não derruba o painel.
+Description=Monitor de acessos *.belmino.dev (painel interno 8113)
+Documentation=file:///home/pedro/eleicao2026-mapa/README.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/pedro/eleicao2026-mapa
+ExecStart=/home/pedro/eleicao2026-mapa/monitor/bin/monitor-ataques
+Restart=always
+RestartSec=2s
+
+# Loopback + LAN da casa. Nunca 0.0.0.0 (o binário recusa esse valor também).
+Environment=MONITOR_ENDERECOS=127.0.0.1:8113,192.168.5.179:8113
+Environment=MONITOR_REDE=192.168.5.0/24
+Environment=MONITOR_LOG=/home/pedro/eleicao2026-mapa/var/defesa/acessos.log
+Environment=MONITOR_SERIE=/home/pedro/eleicao2026-mapa/var/defesa/monitor_serie_dia.json
+Environment=MONITOR_ESTADO=/home/pedro/eleicao2026-mapa/var/defesa/estado.json
+
+# Endurecimento: sem privilégio novo, sem /tmp compartilhado, sem home gravável.
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=full
+ProtectHome=read-only
+ReadWritePaths=/home/pedro/eleicao2026-mapa/var/defesa
+MemoryMax=256M
+
+[Install]
+WantedBy=default.target

@@ -22,7 +22,8 @@ navegador
 cloudflared  (hermes-tunel-belmino.service, ~/.cloudflared/belmino-eleicao.yml)
    │  http://127.0.0.1:8110
    ▼
-nginx  (container web)      cabeçalhos, CSP, rate limit 40 req/s por IP, mirror da visita
+nginx  (container web)      cabeçalhos, CSP, rate limit 40 req/s por IP, mirror da visita,
+   │                        lista de bloqueio por IP (geo) e log de defesa
    ├── /            → index.html (React SPA)
    └── /api/        → http://api:8080
                         │
@@ -31,8 +32,19 @@ nginx  (container web)      cabeçalhos, CSP, rate limit 40 req/s por IP, mirror
                                           replay 2022, margens, saúde, configuração da fonte
                         │
                         ├── /dados (ro: JSON pré-gerado do TSE + malhas IBGE)
-                        └── /metricas (SQLite de visitas anônimas, compartilhado com o painel Python)
+                        ├── /metricas (SQLite de visitas anônimas, compartilhado com o painel Python)
+                        └── /defesa (ro: estado do vigia de ataques, para o painel)
+
+painel privado (SÓ 127.0.0.1:8112)
+   │  nginx `listen 8081`, servidor separado, mesmo container
+   └── /api/interno/ → http://api:8080/api/interno/   (sem token: é local)
 ```
+
+Dois `server` no nginx, e isso é requisito duro: o site público (`listen 80`,
+publicado em `127.0.0.1:8110`) responde **404** em `/api/interno/*` mesmo com
+token válido; o painel existe apenas no `listen 8081`, publicado em
+`127.0.0.1:8112`, porta que o túnel não conhece. Isolamento por porta, não por
+token — a liberação sem token se apoia nesse isolamento (ver abaixo).
 
 - **Front**: React 19 + Vite + MapLibre GL. Build estático dentro do container
   `web`; o nginx serve `dist/`. Roteamento próprio (`web/src/router.jsx`), sem
@@ -337,26 +349,192 @@ simultâneas e 24 por IP, validação de URI/parâmetros (414/400), whitelist de
 **Bateria de ataque** (não altera estado; sai 1 se algo falhar):
 
 ```bash
-scripts/seguranca/teste_ataques.sh                      # contra 127.0.0.1:8110
-scripts/seguranca/teste_ataques.sh http://127.0.0.1:8100  # contra a stack de teste
+scripts/seguranca/teste_ataques.sh                       # contra 127.0.0.1:8110 (71 casos)
+scripts/seguranca/teste_ataques.sh http://127.0.0.1:8100 # contra a stack de teste
+scripts/seguranca/teste_ataques.sh https://eleicao2026.belmino.dev   # pela internet, como o mundo vê
 ```
 
 Cobre flood (429), injeção SQL/JS em caminho e parâmetro, path traversal, injeção de cabeçalho por
 CRLF, payload de 2 MB, métodos não permitidos, acesso direto a arquivo de dados, listagem de
-diretório, 404 sem stack e o painel privado. O flood é o último caso de propósito: ele satura o
-balde do próprio IP.
+diretório, 404 sem stack, o painel privado (200 só na porta interna, 404 no público **com token
+válido**) e a defesa (autoteste do vigia + lista de bloqueio sem faixa privada). O flood é o último
+caso de propósito: ele satura o balde do próprio IP.
 
-**Painel privado de métricas** (acessos, latência p50/p95/p99, erros, recusas do limitador, saúde
-da stack e visitas anônimas):
+**Painel privado de métricas** — acessos, latência p50/p95/p99, erros, recusas do limitador, saúde
+da stack, visitas anônimas, série temporal com gráfico e o estado da defesa:
 
 ```
 GET /api/interno/metricas   # JSON
 GET /api/interno/painel     # HTML, recarrega a cada 20 s
 ```
 
-Credencial em `METRICAS_TOKEN` (arquivo `.env`, 0600, fora do git). Sem credencial → 401, token
-errado → 403, sem token configurado → 403 (falha fechada). O nginx não registra acesso a essas
-rotas e o Go omite o token na linha de log.
+Só em `http://127.0.0.1:8112`. **Na própria máquina não precisa de token** (decisão de
+24/10/2026): abrir `http://127.0.0.1:8112/api/interno/painel` já responde 200. Fora do loopback
+a credencial `METRICAS_TOKEN` (`.env`, 0600, fora do git) continua obrigatória — sem credencial
+→ 401, token errado → 403, sem token configurado → 403 (falha fechada). Pelo hostname público as
+duas rotas são **404**, com ou sem token: no servidor público o caminho não existe
+(`location ^~ /api/interno/ { return 404; }`).
+
+Como o acesso local é decidido (o atalho fácil é errado): **não** se olha `X-Real-IP`,
+`X-Forwarded-For` nem `Host` — todos forjáveis. Medido nesta máquina, uma conexão do host para
+uma porta publicada em `127.0.0.1` chega ao container com `RemoteAddr` = IP do gateway docker
+(`172.17.0.1`), então "`RemoteAddr` é 127.0.0.1" não existe dentro do container. A regra é:
+`X-Painel-Local: 1` **e** par de rede privado. A marca só é escrita pelo `server` do `listen 8081`
+(`proxy_set_header` sobrescreve o que o cliente mandou) e o `server` público a apaga antes de
+proxiar (`proxy_set_header X-Painel-Local "";`). Consequência: marca forjada pela borda não
+passa, e mesmo que passasse o par não seria privado.
+
+Ver o painel da própria máquina (sem token):
+
+```bash
+xdg-open "http://127.0.0.1:8112/api/interno/painel"
+painel-eleicao          # atalho local (~/.local/bin): abre no navegador padrão
+```
+
+Ver de outra máquina, **sem expor nada**: túnel SSH pela porta que já é loopback.
+
+```bash
+# na sua máquina, com acesso SSH a esta:
+ssh -N -L 8112:127.0.0.1:8112 pedro@<ip-desta-máquina>
+# depois abra http://127.0.0.1:8112/api/interno/painel?token=... no navegador local
+```
+
+O túnel Cloudflare (`~/.cloudflared/belmino-eleicao.yml`) aponta só para `127.0.0.1:8110`; não
+existe hostname público apontando para 8112. Não adicione um.
+
+### Monitor de acessos `*.belmino.dev` (painel 8113, SÓ rede interna)
+
+```
+http://192.168.5.179:8113        # de qualquer máquina da LAN
+http://127.0.0.1:8113            # na própria máquina
+```
+
+Mostra, em tempo real (SSE), quem entra pela borda `*.belmino.dev`: req/s por status
+(2xx/3xx/4xx/5xx), visitantes únicos (1 min e 1 h), top IPs/hosts/caminhos/user-agents, bots
+ativos, ataques classificados por tipo, insights gerados por regra (sem LLM), série de 60 min por
+minuto e de 7 dias por dia separando humano × bot × ataque, filtros de 5 min / 1 h / 24 h e botão
+de pausar o ao vivo.
+
+**Por que só a LAN alcança** — três motivos independentes, todos no servidor:
+
+1. o processo (`monitor/bin/monitor-ataques`, systemd `--user` `hermes-eleicao-monitor.service`)
+   escuta **somente** `127.0.0.1:8113` e `192.168.5.179:8113` — nunca `0.0.0.0`. O binário recusa
+   `0.0.0.0` na configuração e cai para o IP atual da LAN se o DHCP mudar o endereço;
+2. toda requisição passa por um filtro que olha o **IP do socket** (`RemoteAddr`, o que o kernel
+   aceitou), liberando só `192.168.5.0/24` e loopback; o resto recebe `403`. Nenhum cabeçalho
+   (`X-Real-IP`, `X-Forwarded-For`, `CF-Connecting-IP`, `X-Painel-Local`) é lido — forjar header
+   não abre nada;
+3. não existe hostname público apontando para 8113 no túnel, e o nginx público responde **404**
+   em `/monitor` e `/api/monitor/` (inclusive com cabeçalho forjado).
+
+**Onde vêm os dados** — o `log_format defesa` do nginx grava, por requisição: IP real (o
+`real_ip_header CF-Connecting-IP` da borda resolve o visitante, não o Cloudflare), instante,
+status, método, caminho, **host**, flag de bloqueio, a requisição crua entre aspas (com query) e o
+user-agent. O host é o que separa `eleicao2026.belmino.dev` de `belmino.dev`/`www.belmino.dev` de
+scanner batendo no IP. As linhas antigas (sem host) continuam válidas e aparecem como `?`. O hub
+(`belmino.dev`/`www`, porta 8111) grava no mesmo arquivo o mesmo formato — sem isso esses dois
+domínios nunca apareceriam. O log é truncado em 5 MB pelo vigia; por isso a janela de 24 h pode
+aparecer como **parcial** — o painel diz o que está vendo, não estima.
+
+**Como desligar** (o site público não depende dele):
+
+```bash
+systemctl --user stop hermes-eleicao-monitor.service      # para o painel
+systemctl --user disable hermes-eleicao-monitor.service   # não sobe no boot
+# desfazer a coleta no log (volta ao formato de 5 campos, sem host):
+#   git -C ~/eleicao2026-mapa revert <commit-deste-painel> -- web/nginx.conf
+#   docker compose -p eleicao2026-mapa up -d --no-deps web
+# desfazer o espelho do hub:
+#   git -C ~/monitoramento-eleicoes-presidenciais-governo-ce checkout hub/servidor_hub.py
+#   systemctl --user restart hub-belmino.service
+```
+
+**Como interpretar os insights** — são regras, não opinião de modelo, e cada uma só fala quando o
+número existe:
+
+| frase | regra |
+|---|---|
+| `pico Nx acima da média dos últimos 25 min` | req/s dos últimos 5 min ÷ média dos 25 min anteriores ≥ 3 (≥ 20 req) |
+| `IP X tentou N caminhos de <tipo> em 5 min` | mesmo IP com ≥ 8 caminhos sensíveis/traversal/scanner na janela |
+| `nenhum ataque há N` | último evento classificado como ataque faz mais de 1 h |
+| `N bots ativos nos últimos 5 min` | IPs distintos com UA de robô (mesmo `reBot` da contagem anônima) |
+| `host concentra N% do tráfego` | host com maior volume na última hora |
+| `N respostas 5xx em 5 min` | erro de backend, **não** é ataque |
+| `N IP(s) bloqueados na borda` | lido de `var/defesa/estado.json` (o vigia) |
+| `janela de 24 h parcial` | o log truncou e não cobre as 24 h |
+
+Tipos de ataque (um por evento, o mais específico primeiro): **arquivo sensível** (`.env`, `.git`,
+`/admin`, `nginx.conf`…), **path traversal** (`../`, `%2e%2e`, `/etc/passwd`), **SQLi** (aspas com
+`OR/AND`, `UNION SELECT`, `sleep(`, `1=1`), **scanner de vulnerabilidade** (`wp-admin`,
+`xmlrpc.php`, `*.php`, UA de `sqlmap`/`nuclei`/`nikto`…), **método não permitido** (fora de
+GET/HEAD/POST/OPTIONS) e **flood / 429** (429 do nginx ou ≥ 120 req/min do mesmo IP).
+IP `não resolvido` = requisição recusada pelo nginx no parse da linha (ex. `/../etc/passwd`), antes
+do `real_ip` rodar: o painel mostra isso em vez de atribuir o ataque ao gateway do docker.
+
+**Resiliência** — o painel é processo separado: não fala com o container do site, só lê o arquivo
+de log. `systemctl --user stop` nele não muda nada na 8110; se ele morrer, `Restart=always` em 2 s
+o levanta; e derrubar o site só faz o painel mostrar silêncio.
+
+
+**Gráfico** — série de acessos por hora (24 h) e por dia (14 dias), separando humano × bot, com
+total do dia, pico do dia, pico da hora e top países/cidades. Sai do mesmo `visitas.db` da contagem
+anônima (nada de tabela nova) e é **SVG gerado no Go** (`api/grafico.go`): zero JavaScript, zero
+CDN, zero requisição externa — a CSP do nginx continua fechada e o painel é um documento só.
+
+**Defesa automática contra ataque** (`hermes-eleicao-defesa.timer`, systemd --user, 1 min):
+
+| limiar | padrão | env |
+|---|---|---|
+| requisições do mesmo IP em 60 s | 120 | `LIMITE_REQ_MIN` |
+| respostas 429 em 60 s | 20 | `LIMITE_429` |
+| varredura (traversal, `.env`, `.git`, `wp-admin`…) ou 5xx em 5 min | 15 | `LIMITE_SUSPEITOS` |
+| janela do bloqueio (renovável) | 30 min | `DURACAO_MIN` |
+
+Como funciona, por ciclo:
+
+1. lê o que é novo em `var/defesa/acessos.log` (log do nginx no formato
+   `IP instante status método caminho` — sem query string, para o token nunca entrar em log);
+2. agrega por IP e aplica os limiares. **IP privado, loopback, link-local ou reservado nunca é
+   bloqueado** — é a trava que mantém o túnel, o nginx e o painel de pé, e tem teste próprio
+   (`vigia_ataques.py --autoteste`, 22 casos);
+3. escreve `var/defesa/bloqueios.conf` (`<ip> 1;`), roda `nginx -t` e recarrega o container `web`;
+   o `geo $bloqueado_ip` do nginx devolve **403 só para aquele IP**. Todo o resto continua 200;
+4. grava o estado em `var/defesa/estado.json` (o painel lê daí) e conta os bloqueios;
+5. avisa no Telegram com IP, motivo, contagem e horário (renovação avisa no máximo a cada 10 min);
+6. ao vencer a janela, o IP sai da lista sozinho e o nginx recarrega.
+
+Operação:
+
+```bash
+python3 scripts/defesa/vigia_ataques.py --status          # bloqueios ativos, contador, última execução
+python3 scripts/defesa/vigia_ataques.py --autoteste      # prova que faixa privada nunca é bloqueada
+python3 scripts/defesa/vigia_ataques.py --ensaio         # decide e imprime, sem tocar em nada
+bash scripts/defesa/desbloquear.sh 45.22.33.44           # desbloqueio manual (um IP)
+bash scripts/defesa/desbloquear.sh --todos               # lista inteira
+bash scripts/defesa/prova_bloqueio.sh                    # prova ponta a ponta (ataca e desbloqueia)
+systemctl --user list-timers hermes-eleicao-defesa.timer # cadência
+journalctl --user -u hermes-eleicao-defesa -n 50         # ciclos
+tail -20 ~/.hermes/logs/eleicao-defesa.log               # bloqueios, renovações, desbloqueios
+```
+
+Desligar a defesa (o site continua no ar, com o rate limit do nginx):
+
+```bash
+systemctl --user disable --now hermes-eleicao-defesa.timer
+bash scripts/defesa/desbloquear.sh --todos               # e limpe o que estiver bloqueado
+```
+
+Reverter tudo (voltar ao estado de 24/10/2026, sem painel separado nem bloqueio):
+
+```bash
+git revert <commit>
+docker compose -p eleicao2026-mapa up -d --build        # nginx volta a ter um server só
+bash scripts/defesa/desbloquear.sh --todos
+```
+
+Privacidade: `var/defesa/acessos.log` é o **único** lugar onde um IP aparece em claro. Fica fora de
+qualquer raiz servida, é truncado pelo próprio vigia ao passar de 5 MB e serve só para contar
+requisição por IP. A contagem de visitas do mapa continua anônima (hash do dia) e independente dele.
 
 **Visitas anônimas** — o nginx espelha a abertura da página (`mirror /_visita`) para a API, que
 grava no MESMO `visitas.db` do painel Python (`~/.hermes/painel_publico`, montado em `/metricas`).

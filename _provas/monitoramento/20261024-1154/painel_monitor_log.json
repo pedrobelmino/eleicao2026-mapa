@@ -1,0 +1,1524 @@
+{
+ "gerado_em": "2026-10-24T11:54:37-03:00",
+ "uptime_s": 17,
+ "lidos": 2391,
+ "canario": 1113,
+ "janelas": {
+  "1h": {
+   "nome": "1h",
+   "segundos": 3600,
+   "total": 109,
+   "req_s": 0.03027777777777778,
+   "humano": 81,
+   "bot": 9,
+   "ataques": 19,
+   "por_classe": {
+    "2xx": 70,
+    "3xx": 1,
+    "4xx": 38,
+    "5xx": 0
+   },
+   "classe_chamadas": {
+    "GET": 108,
+    "PROPFIND": 1
+   },
+   "unicos": {
+    "hora": 8,
+    "minuto": 0
+   },
+   "bots_ativos": 2,
+   "bloqueados": 0,
+   "top_ips": [
+    {
+     "chave": "191.31.15.133",
+     "n": 58
+    },
+    {
+     "chave": "172.19.0.1",
+     "n": 22
+    },
+    {
+     "chave": "186.219.137.78",
+     "n": 10
+    },
+    {
+     "chave": "não resolvido",
+     "n": 7
+    },
+    {
+     "chave": "108.174.5.113",
+     "n": 6
+    },
+    {
+     "chave": "9.169.121.185",
+     "n": 4
+    },
+    {
+     "chave": "127.0.0.1",
+     "n": 1
+    },
+    {
+     "chave": "170.106.73.216",
+     "n": 1
+    }
+   ],
+   "top_hosts": [
+    {
+     "chave": "?",
+     "n": 57
+    },
+    {
+     "chave": "eleicao2026.belmino.dev",
+     "n": 32
+    },
+    {
+     "chave": "127.0.0.1",
+     "n": 9
+    },
+    {
+     "chave": "_",
+     "n": 7
+    },
+    {
+     "chave": "belmino.dev",
+     "n": 3
+    },
+    {
+     "chave": "www.belmino.dev",
+     "n": 1
+    }
+   ],
+   "top_caminhos": [
+    {
+     "chave": "/index.html",
+     "n": 44
+    },
+    {
+     "chave": "/api/interno/painel",
+     "n": 11
+    },
+    {
+     "chave": "/",
+     "n": 9
+    },
+    {
+     "chave": "/.env",
+     "n": 4
+    },
+    {
+     "chave": "/api/interno/metricas",
+     "n": 3
+    },
+    {
+     "chave": "/api/monitor/estado",
+     "n": 3
+    },
+    {
+     "chave": "/monitor",
+     "n": 3
+    },
+    {
+     "chave": "/api/api/interno/painel",
+     "n": 2
+    }
+   ],
+   "top_uas": [
+    {
+     "chave": "desconhecido",
+     "n": 77
+    },
+    {
+     "chave": "curl/8.18.0",
+     "n": 9
+    },
+    {
+     "chave": "Chrome · Android",
+     "n": 8
+    },
+    {
+     "chave": "Chrome · Linux",
+     "n": 8
+    },
+    {
+     "chave": "-",
+     "n": 2
+    },
+    {
+     "chave": "nuclei/v3",
+     "n": 2
+    },
+    {
+     "chave": "Firefox · Windows",
+     "n": 1
+    },
+    {
+     "chave": "Safari · iPhone",
+     "n": 1
+    }
+   ],
+   "hosts": [
+    {
+     "host": "?",
+     "humano": 57,
+     "bot": 0,
+     "ataque": 0,
+     "total": 57
+    },
+    {
+     "host": "eleicao2026.belmino.dev",
+     "humano": 12,
+     "bot": 3,
+     "ataque": 17,
+     "total": 32
+    },
+    {
+     "host": "127.0.0.1",
+     "humano": 4,
+     "bot": 5,
+     "ataque": 0,
+     "total": 9
+    },
+    {
+     "host": "_",
+     "humano": 5,
+     "bot": 0,
+     "ataque": 2,
+     "total": 7
+    },
+    {
+     "host": "belmino.dev",
+     "humano": 2,
+     "bot": 1,
+     "ataque": 0,
+     "total": 3
+    },
+    {
+     "host": "www.belmino.dev",
+     "humano": 1,
+     "bot": 0,
+     "ataque": 0,
+     "total": 1
+    }
+   ],
+   "ataque_tipo": {
+    "SQLi": 4,
+    "arquivo sensível": 8,
+    "método não permitido": 1,
+    "path traversal": 5,
+    "scanner de vulnerabilidade": 1
+   },
+   "ataques_reg": [
+    {
+     "tipo": "arquivo sensível",
+     "ip": "191.31.15.133",
+     "host": "eleicao2026.belmino.dev",
+     "caminho": "GET /admin HTTP/1.1",
+     "n": 8,
+     "primeiro": "11:47:08",
+     "ultimo": "11:49:36",
+     "bloqueado": false
+    },
+    {
+     "tipo": "SQLi",
+     "ip": "191.31.15.133",
+     "host": "eleicao2026.belmino.dev",
+     "caminho": "GET /?id=1'%20OR%20'1'='1 HTTP/1.1",
+     "n": 4,
+     "primeiro": "11:47:08",
+     "ultimo": "11:49:36",
+     "bloqueado": false
+    },
+    {
+     "tipo": "path traversal",
+     "ip": "191.31.15.133",
+     "host": "eleicao2026.belmino.dev",
+     "caminho": "GET /mapa/../etc/passwd HTTP/1.1",
+     "n": 3,
+     "primeiro": "11:47:53",
+     "ultimo": "11:49:36",
+     "bloqueado": false
+    },
+    {
+     "tipo": "path traversal",
+     "ip": "não resolvido",
+     "host": "_",
+     "caminho": "GET /../etc/passwd HTTP/1.1",
+     "n": 2,
+     "primeiro": "11:48:17",
+     "ultimo": "11:49:36",
+     "bloqueado": false
+    },
+    {
+     "tipo": "scanner de vulnerabilidade",
+     "ip": "191.31.15.133",
+     "host": "eleicao2026.belmino.dev",
+     "caminho": "GET /wp-login.php HTTP/1.1",
+     "n": 1,
+     "primeiro": "11:49:36",
+     "ultimo": "11:49:36",
+     "bloqueado": false
+    },
+    {
+     "tipo": "método não permitido",
+     "ip": "191.31.15.133",
+     "host": "eleicao2026.belmino.dev",
+     "caminho": "PROPFIND /mapa HTTP/1.1",
+     "n": 1,
+     "primeiro": "11:49:36",
+     "ultimo": "11:49:36",
+     "bloqueado": false
+    }
+   ]
+  },
+  "24h": {
+   "nome": "24h",
+   "segundos": 86400,
+   "total": 1278,
+   "req_s": 0.014791666666666667,
+   "humano": 1070,
+   "bot": 9,
+   "ataques": 199,
+   "por_classe": {
+    "2xx": 982,
+    "3xx": 20,
+    "4xx": 276,
+    "5xx": 0
+   },
+   "classe_chamadas": {
+    "DELETE": 1,
+    "GET": 1269,
+    "HEAD": 1,
+    "OPTIONS": 1,
+    "PATCH": 1,
+    "POST": 2,
+    "PROPFIND": 1,
+    "PUT": 1,
+    "TRACE": 1
+   },
+   "unicos": {
+    "hora": 8,
+    "minuto": 0
+   },
+   "bots_ativos": 2,
+   "bloqueados": 3,
+   "top_ips": [
+    {
+     "chave": "172.19.0.1",
+     "n": 766
+    },
+    {
+     "chave": "45.22.33.44",
+     "n": 409
+    },
+    {
+     "chave": "191.31.15.133",
+     "n": 68
+    },
+    {
+     "chave": "186.219.137.78",
+     "n": 10
+    },
+    {
+     "chave": "não resolvido",
+     "n": 7
+    },
+    {
+     "chave": "108.174.5.113",
+     "n": 6
+    },
+    {
+     "chave": "45.22.33.45",
+     "n": 4
+    },
+    {
+     "chave": "9.169.121.185",
+     "n": 4
+    }
+   ],
+   "top_hosts": [
+    {
+     "chave": "?",
+     "n": 435
+    },
+    {
+     "chave": "45.22.33.44",
+     "n": 409
+    },
+    {
+     "chave": "-",
+     "n": 368
+    },
+    {
+     "chave": "eleicao2026.belmino.dev",
+     "n": 32
+    },
+    {
+     "chave": "127.0.0.1",
+     "n": 9
+    },
+    {
+     "chave": "191.31.15.133",
+     "n": 7
+    },
+    {
+     "chave": "_",
+     "n": 7
+    },
+    {
+     "chave": "45.22.33.45",
+     "n": 4
+    }
+   ],
+   "top_caminhos": [
+    {
+     "chave": "/api/estados",
+     "n": 765
+    },
+    {
+     "chave": "/index.html",
+     "n": 102
+    },
+    {
+     "chave": "/api/ufs.geojson",
+     "n": 37
+    },
+    {
+     "chave": "/api/estados/identidade",
+     "n": 28
+    },
+    {
+     "chave": "/assets/index-CFgDM_H5.js",
+     "n": 24
+    },
+    {
+     "chave": "/assets/index-DagsRG5q.css",
+     "n": 24
+    },
+    {
+     "chave": "/api/uf/CE/municipios",
+     "n": 22
+    },
+    {
+     "chave": "/api/uf/CE/municipios.geojson",
+     "n": 22
+    }
+   ],
+   "top_uas": [
+    {
+     "chave": "desconhecido",
+     "n": 1246
+    },
+    {
+     "chave": "curl/8.18.0",
+     "n": 9
+    },
+    {
+     "chave": "Chrome · Android",
+     "n": 8
+    },
+    {
+     "chave": "Chrome · Linux",
+     "n": 8
+    },
+    {
+     "chave": "-",
+     "n": 2
+    },
+    {
+     "chave": "nuclei/v3",
+     "n": 2
+    },
+    {
+     "chave": "Firefox · Windows",
+     "n": 1
+    },
+    {
+     "chave": "Safari · iPhone",
+     "n": 1
+    }
+   ],
+   "hosts": [
+    {
+     "host": "?",
+     "humano": 435,
+     "bot": 0,
+     "ataque": 0,
+     "total": 435
+    },
+    {
+     "host": "45.22.33.44",
+     "humano": 367,
+     "bot": 0,
+     "ataque": 42,
+     "total": 409
+    },
+    {
+     "host": "-",
+     "humano": 230,
+     "bot": 0,
+     "ataque": 138,
+     "total": 368
+    },
+    {
+     "host": "eleicao2026.belmino.dev",
+     "humano": 12,
+     "bot": 3,
+     "ataque": 17,
+     "total": 32
+    },
+    {
+     "host": "127.0.0.1",
+     "humano": 4,
+     "bot": 5,
+     "ataque": 0,
+     "total": 9
+    },
+    {
+     "host": "_",
+     "humano": 5,
+     "bot": 0,
+     "ataque": 2,
+     "total": 7
+    },
+    {
+     "host": "191.31.15.133",
+     "humano": 7,
+     "bot": 0,
+     "ataque": 0,
+     "total": 7
+    },
+    {
+     "host": "45.22.33.45",
+     "humano": 4,
+     "bot": 0,
+     "ataque": 0,
+     "total": 4
+    },
+    {
+     "host": "belmino.dev",
+     "humano": 2,
+     "bot": 1,
+     "ataque": 0,
+     "total": 3
+    },
+    {
+     "host": "192.168.0.10",
+     "humano": 2,
+     "bot": 0,
+     "ataque": 0,
+     "total": 2
+    },
+    {
+     "host": "www.belmino.dev",
+     "humano": 1,
+     "bot": 0,
+     "ataque": 0,
+     "total": 1
+    },
+    {
+     "host": "OR",
+     "humano": 1,
+     "bot": 0,
+     "ataque": 0,
+     "total": 1
+    }
+   ],
+   "ataque_tipo": {
+    "SQLi": 4,
+    "arquivo sensível": 11,
+    "flood / 429": 173,
+    "método não permitido": 5,
+    "path traversal": 5,
+    "scanner de vulnerabilidade": 1
+   },
+   "ataques_reg": [
+    {
+     "tipo": "flood / 429",
+     "ip": "172.19.0.1",
+     "host": "-",
+     "caminho": "/api/estados",
+     "n": 131,
+     "primeiro": "10:24:25",
+     "ultimo": "10:24:26",
+     "bloqueado": false
+    },
+    {
+     "tipo": "flood / 429",
+     "ip": "45.22.33.44",
+     "host": "45.22.33.44",
+     "caminho": "/api/estados",
+     "n": 42,
+     "primeiro": "10:23:00",
+     "ultimo": "10:23:19",
+     "bloqueado": false
+    },
+    {
+     "tipo": "arquivo sensível",
+     "ip": "191.31.15.133",
+     "host": "eleicao2026.belmino.dev",
+     "caminho": "GET /admin HTTP/1.1",
+     "n": 8,
+     "primeiro": "11:47:08",
+     "ultimo": "11:49:36",
+     "bloqueado": false
+    },
+    {
+     "tipo": "SQLi",
+     "ip": "191.31.15.133",
+     "host": "eleicao2026.belmino.dev",
+     "caminho": "GET /?id=1'%20OR%20'1'='1 HTTP/1.1",
+     "n": 4,
+     "primeiro": "11:47:08",
+     "ultimo": "11:49:36",
+     "bloqueado": false
+    },
+    {
+     "tipo": "método não permitido",
+     "ip": "172.19.0.1",
+     "host": "-",
+     "caminho": "/api/estados",
+     "n": 4,
+     "primeiro": "10:24:24",
+     "ultimo": "10:24:24",
+     "bloqueado": false
+    },
+    {
+     "tipo": "path traversal",
+     "ip": "191.31.15.133",
+     "host": "eleicao2026.belmino.dev",
+     "caminho": "GET /mapa/../etc/passwd HTTP/1.1",
+     "n": 3,
+     "primeiro": "11:47:53",
+     "ultimo": "11:49:36",
+     "bloqueado": false
+    },
+    {
+     "tipo": "arquivo sensível",
+     "ip": "172.19.0.1",
+     "host": "-",
+     "caminho": "/nginx.conf",
+     "n": 3,
+     "primeiro": "10:24:24",
+     "ultimo": "10:24:24",
+     "bloqueado": false
+    },
+    {
+     "tipo": "path traversal",
+     "ip": "não resolvido",
+     "host": "_",
+     "caminho": "GET /../etc/passwd HTTP/1.1",
+     "n": 2,
+     "primeiro": "11:48:17",
+     "ultimo": "11:49:36",
+     "bloqueado": false
+    },
+    {
+     "tipo": "scanner de vulnerabilidade",
+     "ip": "191.31.15.133",
+     "host": "eleicao2026.belmino.dev",
+     "caminho": "GET /wp-login.php HTTP/1.1",
+     "n": 1,
+     "primeiro": "11:49:36",
+     "ultimo": "11:49:36",
+     "bloqueado": false
+    },
+    {
+     "tipo": "método não permitido",
+     "ip": "191.31.15.133",
+     "host": "eleicao2026.belmino.dev",
+     "caminho": "PROPFIND /mapa HTTP/1.1",
+     "n": 1,
+     "primeiro": "11:49:36",
+     "ultimo": "11:49:36",
+     "bloqueado": false
+    }
+   ]
+  },
+  "5m": {
+   "nome": "5m",
+   "segundos": 300,
+   "total": 18,
+   "req_s": 0.06,
+   "humano": 10,
+   "bot": 8,
+   "ataques": 0,
+   "por_classe": {
+    "2xx": 12,
+    "3xx": 1,
+    "4xx": 5,
+    "5xx": 0
+   },
+   "classe_chamadas": {
+    "GET": 18
+   },
+   "unicos": {
+    "hora": 8,
+    "minuto": 0
+   },
+   "bots_ativos": 2,
+   "bloqueados": 0,
+   "top_ips": [
+    {
+     "chave": "186.219.137.78",
+     "n": 8
+    },
+    {
+     "chave": "191.31.15.133",
+     "n": 5
+    },
+    {
+     "chave": "172.19.0.1",
+     "n": 4
+    },
+    {
+     "chave": "108.174.5.113",
+     "n": 1
+    }
+   ],
+   "top_hosts": [
+    {
+     "chave": "eleicao2026.belmino.dev",
+     "n": 11
+    },
+    {
+     "chave": "127.0.0.1",
+     "n": 4
+    },
+    {
+     "chave": "belmino.dev",
+     "n": 2
+    },
+    {
+     "chave": "www.belmino.dev",
+     "n": 1
+    }
+   ],
+   "top_caminhos": [
+    {
+     "chave": "/index.html",
+     "n": 10
+    },
+    {
+     "chave": "/",
+     "n": 2
+    },
+    {
+     "chave": "/api/monitor/estado",
+     "n": 2
+    },
+    {
+     "chave": "/monitor",
+     "n": 2
+    },
+    {
+     "chave": "/monitor/",
+     "n": 1
+    },
+    {
+     "chave": "/sobre",
+     "n": 1
+    }
+   ],
+   "top_uas": [
+    {
+     "chave": "Chrome · Android",
+     "n": 8
+    },
+    {
+     "chave": "curl/8.18.0",
+     "n": 8
+    },
+    {
+     "chave": "Firefox · Windows",
+     "n": 1
+    },
+    {
+     "chave": "prova-host/1",
+     "n": 1
+    }
+   ],
+   "hosts": [
+    {
+     "host": "eleicao2026.belmino.dev",
+     "humano": 8,
+     "bot": 3,
+     "ataque": 0,
+     "total": 11
+    },
+    {
+     "host": "127.0.0.1",
+     "humano": 0,
+     "bot": 4,
+     "ataque": 0,
+     "total": 4
+    },
+    {
+     "host": "belmino.dev",
+     "humano": 1,
+     "bot": 1,
+     "ataque": 0,
+     "total": 2
+    },
+    {
+     "host": "www.belmino.dev",
+     "humano": 1,
+     "bot": 0,
+     "ataque": 0,
+     "total": 1
+    }
+   ],
+   "ataque_tipo": {},
+   "ataques_reg": []
+  }
+ },
+ "serie_min": [
+  {
+   "rotulo": "10:55",
+   "chave": "2026-10-24T10:55",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "10:56",
+   "chave": "2026-10-24T10:56",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "10:57",
+   "chave": "2026-10-24T10:57",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "10:58",
+   "chave": "2026-10-24T10:58",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "10:59",
+   "chave": "2026-10-24T10:59",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:00",
+   "chave": "2026-10-24T11:00",
+   "humano": 4,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:01",
+   "chave": "2026-10-24T11:01",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:02",
+   "chave": "2026-10-24T11:02",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:03",
+   "chave": "2026-10-24T11:03",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:04",
+   "chave": "2026-10-24T11:04",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:05",
+   "chave": "2026-10-24T11:05",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:06",
+   "chave": "2026-10-24T11:06",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:07",
+   "chave": "2026-10-24T11:07",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:08",
+   "chave": "2026-10-24T11:08",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:09",
+   "chave": "2026-10-24T11:09",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:10",
+   "chave": "2026-10-24T11:10",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:11",
+   "chave": "2026-10-24T11:11",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:12",
+   "chave": "2026-10-24T11:12",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:13",
+   "chave": "2026-10-24T11:13",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:14",
+   "chave": "2026-10-24T11:14",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:15",
+   "chave": "2026-10-24T11:15",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:16",
+   "chave": "2026-10-24T11:16",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:17",
+   "chave": "2026-10-24T11:17",
+   "humano": 2,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:18",
+   "chave": "2026-10-24T11:18",
+   "humano": 7,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:19",
+   "chave": "2026-10-24T11:19",
+   "humano": 20,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:20",
+   "chave": "2026-10-24T11:20",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:21",
+   "chave": "2026-10-24T11:21",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:22",
+   "chave": "2026-10-24T11:22",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:23",
+   "chave": "2026-10-24T11:23",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:24",
+   "chave": "2026-10-24T11:24",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:25",
+   "chave": "2026-10-24T11:25",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:26",
+   "chave": "2026-10-24T11:26",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:27",
+   "chave": "2026-10-24T11:27",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:28",
+   "chave": "2026-10-24T11:28",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:29",
+   "chave": "2026-10-24T11:29",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:30",
+   "chave": "2026-10-24T11:30",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:31",
+   "chave": "2026-10-24T11:31",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:32",
+   "chave": "2026-10-24T11:32",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:33",
+   "chave": "2026-10-24T11:33",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:34",
+   "chave": "2026-10-24T11:34",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:35",
+   "chave": "2026-10-24T11:35",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:36",
+   "chave": "2026-10-24T11:36",
+   "humano": 21,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:37",
+   "chave": "2026-10-24T11:37",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:38",
+   "chave": "2026-10-24T11:38",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:39",
+   "chave": "2026-10-24T11:39",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:40",
+   "chave": "2026-10-24T11:40",
+   "humano": 1,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:41",
+   "chave": "2026-10-24T11:41",
+   "humano": 2,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:42",
+   "chave": "2026-10-24T11:42",
+   "humano": 5,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:43",
+   "chave": "2026-10-24T11:43",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:44",
+   "chave": "2026-10-24T11:44",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:45",
+   "chave": "2026-10-24T11:45",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:46",
+   "chave": "2026-10-24T11:46",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:47",
+   "chave": "2026-10-24T11:47",
+   "humano": 7,
+   "bot": 0,
+   "ataque": 8
+  },
+  {
+   "rotulo": "11:48",
+   "chave": "2026-10-24T11:48",
+   "humano": 1,
+   "bot": 1,
+   "ataque": 3
+  },
+  {
+   "rotulo": "11:49",
+   "chave": "2026-10-24T11:49",
+   "humano": 1,
+   "bot": 7,
+   "ataque": 8
+  },
+  {
+   "rotulo": "11:50",
+   "chave": "2026-10-24T11:50",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:51",
+   "chave": "2026-10-24T11:51",
+   "humano": 10,
+   "bot": 1,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:52",
+   "chave": "2026-10-24T11:52",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:53",
+   "chave": "2026-10-24T11:53",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "11:54",
+   "chave": "2026-10-24T11:54",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  }
+ ],
+ "serie_dia": [
+  {
+   "rotulo": "18/10",
+   "chave": "2026-10-18",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "19/10",
+   "chave": "2026-10-19",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "20/10",
+   "chave": "2026-10-20",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "21/10",
+   "chave": "2026-10-21",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "22/10",
+   "chave": "2026-10-22",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "23/10",
+   "chave": "2026-10-23",
+   "humano": 0,
+   "bot": 0,
+   "ataque": 0
+  },
+  {
+   "rotulo": "24/10",
+   "chave": "2026-10-24",
+   "humano": 3195,
+   "bot": 24,
+   "ataque": 588
+  }
+ ],
+ "insights": [
+  {
+   "nivel": "info",
+   "texto": "2 bot(s) ativo(s) nos últimos 5 min; 8 humano(s) na última hora"
+  },
+  {
+   "nivel": "info",
+   "texto": "host não registrado (linhas antigas do log) concentra 52% do tráfego da última hora (57 req)"
+  },
+  {
+   "nivel": "info",
+   "texto": "tráfego da última hora: 74% humano · 8% bot · 17% ataque"
+  },
+  {
+   "nivel": "info",
+   "texto": "janela de 24 h parcial: o log é truncado em 5 MB pelo vigia, o painel mostra o que ainda está no arquivo"
+  }
+ ],
+ "feed": [
+  {
+   "hora": "11:51:54",
+   "ip": "108.174.5.113",
+   "host": "belmino.dev",
+   "metodo": "GET",
+   "caminho": "GET / HTTP/1.1",
+   "status": 200,
+   "ataque": "",
+   "bot": false
+  },
+  {
+   "hora": "11:51:53",
+   "ip": "186.219.137.78",
+   "host": "eleicao2026.belmino.dev",
+   "metodo": "GET",
+   "caminho": "GET /mapa?prova_sse=8 HTTP/1.1",
+   "status": 200,
+   "ataque": "",
+   "bot": false
+  },
+  {
+   "hora": "11:51:52",
+   "ip": "186.219.137.78",
+   "host": "eleicao2026.belmino.dev",
+   "metodo": "GET",
+   "caminho": "GET /mapa?prova_sse=7 HTTP/1.1",
+   "status": 200,
+   "ataque": "",
+   "bot": false
+  },
+  {
+   "hora": "11:51:51",
+   "ip": "186.219.137.78",
+   "host": "eleicao2026.belmino.dev",
+   "metodo": "GET",
+   "caminho": "GET /mapa?prova_sse=6 HTTP/1.1",
+   "status": 200,
+   "ataque": "",
+   "bot": false
+  },
+  {
+   "hora": "11:51:50",
+   "ip": "186.219.137.78",
+   "host": "eleicao2026.belmino.dev",
+   "metodo": "GET",
+   "caminho": "GET /mapa?prova_sse=5 HTTP/1.1",
+   "status": 200,
+   "ataque": "",
+   "bot": false
+  },
+  {
+   "hora": "11:51:49",
+   "ip": "186.219.137.78",
+   "host": "eleicao2026.belmino.dev",
+   "metodo": "GET",
+   "caminho": "GET /mapa?prova_sse=4 HTTP/1.1",
+   "status": 200,
+   "ataque": "",
+   "bot": false
+  },
+  {
+   "hora": "11:51:48",
+   "ip": "186.219.137.78",
+   "host": "eleicao2026.belmino.dev",
+   "metodo": "GET",
+   "caminho": "GET /mapa?prova_sse=3 HTTP/1.1",
+   "status": 200,
+   "ataque": "",
+   "bot": false
+  },
+  {
+   "hora": "11:51:47",
+   "ip": "186.219.137.78",
+   "host": "eleicao2026.belmino.dev",
+   "metodo": "GET",
+   "caminho": "GET /mapa?prova_sse=2 HTTP/1.1",
+   "status": 200,
+   "ataque": "",
+   "bot": false
+  },
+  {
+   "hora": "11:51:46",
+   "ip": "186.219.137.78",
+   "host": "eleicao2026.belmino.dev",
+   "metodo": "GET",
+   "caminho": "GET /mapa?prova_sse=1 HTTP/1.1",
+   "status": 200,
+   "ataque": "",
+   "bot": false
+  },
+  {
+   "hora": "11:51:26",
+   "ip": "191.31.15.133",
+   "host": "www.belmino.dev",
+   "metodo": "GET",
+   "caminho": "GET /sobre HTTP/1.1",
+   "status": 302,
+   "ataque": "",
+   "bot": false
+  },
+  {
+   "hora": "11:51:21",
+   "ip": "191.31.15.133",
+   "host": "belmino.dev",
+   "metodo": "GET",
+   "caminho": "GET / HTTP/1.1",
+   "status": 200,
+   "ataque": "",
+   "bot": true
+  },
+  {
+   "hora": "11:49:45",
+   "ip": "191.31.15.133",
+   "host": "eleicao2026.belmino.dev",
+   "metodo": "GET",
+   "caminho": "GET / HTTP/1.1",
+   "status": 200,
+   "ataque": "",
+   "bot": true
+  },
+  {
+   "hora": "11:49:45",
+   "ip": "191.31.15.133",
+   "host": "eleicao2026.belmino.dev",
+   "metodo": "GET",
+   "caminho": "GET /api/monitor/estado HTTP/1.1",
+   "status": 404,
+   "ataque": "",
+   "bot": true
+  },
+  {
+   "hora": "11:49:45",
+   "ip": "191.31.15.133",
+   "host": "eleicao2026.belmino.dev",
+   "metodo": "GET",
+   "caminho": "GET /monitor HTTP/1.1",
+   "status": 404,
+   "ataque": "",
+   "bot": true
+  },
+  {
+   "hora": "11:49:45",
+   "ip": "172.19.0.1",
+   "host": "127.0.0.1",
+   "metodo": "GET",
+   "caminho": "GET /saude HTTP/1.1",
+   "status": 200,
+   "ataque": "",
+   "bot": true
+  },
+  {
+   "hora": "11:49:45",
+   "ip": "172.19.0.1",
+   "host": "127.0.0.1",
+   "metodo": "GET",
+   "caminho": "GET /api/monitor/estado HTTP/1.1",
+   "status": 404,
+   "ataque": "",
+   "bot": true
+  },
+  {
+   "hora": "11:49:45",
+   "ip": "172.19.0.1",
+   "host": "127.0.0.1",
+   "metodo": "GET",
+   "caminho": "GET /monitor/ HTTP/1.1",
+   "status": 404,
+   "ataque": "",
+   "bot": true
+  },
+  {
+   "hora": "11:49:45",
+   "ip": "172.19.0.1",
+   "host": "127.0.0.1",
+   "metodo": "GET",
+   "caminho": "GET /monitor HTTP/1.1",
+   "status": 404,
+   "ataque": "",
+   "bot": true
+  },
+  {
+   "hora": "11:49:36",
+   "ip": "191.31.15.133",
+   "host": "eleicao2026.belmino.dev",
+   "metodo": "GET",
+   "caminho": "GET /mapa HTTP/1.1",
+   "status": 200,
+   "ataque": "",
+   "bot": false
+  },
+  {
+   "hora": "11:49:36",
+   "ip": "191.31.15.133",
+   "host": "eleicao2026.belmino.dev",
+   "metodo": "PROPFIND",
+   "caminho": "PROPFIND /mapa HTTP/1.1",
+   "status": 405,
+   "ataque": "método não permitido",
+   "bot": false
+  },
+  {
+   "hora": "11:49:36",
+   "ip": "191.31.15.133",
+   "host": "eleicao2026.belmino.dev",
+   "metodo": "GET",
+   "caminho": "GET /wp-login.php HTTP/1.1",
+   "status": 200,
+   "ataque": "scanner de vulnerabilidade",
+   "bot": false
+  },
+  {
+   "hora": "11:49:36",
+   "ip": "191.31.15.133",
+   "host": "eleicao2026.belmino.dev",
+   "metodo": "GET",
+   "caminho": "GET /?id=1'%20OR%20'1'='1 HTTP/1.1",
+   "status": 200,
+   "ataque": "SQLi",
+   "bot": false
+  },
+  {
+   "hora": "11:49:36",
+   "ip": "191.31.15.133",
+   "host": "eleicao2026.belmino.dev",
+   "metodo": "GET",
+   "caminho": "GET /admin HTTP/1.1",
+   "status": 200,
+   "ataque": "arquivo sensível",
+   "bot": false
+  },
+  {
+   "hora": "11:49:36",
+   "ip": "191.31.15.133",
+   "host": "eleicao2026.belmino.dev",
+   "metodo": "GET",
+   "caminho": "GET /mapa/../etc/passwd HTTP/1.1",
+   "status": 200,
+   "ataque": "path traversal",
+   "bot": false
+  },
+  {
+   "hora": "11:49:36",
+   "ip": "não resolvido",
+   "host": "_",
+   "metodo": "GET",
+   "caminho": "GET /../etc/passwd HTTP/1.1",
+   "status": 400,
+   "ataque": "path traversal",
+   "bot": false
+  }
+ ],
+ "vigia": {
+  "bloqueios_ativos": 0,
+  "ips": [],
+  "total_bloqueios": 2,
+  "ultima_execucao": "2026-10-24T11:54:01-03:00"
+ },
+ "parcial_24h": true
+}

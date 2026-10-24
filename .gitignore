@@ -29,3 +29,13 @@ dados/mapa_ufs.json
 
 # backup de dado antigo movido de dados/ (dados/ e montado read-only no container)
 _provas/backup_dados/
+
+# defesa: log por IP (runtime) e estado do vigia — nunca versionados
+var/defesa/acessos.log
+var/defesa/estado.json
+var/defesa/*.tmp
+
+# painel de monitoramento: binário local e agregado diário (runtime)
+monitor/bin/
+var/defesa/monitor_serie_dia.json
+var/defesa/monitor_serie_dia.json.tmp
