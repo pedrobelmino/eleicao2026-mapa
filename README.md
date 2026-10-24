@@ -52,7 +52,7 @@ Volumes: `./dados` é montado somente-leitura em `/dados`;
 
 ## Operação
 
-Todos os comandos rodam em `/home/pedro/eleicao2026-mapa`.
+Todos os comandos rodam na raiz do repositório — nos exemplos, `~/eleicao2026-mapa` (ajuste ao seu caminho).
 
 ### Subir / atualizar a produção
 
@@ -79,11 +79,11 @@ parcial. Produção **não** define essa variável.
 ### Atualizar os dados (durante a apuração)
 
 ```bash
-cd /home/pedro/monitoramento-eleicoes-presidenciais-governo-ce
+cd ~/monitoramento-eleicoes-presidenciais-governo-ce
 python3 coleta_presidente.py           # série da corrida presidencial no TSE
 python3 snapshot_publico.py            # grava dados/publico.json (o que a home lê)
 
-cd /home/pedro/eleicao2026-mapa
+cd ~/eleicao2026-mapa
 docker compose -p eleicao2026-mapa restart api     # a API carrega os dados no boot
 curl -s http://127.0.0.1:8110/api/health | head -c 200
 ```
@@ -149,8 +149,8 @@ systemctl --user disable --now hermes-eleicao-coleta.timer  # para de coletar
 **Reverter à mão** (volta ao 1º turno ou desfaz uma virada):
 
 ```bash
-ls -1 /home/pedro/eleicao2026-mapa/.env.bak-turno-*        # backups das viradas
-cp /home/pedro/eleicao2026-mapa/.env.bak-turno-AAAAMMDD-HHMMSS /home/pedro/eleicao2026-mapa/.env
+ls -1 ~/eleicao2026-mapa/.env.bak-turno-*        # backups das viradas
+cp ~/eleicao2026-mapa/.env.bak-turno-AAAAMMDD-HHMMSS ~/eleicao2026-mapa/.env
 docker compose -p eleicao2026-mapa up -d api
 docker compose -p eleicao2026-mapa exec -T web nginx -s reload
 curl -s http://127.0.0.1:8110/api/health                   # turno esperado
@@ -208,7 +208,7 @@ que o aviso aparece escrito, e que o da API é o mesmo da tela):
 ```bash
 docker compose -p eleicao2026-teste -f compose.yaml -f compose.teste.yaml \
   up -d --build api web            # com ELEICAO=6258 TURNO=2 no ambiente
-NODE_PATH=/home/pedro/.hermes/hermes-agent/node_modules \
+NODE_PATH=$HOME/.hermes/hermes-agent/node_modules \
   node scripts/provas/aviso_procedencia.mjs --base http://127.0.0.1:8100 \
   --out _provas --prefix aviso_teste     # ok:true e problemas: []
 ```
@@ -379,9 +379,9 @@ O rodapé de ambas as rotas repete esses créditos (`web/src/components/Rodape.j
 ```bash
 cd web && npm run build                 # build do front
 cd api && go test ./...                 # suíte da API (leva ~6 min: carrega os dados por teste)
-NODE_PATH=/home/pedro/.hermes/hermes-agent/node_modules \
+NODE_PATH=$HOME/.hermes/hermes-agent/node_modules \
   node scripts/provas/auditoria.mjs --base http://127.0.0.1:8100 --out _provas
-NODE_PATH=/home/pedro/.hermes/hermes-agent/node_modules \
+NODE_PATH=$HOME/.hermes/hermes-agent/node_modules \
   node scripts/provas/captura.mjs --base http://127.0.0.1:8100 --out _provas --prefix prova
 ```
 
