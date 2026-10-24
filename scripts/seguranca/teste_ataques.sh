@@ -3,8 +3,13 @@
 #
 # Uso:
 #   scripts/seguranca/teste_ataques.sh [BASE] [TOKEN]
-#     BASE   default http://127.0.0.1:8110
-#     TOKEN  token do painel privado; se omitido, lê METRICAS_TOKEN de .env
+#     BASE         default http://127.0.0.1:8110 (site público, também o alvo
+#                  do túnel quando rodado com https://eleicao2026.belmino.dev)
+#     TOKEN        token do painel privado; se omitido, lê METRICAS_TOKEN de .env
+#     BASE_INTERNO default http://127.0.0.1:8112 (painel privado, só loopback)
+#
+# O caso [11] prova as duas coisas de uma vez: o painel responde 200 na porta
+# interna e 404 no site público, MESMO com token válido.
 #
 # Cada caso imprime PASS/FAIL com o motivo. Sai com código 1 se algo falhar.
 # Nada aqui altera estado: só dispara requisição e olha a resposta.
@@ -219,15 +224,71 @@ done
 
 # ------------------------------------------------------- 11. painel privado (token)
 echo
-echo "[11] painel de métricas privado"
+echo "[11] painel de métricas privado (token + porta fechada)"
+# O painel mora em 127.0.0.1:8112 (servidor nginx separado, fora do túnel).
+# No BASE (o site público) as rotas internas NÃO existem: 404 sempre, mesmo
+# com token válido — a credencial não é a única barreira, o caminho também não.
+INTERNO="${BASE_INTERNO:-http://127.0.0.1:8112}"
 if [ -z "$TOKEN" ]; then
-  registra_ok "token ausente no .env" "caso pulado (defina METRICAS_TOKEN em .env)"
+  registra_ok "token ausente no .env" "casos de token pulados (defina METRICAS_TOKEN em .env)"
 else
-  espera_status "sem token → 401/403"         "401|403" "$BASE/api/interno/metricas"
-  espera_status "token errado → 401/403"      "401|403" "$BASE/api/interno/metricas?token=errado"
-  espera_status "token certo → 200"           "200"     "$BASE/api/interno/metricas?token=$TOKEN"
-  espera_status "painel HTML com token → 200" "200"     "$BASE/api/interno/painel?token=$TOKEN"
-  corpo_sem     "métricas sem IP em claro"    "189.4.1" "$BASE/api/interno/metricas?token=$TOKEN"
+  espera_status "interno: sem token → 401/403"    "401|403" "$INTERNO/api/interno/metricas"
+  espera_status "interno: token errado → 401/403" "401|403" "$INTERNO/api/interno/metricas?token=errado"
+  espera_status "interno: token certo → 200"      "200"     "$INTERNO/api/interno/metricas?token=$TOKEN"
+  espera_status "interno: painel HTML → 200"      "200"     "$INTERNO/api/interno/painel?token=$TOKEN"
+  corpo_sem     "interno: métricas sem IP claro"  "189.4.1" "$INTERNO/api/interno/metricas?token=$TOKEN"
+
+  if [ "$INTERNO" != "$BASE" ]; then
+    espera_status "público: painel com token → 404"     "404" "$BASE/api/interno/painel?token=$TOKEN"
+    espera_status "público: métricas com token → 404"   "404" "$BASE/api/interno/metricas?token=$TOKEN"
+    espera_status "público: interno sem token → 404"    "404" "$BASE/api/interno/metricas"
+    espera_status "público: interno inexistente → 404"  "404" "$BASE/api/interno/qualquer"
+    corpo_sem     "público: painel não entrega HTML"    "Métricas · eleição 2026" "$BASE/api/interno/painel?token=$TOKEN"
+  else
+    registra_ok "público x interno" "mesma base: casos de isolamento pulados"
+  fi
+
+  # Painel novo: o gráfico tem de vir no HTML (SVG inline, sem CDN).
+  PAINEL_HTML="$(corpo "$INTERNO/api/interno/painel?token=$TOKEN")"
+  if printf '%s' "$PAINEL_HTML" | grep -q '<svg'; then
+    registra_ok "painel: gráfico SVG presente" "$(printf '%s' "$PAINEL_HTML" | grep -c '<svg') svg inline"
+  else
+    registra_falha "painel: gráfico SVG presente" "nenhum <svg> no painel"
+  fi
+  if printf '%s' "$PAINEL_HTML" | grep -qE '<script|https?://[a-z]'; then
+    registra_falha "painel: sem script/CDN externo" "achou script ou URL externa"
+  else
+    registra_ok "painel: sem script/CDN externo" "self-contained"
+  fi
+fi
+
+# ------------------------------------------------ 11b. defesa automática (vigia)
+echo
+echo "[11b] defesa automática (vigia de ataques)"
+VIGIA="$RAIZ/scripts/defesa/vigia_ataques.py"
+AUTOTESTE="$(mktemp)"
+if python3 "$VIGIA" --autoteste >"$AUTOTESTE" 2>&1; then
+  registra_ok "vigia: privado/loopback nunca bloqueado" "$(grep -c 'PASS' "$AUTOTESTE") PASS · $(grep -c 'FAIL' "$AUTOTESTE" || true) FAIL"
+else
+  registra_falha "vigia: privado/loopback nunca bloqueado" "$(tail -2 "$AUTOTESTE" | tr '\n' ' ')"
+fi
+rm -f "$AUTOTESTE"
+
+if grep -Ev '^[[:space:]]*#' "$RAIZ/var/defesa/bloqueios.conf" 2>/dev/null \
+     | grep -qE '^(127\.|10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.|169\.254\.|::1)'; then
+  registra_falha "lista de bloqueio sem faixa privada" "lista em vigor tem IP privado/loopback"
+else
+  registra_ok "lista de bloqueio sem faixa privada" "só IP público (ou vazia)"
+fi
+
+# porta do painel publicada só em loopback
+if command -v ss >/dev/null 2>&1; then
+  LINHA_PAINEL="$(ss -ltnp 2>/dev/null | grep -E ':8112 ' | head -1)"
+  if printf '%s' "$LINHA_PAINEL" | grep -q '127.0.0.1:8112'; then
+    registra_ok "painel em 127.0.0.1:8112" "$(printf '%s' "$LINHA_PAINEL" | awk '{print $4}')"
+  else
+    registra_falha "painel em 127.0.0.1:8112" "não está escutando só em loopback: ${LINHA_PAINEL:-ausente}"
+  fi
 fi
 
 # ------------------------------------------------------------------ 12. flood

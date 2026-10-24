@@ -3,6 +3,9 @@ package main
 // Painel de métricas em HTML puro (sem JavaScript): a política de CSP do nginx
 // não permite script inline, e a página não precisa de script — recarrega
 // sozinha por <meta refresh>. Texto sempre escapado.
+//
+// O gráfico de acessos é SVG gerado aqui (grafico.go): nada de CDN, nada de JS
+// de terceiro. O painel inteiro sai de um único documento self-contained.
 
 import (
 	"fmt"
@@ -22,6 +25,8 @@ type montagemPainel struct {
 	Saude    []saudeServico
 	Limites  estatisticasLimite
 	Anonimo  map[string]any
+	Acessos  *acessosResumo
+	Defesa   estadoDefesa
 	Recarga  bool
 }
 
@@ -43,6 +48,7 @@ h1{font-size:16px;margin:0;letter-spacing:.02em}
 .selo{font-size:12px;color:#8b949e}
 main{padding:16px 20px;display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
 section{background:#161b22;border:1px solid #21262d;border-radius:8px;padding:12px 14px}
+section.larga{grid-column:1/-1}
 h2{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#8b949e;margin:0 0 10px}
 table{width:100%;border-collapse:collapse;font-size:13px}
 td,th{padding:3px 4px;border-bottom:1px solid #21262d;text-align:left;vertical-align:top}
@@ -51,11 +57,12 @@ td.n{text-align:right;font-variant-numeric:tabular-nums}
 .ok{color:#3fb950}.ruim{color:#f85149}.aviso{color:#d29922}
 .grande{font-size:22px;font-variant-numeric:tabular-nums}
 footer{padding:12px 20px;color:#8b949e;font-size:12px;border-top:1px solid #21262d}
-</style></head><body>`)
+`)
+	b.WriteString(`</style></head><body>`)
 
 	b.WriteString(`<header><h1>Métricas · eleição 2026</h1>`)
 	fmt.Fprintf(&b, `<span class="selo">gerado %s · uptime %s</span>`, html.EscapeString(m.GeradoEm), duracao(m.Uptime))
-	b.WriteString(`<span class="selo">recarrega a cada 20 s</span></header><main>`)
+	b.WriteString(`<span class="selo">recarrega a cada 20 s · só 127.0.0.1</span></header><main>`)
 
 	// Acessos
 	b.WriteString(`<section><h2>Acessos</h2><table>`)
@@ -136,8 +143,90 @@ footer{padding:12px 20px;color:#8b949e;font-size:12px;border-top:1px solid #2126
 	}
 	b.WriteString(`</section>`)
 
+	// ------------------------------------------------ série temporal (gráfico)
+	if m.Acessos != nil {
+		b.WriteString(`<section class="largo"><h2>Acessos por hora · últimas 24 h</h2>`)
+		b.WriteString(graficoBarrasSVG(
+			pontosDoGrafico(m.Acessos.SerieHora), "últimas 24 horas · humano × bot", 900, 250))
+		b.WriteString(`</section>`)
+
+		b.WriteString(`<section class="largo"><h2>Acessos por dia · últimos 14 dias</h2>`)
+		b.WriteString(graficoBarrasSVG(
+			pontosDoGrafico(m.Acessos.SerieDia), "últimos 14 dias · humano × bot", 900, 250))
+		b.WriteString(`</section>`)
+
+		b.WriteString(`<section><h2>Total do dia e picos</h2><table>`)
+		fmt.Fprintf(&b, `<tr><td>hoje (%s)</td><td class="n grande">%d</td></tr>`,
+			html.EscapeString(m.Acessos.Hoje.Rotulo), m.Acessos.Hoje.Total)
+		fmt.Fprintf(&b, `<tr><td>hoje humano / bot</td><td class="n">%d / %d</td></tr>`,
+			m.Acessos.Hoje.Humano, m.Acessos.Hoje.Bot)
+		fmt.Fprintf(&b, `<tr><td>pico do dia</td><td class="n">%d <span class="selo">(%s)</span></td></tr>`,
+			m.Acessos.PicoDia.Total, html.EscapeString(m.Acessos.PicoDia.Rotulo))
+		fmt.Fprintf(&b, `<tr><td>pico da hora</td><td class="n">%d <span class="selo">(%s)</span></td></tr>`,
+			m.Acessos.PicoHora.Total, html.EscapeString(m.Acessos.PicoHora.Rotulo))
+		b.WriteString(`</table></section>`)
+
+		b.WriteString(`<section><h2>Top países</h2><table><tr><th>país</th><th>humano</th><th>bot</th></tr>`)
+		for _, linha := range m.Acessos.TopPaises {
+			fmt.Fprintf(&b, `<tr><td>%s</td><td class="n">%d</td><td class="n">%d</td></tr>`,
+				html.EscapeString(linha.Regiao), linha.Humano, linha.Bot)
+		}
+		if len(m.Acessos.TopPaises) == 0 {
+			b.WriteString(`<tr><td colspan="3">sem visitas registradas</td></tr>`)
+		}
+		b.WriteString(`</table></section>`)
+
+		b.WriteString(`<section><h2>Top cidades</h2><table><tr><th>cidade</th><th>humano</th><th>bot</th></tr>`)
+		for _, linha := range m.Acessos.TopCidades {
+			fmt.Fprintf(&b, `<tr><td>%s</td><td class="n">%d</td><td class="n">%d</td></tr>`,
+				html.EscapeString(linha.Regiao), linha.Humano, linha.Bot)
+		}
+		if len(m.Acessos.TopCidades) == 0 {
+			b.WriteString(`<tr><td colspan="3">sem visitas registradas</td></tr>`)
+		}
+		b.WriteString(`</table></section>`)
+
+		b.WriteString(`<section class="largo"><h2>Total por dia · 14 dias</h2><table>`)
+		b.WriteString(`<tr><th>dia</th><th>humano</th><th>bot</th><th>total</th></tr>`)
+		for _, dia := range m.Acessos.SerieDia {
+			fmt.Fprintf(&b, `<tr><td>%s</td><td class="n">%d</td><td class="n">%d</td><td class="n">%d</td></tr>`,
+				html.EscapeString(dia.Rotulo), dia.Humano, dia.Bot, dia.Total)
+		}
+		b.WriteString(`</table></section>`)
+	} else {
+		b.WriteString(`<section class="largo"><h2>Acessos por hora · últimas 24 h</h2>` +
+			`<p class="aviso">série indisponível (banco de visitas não montado)</p></section>`)
+	}
+
+	// ------------------------------------------------------------- defesa
+	b.WriteString(`<section><h2>Defesa (bloqueios)</h2>`)
+	if !m.Defesa.Disponivel {
+		fmt.Fprintf(&b, `<p class="aviso">%s</p>`, html.EscapeString(m.Defesa.Motivo))
+	} else {
+		classe := "ok"
+		if len(m.Defesa.Bloqueios) > 0 {
+			classe = "aviso"
+		}
+		fmt.Fprintf(&b, `<table><tr><td>bloqueios ativos</td><td class="n %s grande">%d</td></tr>`,
+			classe, len(m.Defesa.Bloqueios))
+		fmt.Fprintf(&b, `<tr><td>total histórico</td><td class="n">%d</td></tr>`, m.Defesa.Total)
+		fmt.Fprintf(&b, `<tr><td>última execução</td><td class="n">%s</td></tr>`,
+			html.EscapeString(horaLegivel(m.Defesa.Execucao)))
+		b.WriteString(`</table>`)
+		if len(m.Defesa.Bloqueios) > 0 {
+			b.WriteString(`<table><tr><th>IP</th><th>motivo</th><th>até</th></tr>`)
+			for _, bloqueio := range m.Defesa.Bloqueios {
+				fmt.Fprintf(&b, `<tr><td>%s</td><td>%s</td><td class="n">%s</td></tr>`,
+					html.EscapeString(bloqueio.IP), html.EscapeString(bloqueio.Motivo),
+					html.EscapeString(horaLegivel(bloqueio.Ate)))
+			}
+			b.WriteString(`</table>`)
+		}
+	}
+	b.WriteString(`</section>`)
+
 	b.WriteString(`</main><footer>`)
-	b.WriteString(`métricas locais do processo Go · nenhum IP em claro · token obrigatório`)
+	b.WriteString(`métricas locais do processo Go · nenhum IP em claro · token obrigatório · painel fora do ar público`)
 	b.WriteString(`</footer></body></html>`)
 
 	return b.String()
@@ -167,4 +256,3 @@ func duracao(segundos int64) string {
 	dias := segundos / 86400
 	return fmt.Sprintf("%dd%02dh", dias, (segundos%86400)/3600)
 }
-

@@ -25,9 +25,9 @@ import (
 )
 
 const (
-	janelaLatencia  = 2048 // amostras guardadas para percentis
+	janelaLatencia   = 2048 // amostras guardadas para percentis
 	minutosHistorico = 90
-	maxRotas        = 120
+	maxRotas         = 120
 )
 
 type rotaObs struct {
@@ -45,21 +45,21 @@ type minutoObs struct {
 type observador struct {
 	inicio time.Time
 
-	mu       sync.Mutex
-	total    uint64
-	classe2  uint64
-	classe3  uint64
-	classe4  uint64
-	classe5  uint64
-	erros    uint64
-	latencias []float64
+	mu           sync.Mutex
+	total        uint64
+	classe2      uint64
+	classe3      uint64
+	classe4      uint64
+	classe5      uint64
+	erros        uint64
+	latencias    []float64
 	posLatencias int
-	rotas    map[string]*rotaObs
-	minutos  map[string]*minutoObs
+	rotas        map[string]*rotaObs
+	minutos      map[string]*minutoObs
 
-	saudeCache   []saudeServico
-	saudeQuando  time.Time
-	saudeMu      sync.Mutex
+	saudeCache  []saudeServico
+	saudeQuando time.Time
+	saudeMu     sync.Mutex
 }
 
 type saudeServico struct {
@@ -181,12 +181,12 @@ func normalizarRota(caminho string) string {
 }
 
 type latenciaResumo struct {
-	P50   float64 `json:"p50"`
-	P95   float64 `json:"p95"`
-	P99   float64 `json:"p99"`
-	Max   float64 `json:"max"`
-	Media float64 `json:"media"`
-	Amostras int  `json:"amostras"`
+	P50      float64 `json:"p50"`
+	P95      float64 `json:"p95"`
+	P99      float64 `json:"p99"`
+	Max      float64 `json:"max"`
+	Media    float64 `json:"media"`
+	Amostras int     `json:"amostras"`
 }
 
 func (o *observador) percentis() latenciaResumo {
@@ -285,11 +285,11 @@ func (o *observador) resumo() map[string]any {
 			"por_classe": map[string]uint64{
 				"2xx": classe2, "3xx": classe3, "4xx": classe4, "5xx": classe5,
 			},
-			"erros_5xx":       erros,
-			"taxa_erro_pct":   taxaErro,
-			"latencia_ms":     latencia,
-			"rotas":           rotas,
-			"por_minuto":      minutos,
+			"erros_5xx":     erros,
+			"taxa_erro_pct": taxaErro,
+			"latencia_ms":   latencia,
+			"rotas":         rotas,
+			"por_minuto":    minutos,
 		},
 	}
 }
@@ -298,6 +298,28 @@ func (o *observador) resumo() map[string]any {
 
 func tokenConfigurado() string {
 	return strings.TrimSpace(envOu("METRICAS_TOKEN", ""))
+}
+
+// acessoLocalPainel diz se a requisição veio pelo server block local do nginx.
+// O bloco `listen 8081` desse nginx é publicado no host apenas em
+// 127.0.0.1:8112 (fora do túnel) e injeta `X-Painel-Local: 1` com
+// proxy_set_header, sobrescrevendo qualquer valor enviado pelo cliente; o
+// server block público (`listen 80`) apaga esse cabeçalho antes de proxiar e
+// responde 404 em /api/interno/. Dentro do container o RemoteAddr de uma
+// conexão vinda do loopback do host aparece como o IP do gateway Docker
+// (medido: 172.17.0.1), então o teste é "marca do proxy + par privado" e não
+// "RemoteAddr == 127.0.0.1". Nenhum outro cabeçalho (X-Real-IP,
+// X-Forwarded-For, CF-Connecting-IP), Host, query string ou origem CORS
+// participa da decisão: cabeçalho forjado por cliente não libera nada.
+func acessoLocalPainel(r *http.Request) bool {
+	if r.Header.Get("X-Painel-Local") != "1" {
+		return false
+	}
+	ip, ok := ipValido(r.RemoteAddr)
+	if !ok {
+		return false
+	}
+	return ipPrivado(ip)
 }
 
 func tokenDaRequisicao(r *http.Request) string {
@@ -312,8 +334,17 @@ func tokenDaRequisicao(r *http.Request) string {
 
 // withTokenMetricas é a única porta das rotas internas. Falha fechada: sem
 // METRICAS_TOKEN no ambiente, ninguém entra (403) — nunca "aberto por padrão".
+// A exceção é o acesso pelo painel local do nginx, marcado pelo próprio proxy
+// e restrito a par privado (ver acessoLocalPainel).
 func withTokenMetricas(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if acessoLocalPainel(r) {
+			w.Header().Set("Cache-Control", "no-store")
+			w.Header().Set("X-Robots-Tag", "noindex, nofollow")
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		esperado := tokenConfigurado()
 		if esperado == "" {
 			log.Printf("painel de métricas chamado sem METRICAS_TOKEN configurado — recusado")
@@ -444,14 +475,26 @@ func tipoDoErro(err error) string {
 func (a *app) handleMetricasJSON(w http.ResponseWriter, r *http.Request) {
 	corpo := a.obs.resumo()
 	corpo["app"] = map[string]any{
-		"eleicao":        a.cfg.Eleicao,
-		"turno":          a.cfg.Turno,
+		"eleicao":         a.cfg.Eleicao,
+		"turno":           a.cfg.Turno,
 		"dados_gerado_em": a.dados.Publico.GeradoEm,
-		"ufs":            len(a.dados.Publico.UFs),
-		"features":       len(a.dados.Malha.Features),
+		"ufs":             len(a.dados.Publico.UFs),
+		"features":        len(a.dados.Malha.Features),
 	}
 	corpo["limites"] = a.limit.estatisticas()
 	corpo["saude"] = a.saude()
+
+	// Série temporal (hora/dia, humano × bot) e estado do vigia de ataques:
+	// o painel mostra as duas coisas; o JSON também.
+	if a.anon != nil && a.anon.disponivel() {
+		if acessos, err := a.anon.acessos(); err != nil {
+			corpo["acessos"] = map[string]any{"disponivel": false, "motivo": "erro ao ler a série"}
+			log.Printf("série de acessos indisponível: %v", err)
+		} else if acessos != nil {
+			corpo["acessos"] = acessos
+		}
+	}
+	corpo["defesa"] = lerEstadoDefesa()
 
 	if a.anon != nil && a.anon.disponivel() {
 		if resumo, err := a.anon.resumo(14); err != nil {
@@ -479,24 +522,28 @@ func (a *app) handleMetricasPainel(w http.ResponseWriter, r *http.Request) {
 	rotas := corpo["http"].(map[string]any)["rotas"].([]map[string]any)
 
 	var anonimo map[string]any
+	var acessos *acessosResumo
 	if a.anon != nil && a.anon.disponivel() {
 		anonimo, _ = a.anon.resumo(14)
+		acessos, _ = a.anon.acessos()
 	}
 
 	// Recarrega a MESMA URL (com o token que já está nela) em vez de montar uma
 	// URL nova: assim o token não aparece em atributo nenhum do HTML.
 	html := montarPainelMetricas(montagemPainel{
-		GeradoEm:  corpo["gerado_em"].(string),
-		Uptime:    corpo["uptime_s"].(int64),
-		Total:     corpo["http"].(map[string]any)["requisicoes_total"].(uint64),
-		Classes:   classes,
-		TaxaErro:  corpo["http"].(map[string]any)["taxa_erro_pct"].(float64),
-		Latencia:  latencia,
-		Rotas:     rotas,
-		Saude:     saude,
-		Limites:   limites,
-		Anonimo:   anonimo,
-		Recarga:   true,
+		GeradoEm: corpo["gerado_em"].(string),
+		Uptime:   corpo["uptime_s"].(int64),
+		Total:    corpo["http"].(map[string]any)["requisicoes_total"].(uint64),
+		Classes:  classes,
+		TaxaErro: corpo["http"].(map[string]any)["taxa_erro_pct"].(float64),
+		Latencia: latencia,
+		Rotas:    rotas,
+		Saude:    saude,
+		Limites:  limites,
+		Anonimo:  anonimo,
+		Acessos:  acessos,
+		Defesa:   lerEstadoDefesa(),
+		Recarga:  true,
 	})
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")

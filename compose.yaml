@@ -15,6 +15,9 @@ services:
       METRICAS_DB: /metricas/visitas.db
       METRICAS_SAL: /metricas/.salt
       METRICAS_GEO: /metricas/geo/dbip-city-lite.mmdb
+      # Estado do vigia de ataques (bloqueios por IP): leitura, para o painel.
+      DEFESA_ESTADO: /defesa/estado.json
+
       # Painel privado: sem token no ambiente, a rota responde 403 (falha fechada).
       METRICAS_TOKEN: ${METRICAS_TOKEN:-}
       # Limites do Go (segunda barreira, depois do nginx).
@@ -26,6 +29,8 @@ services:
     volumes:
       - ./dados:/dados:ro
       - ${METRICAS_HOST_DIR:-/home/pedro/.hermes/painel_publico}:/metricas
+      # Estado do vigia de ataques (só leitura: quem escreve é o vigia, no host).
+      - ./var/defesa:/defesa:ro
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1:8080/api/health"]
@@ -40,7 +45,25 @@ services:
       api:
         condition: service_healthy
     ports:
+      # Site público: loopback + túnel Cloudflare. Nada além disto é publicado.
       - "127.0.0.1:8110:80"
+      # Painel privado: SÓ loopback. O túnel não aponta para cá (ver
+      # ~/.cloudflared/belmino-eleicao.yml) e não há hostname público para ele.
+      #
+      # Por que a porta do painel NÃO é publicada direto no container `api`:
+      # medido nesta máquina, uma conexão do host para 127.0.0.1:<porta>
+      # publicada chega ao container com RemoteAddr = IP do gateway docker
+      # (172.17.0.1), nunca 127.0.0.1. Publicar o Go direto daria acesso sem
+      # token a qualquer par da rede docker e não daria para distinguir o
+      # loopback real. Aqui o loopback é garantido pelo publish em 127.0.0.1 e
+      # é o server block 8081 que injeta a marca X-Painel-Local: 1 (o público
+      # apaga a marca e responde 404 em /api/interno/).
+      - "127.0.0.1:8112:8081"
+    volumes:
+      # Log por IP que o vigia lê (0600, truncado pelo próprio vigia) e a lista
+      # de bloqueio que o nginx aplica (geo + if).
+      - ./var/defesa:/var/log/defesa
+      - ./var/defesa:/etc/nginx/defesa:ro
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1/healthz"]
