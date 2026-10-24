@@ -23,6 +23,8 @@ export default function Rodape({
   eleicao,
   turno,
   geradoEm,
+  municipalAviso = null,
+  dadosAviso = null,
   variante = 'mapa',
 }) {
   const curto = variante === 'mapa'
@@ -36,6 +38,23 @@ export default function Rodape({
 
   return (
     <footer className={`rodape-site rodape-site--${variante}`}>
+      {dadosAviso ? (
+        // Snapshot nacional/UF de outro turno (janela entre a virada e o
+        // primeiro voto publicado). Sem esta linha o placar apareceria com o
+        // rótulo do turno novo e números do anterior.
+        <p className="rodape-aviso-dado" data-prova="dados-aviso">
+          <b>Atenção</b> {dadosAviso}
+        </p>
+      ) : null}
+      {municipalAviso ? (
+        // Dado municipal/urna vem do dump por seção, que o TSE só publica ao
+        // final de cada turno. Quando o arquivo em disco é de outro turno, a
+        // tela diz isso — nunca mostra número de outro turno como se fosse o
+        // do turno em exibição.
+        <p className="rodape-aviso-dado" data-prova="municipal-aviso">
+          <b>Atenção</b> {municipalAviso}
+        </p>
+      ) : null}
       <p>
         <b>Fonte</b> dados oficiais do TSE · {link(PORTAL_TSE, 'resultados.tse.jus.br')}
         {identificacao ? ` · ${identificacao}` : null}

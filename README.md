@@ -95,7 +95,7 @@ Para regerar o resultado de 2022 usado no replay:
 python3 scripts/prepara_2022.py        # dados/eleicao_2022.json a partir do arquivo do TSE
 ```
 
-### Trocar de turno (1º → 2º)
+### Trocar de turno (1º → 2º) — AUTOMÁTICO desde 24/10/2026
 
 Eleição, turno e URLs são configuração, não código. No TSE cada turno é um
 código de eleição próprio (2026: `6257` = 1º turno, `6258` = 2º turno), e todas
@@ -106,14 +106,117 @@ as URLs saem de `TSE_BASE` + `ELEICAO`:
 {TSE_BASE}/{eleicao}/fotos/{uf}/          (fotos oficiais dos candidatos)
 ```
 
-Passo a passo:
+**Quem vira agora é o vigia, não a mão.** O timer
+`hermes-eleicao-turno.timer` (systemd --user) chama
+`scripts/turno_vigia.py` a cada 10 min no dia da eleição e a cada 60 min fora dele
+(a cadência é decidida pelo próprio script, em `~/.hermes/eleicao_turno/config.json`).
+
+O que ele faz quando o 6258 passa a ter voto publicado (soma de `vap` > 0):
 
 ```bash
-# 1. edite o .env do projeto (0600, fora do git)
-#    ELEICAO=6258
-#    TURNO=2
-#    TSE_BASE=https://resultados.tse.jus.br/oficial/ele2026
-#    TSE_PORTAL=https://resultados.tse.jus.br/
+# 1. backup do .env ao lado (.env.bak-turno-AAAAMMDD-HHMMSS, 0600)
+# 2. grava ELEICAO=6258 e TURNO=2 no .env
+# 3. docker compose -p eleicao2026-mapa up -d api        (a web NÃO é recriada)
+#    + docker compose exec -T web nginx -s reload        (o proxy resolve "api" no boot)
+# 4. valida pela rota pública, como o usuário vê:
+#      /api/health  -> 200 com turno=2 e eleicao=6258
+#      /api/config  -> url_nacional .../6258/dados/br/br-c0001-e006258-u.json
+#      /api/fonte   -> 200
+# 5. avisa no Telegram (sucesso). Se QUALQUER validação falhar:
+#    volta o .env do backup, sobe a api de novo, valida a volta e avisa o erro
+#    no Telegram com o log. Nunca fica meio virado.
+```
+
+Idempotência: com o `.env` já no 6258 o script sai sem tocar em nada
+(estado em `~/.hermes/eleicao_turno/estado.json`) e **nunca vira de volta**.
+Rodar 10 vezes seguidas não muda nada depois da primeira.
+
+Ensaiar a virada sem tocar em produção (TSE e API de mentira + `.env` falso em
+diretório temporário; confere no fim que o `.env` real tem o mesmo hash):
+
+```bash
+python3 scripts/turno_vigia.py --ensaio          # cenário sucesso + falha (rollback)
+python3 scripts/turno_vigia.py --forcar          # checagem real agora, ignorando a cadência
+```
+
+**Desligar o automático** (o painel fica como está, sem virar sozinho):
+
+```bash
+systemctl --user disable --now hermes-eleicao-turno.timer   # para de checar
+systemctl --user disable --now hermes-eleicao-coleta.timer  # para de coletar
+```
+
+**Reverter à mão** (volta ao 1º turno ou desfaz uma virada):
+
+```bash
+ls -1 /home/pedro/eleicao2026-mapa/.env.bak-turno-*        # backups das viradas
+cp /home/pedro/eleicao2026-mapa/.env.bak-turno-AAAAMMDD-HHMMSS /home/pedro/eleicao2026-mapa/.env
+docker compose -p eleicao2026-mapa up -d api
+docker compose -p eleicao2026-mapa exec -T web nginx -s reload
+curl -s http://127.0.0.1:8110/api/health                   # turno esperado
+# e limpe o estado para o vigia poder agir de novo:
+rm ~/.hermes/eleicao_turno/estado.json
+```
+
+**Logs:**
+
+| o quê | onde |
+|---|---|
+| vigia de turno (script) | `~/.hermes/logs/eleicao-turno-vigia.log` |
+| vigia no systemd | `journalctl --user -u hermes-eleicao-turno -n 100` |
+| coleta + publicação | `~/.hermes/logs/eleicao-coleta.log` |
+| coleta no systemd | `journalctl --user -u hermes-eleicao-coleta -n 100` |
+| api (dentro do container) | `docker compose -p eleicao2026-mapa logs api --tail 100` |
+
+### Coleta automática durante a apuração
+
+`hermes-eleicao-coleta.timer` roda `scripts/coleta_apuracao.sh` a cada 10 min.
+Fora do dia da eleição (e das 36 h seguintes) o script sai na primeira linha, sem
+tocar no TSE. No dia ele:
+
+1. roda `coleta_presidente.py` e `snapshot_publico.py` no repositório do painel
+   (os dois têm detecção automática de turno: usam o 6258 só quando ele tem voto);
+2. **só publica** se o snapshot for da MESMA eleição que o `.env` do site. Snapshot
+   de outro turno, ou com `sem_dado=true`, não sobrescreve o dado do site;
+3. reinicia a api (ela carrega `publico.json` em memória no boot) e confere
+   `/api/health` com o `gerado_em` do arquivo novo.
+
+### O dado municipal/urna do 2º turno (limite conhecido, com aviso na tela)
+
+Município, zona e local de votação **não** saem do JSON de resultados: saem do dump
+aberto por seção (`votacao_secao_2026_<UF>.zip`, CDN do TSE), que é **um arquivo por
+UF, atualizado "ao final de cada turno"** (descrição oficial do recurso). Medido em
+24/10/2026: o dump tinha 2.584.325 linhas, todas `NR_TURNO=1`, geradas em 06/10/2026.
+Ou seja: **durante a apuração do 2º turno não existe dado municipal do 2º turno** —
+e o JSON por UF (`-u.json`) só publica agregado por partido, sem município (`-m`,
+`-v`, `-b` respondem 404).
+
+Por isso a API carrega a procedência declarada dentro dos arquivos
+(`eleicao`, `turno`) e devolve em `/api/estados` e `/api/config`:
+
+- `municipal.aviso` — preenchido quando `municipios_<UF>.json`/`secoes_<UF>.json`
+  são de outro turno;
+- `dados_aviso` — o mesmo para o snapshot nacional/UF (`publico.json`).
+
+Quando qualquer um dos dois existe, o rodapé do mapa mostra a linha
+**Atenção** dizendo de que turno é o dado. Número de um turno com rótulo de outro
+nunca aparece sem essa linha.
+
+Prova da tela (abre o /mapa num stack de teste com `ELEICAO=6258 TURNO=2` e confere
+que o aviso aparece escrito, e que o da API é o mesmo da tela):
+
+```bash
+docker compose -p eleicao2026-teste -f compose.yaml -f compose.teste.yaml \
+  up -d --build api web            # com ELEICAO=6258 TURNO=2 no ambiente
+NODE_PATH=/home/pedro/.hermes/hermes-agent/node_modules \
+  node scripts/provas/aviso_procedencia.mjs --base http://127.0.0.1:8100 \
+  --out _provas --prefix aviso_teste     # ok:true e problemas: []
+```
+
+### Troca manual (ainda vale para depurar à mão)
+
+```bash
+# 1. edite o .env do projeto (0600, fora do git): ELEICAO=6258 / TURNO=2
 # 2. recrie só o container da API (o env é lido no boot)
 docker compose -p eleicao2026-mapa up -d api
 # 3. confirme que o serviço está no turno certo

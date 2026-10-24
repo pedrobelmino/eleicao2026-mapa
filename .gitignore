@@ -3,6 +3,8 @@ web/node_modules/
 web/dist/
 api/bin/
 *.log
+__pycache__/
+*.pyc
 
 # provas locais grandes (prints ficam versionados só os finais)
 _provas/tmp/

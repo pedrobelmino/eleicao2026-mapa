@@ -328,6 +328,18 @@ code {
   text-decoration: underline;
 }
 
+/* Procedência do dado municipal/urna (Rodape -> municipalAviso). Só aparece
+   quando os arquivos municipais são de outro turno; cor de alerta, sem virar
+   faixa chamativa (a página continua sendo do resultado oficial). */
+.rodape-site .rodape-aviso-dado {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.rodape-site .rodape-aviso-dado b {
+  color: #a33;
+}
+
 @media (max-width: 820px) {
   .rodape-site {
     font-size: 9.5px;

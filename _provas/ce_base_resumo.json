@@ -1,0 +1,277 @@
+{
+  "base": "http://127.0.0.1:8100",
+  "gerado_em": "2026-10-23T02:42:23.733Z",
+  "capturas": [
+    {
+      "url": "http://127.0.0.1:8100/mapa?uf=CE&m=13897&z=6.4",
+      "print": "_provas/ce_base_CE_desktop_1440x900_z6.4.png",
+      "medicao": {
+        "zoom": 6.4,
+        "pitch": 50,
+        "centro": [
+          -38.52,
+          -3.794
+        ],
+        "debug": {
+          "tempoRenderMs": 521.5,
+          "featuresZonas": 1729,
+          "featuresLocais": 0,
+          "featuresLocaisPrisma": 0,
+          "featuresMunicipios": 0,
+          "modoPredios": "predios",
+          "nivel": "zona",
+          "zoom": 6.4
+        },
+        "area": {
+          "zonas-prisma-lula": {
+            "existe": true,
+            "feicoes": 203
+          },
+          "zonas-prisma-flavio": {
+            "existe": true,
+            "feicoes": 205
+          },
+          "zonas-prisma-outros": {
+            "existe": true,
+            "feicoes": 205
+          },
+          "zonas-prisma-nao-apurado": {
+            "existe": true,
+            "feicoes": 205
+          }
+        },
+        "barra": {
+          "zonas-barra-lula": {
+            "existe": true,
+            "feicoes": 0
+          },
+          "zonas-barra-flavio": {
+            "existe": true,
+            "feicoes": 0
+          },
+          "zonas-barra-outros": {
+            "existe": true,
+            "feicoes": 0
+          },
+          "zonas-barra-nao-apurado": {
+            "existe": true,
+            "feicoes": 0
+          },
+          "zonas-barra-fina-lula": {
+            "existe": true,
+            "feicoes": 0
+          },
+          "zonas-barra-fina-flavio": {
+            "existe": true,
+            "feicoes": 0
+          },
+          "zonas-barra-fina-outros": {
+            "existe": true,
+            "feicoes": 0
+          },
+          "zonas-barra-fina-nao-apurado": {
+            "existe": true,
+            "feicoes": 0
+          }
+        },
+        "amostra": null,
+        "rotulos": {
+          "baseCamadas": 11,
+          "baseOcultas": 11,
+          "baseDesenhadas": 0,
+          "municipioDesenhados": 0
+        }
+      },
+      "erros": [],
+      "requests_ruins": [],
+      "falha": null
+    },
+    {
+      "url": "http://127.0.0.1:8100/mapa?uf=CE&m=13897&z=8.5",
+      "print": "_provas/ce_base_CE_desktop_1440x900_z8.5.png",
+      "medicao": {
+        "zoom": 8.5,
+        "pitch": 50,
+        "centro": [
+          -38.52,
+          -3.794
+        ],
+        "debug": {
+          "tempoRenderMs": 914.9,
+          "featuresZonas": 815,
+          "featuresLocais": 0,
+          "featuresLocaisPrisma": 0,
+          "featuresMunicipios": 299,
+          "modoPredios": "predios",
+          "nivel": "municipio",
+          "zoom": 8.5
+        },
+        "area": {
+          "zonas-prisma-lula": {
+            "existe": true,
+            "feicoes": 73
+          },
+          "zonas-prisma-flavio": {
+            "existe": true,
+            "feicoes": 69
+          },
+          "zonas-prisma-outros": {
+            "existe": true,
+            "feicoes": 47
+          },
+          "zonas-prisma-nao-apurado": {
+            "existe": true,
+            "feicoes": 46
+          }
+        },
+        "barra": {
+          "zonas-barra-lula": {
+            "existe": true,
+            "feicoes": 67
+          },
+          "zonas-barra-flavio": {
+            "existe": true,
+            "feicoes": 67
+          },
+          "zonas-barra-outros": {
+            "existe": true,
+            "feicoes": 67
+          },
+          "zonas-barra-nao-apurado": {
+            "existe": true,
+            "feicoes": 67
+          },
+          "zonas-barra-fina-lula": {
+            "existe": true,
+            "feicoes": 0
+          },
+          "zonas-barra-fina-flavio": {
+            "existe": true,
+            "feicoes": 0
+          },
+          "zonas-barra-fina-outros": {
+            "existe": true,
+            "feicoes": 0
+          },
+          "zonas-barra-fina-nao-apurado": {
+            "existe": true,
+            "feicoes": 0
+          }
+        },
+        "amostra": {
+          "camada": "zonas-barra-lula",
+          "zona": 105,
+          "municipio": "ITAPIÚNA",
+          "altura_m": 40007,
+          "bar_lula": 68.07,
+          "bar_flavio": 28.36,
+          "bar_outros": 3.57,
+          "bar_nao_apurado": 0
+        },
+        "rotulos": {
+          "baseCamadas": 11,
+          "baseOcultas": 11,
+          "baseDesenhadas": 0,
+          "municipioDesenhados": 36
+        }
+      },
+      "erros": [],
+      "requests_ruins": [],
+      "falha": null
+    },
+    {
+      "url": "http://127.0.0.1:8100/mapa?uf=CE&m=13897&z=10.5",
+      "print": "_provas/ce_base_CE_desktop_1440x900_z10.5.png",
+      "medicao": {
+        "zoom": 10.5,
+        "pitch": 50,
+        "centro": [
+          -38.52,
+          -3.794
+        ],
+        "debug": {
+          "tempoRenderMs": 686.4,
+          "featuresZonas": 294,
+          "featuresLocais": 277,
+          "featuresLocaisPrisma": 277,
+          "featuresMunicipios": 67,
+          "modoPredios": "predios",
+          "nivel": "local",
+          "zoom": 10.5
+        },
+        "area": {
+          "zonas-prisma-lula": {
+            "existe": true,
+            "feicoes": 0
+          },
+          "zonas-prisma-flavio": {
+            "existe": true,
+            "feicoes": 0
+          },
+          "zonas-prisma-outros": {
+            "existe": true,
+            "feicoes": 0
+          },
+          "zonas-prisma-nao-apurado": {
+            "existe": true,
+            "feicoes": 0
+          }
+        },
+        "barra": {
+          "zonas-barra-lula": {
+            "existe": true,
+            "feicoes": 0
+          },
+          "zonas-barra-flavio": {
+            "existe": true,
+            "feicoes": 0
+          },
+          "zonas-barra-outros": {
+            "existe": true,
+            "feicoes": 0
+          },
+          "zonas-barra-nao-apurado": {
+            "existe": true,
+            "feicoes": 0
+          },
+          "zonas-barra-fina-lula": {
+            "existe": true,
+            "feicoes": 27
+          },
+          "zonas-barra-fina-flavio": {
+            "existe": true,
+            "feicoes": 27
+          },
+          "zonas-barra-fina-outros": {
+            "existe": true,
+            "feicoes": 27
+          },
+          "zonas-barra-fina-nao-apurado": {
+            "existe": true,
+            "feicoes": 27
+          }
+        },
+        "amostra": {
+          "camada": "zonas-barra-fina-lula",
+          "zona": 66,
+          "municipio": "AQUIRAZ",
+          "altura_m": 77294,
+          "bar_lula": 58.37,
+          "bar_flavio": 35.88,
+          "bar_outros": 5.75,
+          "bar_nao_apurado": 0
+        },
+        "rotulos": {
+          "baseCamadas": 11,
+          "baseOcultas": 11,
+          "baseDesenhadas": 0,
+          "municipioDesenhados": 5
+        }
+      },
+      "erros": [],
+      "requests_ruins": [],
+      "falha": null
+    }
+  ],
+  "problemas": []
+}

@@ -28,6 +28,10 @@ type configResposta struct {
 	// padrão de caminho do TSE.
 	URLUF    string `json:"url_uf"`
 	URLFotos string `json:"url_fotos"`
+	// Procedência do dado municipal/urna (municipios_<UF>.json e
+	// secoes_<UF>.json, que vêm do dump por seção — outro caminho, outro
+	// relógio). `aviso` vazio = os arquivos são da eleição configurada.
+	Municipal procedenciaMunicipal `json:"municipal"`
 }
 
 func (a *app) handleConfig(w http.ResponseWriter, _ *http.Request) {
@@ -41,6 +45,7 @@ func (a *app) handleConfig(w http.ResponseWriter, _ *http.Request) {
 		URLNacional: a.fonte.Nacional,
 		URLUF:       modeloUF,
 		URLFotos:    modeloFotos,
+		Municipal:   a.procedenciaDoMunicipal(),
 	})
 }
 

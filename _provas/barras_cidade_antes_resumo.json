@@ -1,0 +1,564 @@
+{
+  "base": "http://127.0.0.1:8110",
+  "gerado_em": "2026-10-23T00:28:58.884Z",
+  "capturas": [
+    {
+      "url": "http://127.0.0.1:8110/mapa?uf=CE&m=13897&z=8.5",
+      "print": "_provas/barras_cidade_antes_CE_desktop_1440x900_z8.5.png",
+      "medicao": {
+        "zoom": 8.5,
+        "pitch": 50,
+        "centro": [
+          -38.52,
+          -3.794
+        ],
+        "debug": {
+          "featuresZonas": 0,
+          "featuresLocais": 0,
+          "featuresLocaisPrisma": 0,
+          "featuresMunicipios": 299,
+          "modoPredios": "predios",
+          "nivel": "municipio",
+          "zoom": 8.5
+        },
+        "area": {
+          "zonas-prisma-lula": {
+            "existe": true,
+            "feicoes": 0
+          },
+          "zonas-prisma-flavio": {
+            "existe": true,
+            "feicoes": 0
+          },
+          "zonas-prisma-outros": {
+            "existe": true,
+            "feicoes": 0
+          },
+          "zonas-prisma-nao-apurado": {
+            "existe": true,
+            "feicoes": 0
+          }
+        },
+        "barra": {
+          "zonas-barra-lula": {
+            "existe": false,
+            "feicoes": 0
+          },
+          "zonas-barra-flavio": {
+            "existe": false,
+            "feicoes": 0
+          },
+          "zonas-barra-outros": {
+            "existe": false,
+            "feicoes": 0
+          },
+          "zonas-barra-nao-apurado": {
+            "existe": false,
+            "feicoes": 0
+          }
+        },
+        "amostra": null,
+        "rotulos": {
+          "baseCamadas": 11,
+          "baseOcultas": 0,
+          "baseDesenhadas": 11,
+          "municipioDesenhados": 38
+        }
+      },
+      "erros": [],
+      "requests_ruins": [],
+      "falha": null
+    },
+    {
+      "url": "http://127.0.0.1:8110/mapa?uf=CE&m=13897&z=9.5",
+      "print": "_provas/barras_cidade_antes_CE_desktop_1440x900_z9.5.png",
+      "medicao": {
+        "zoom": 9.5,
+        "pitch": 50,
+        "centro": [
+          -38.52,
+          -3.794
+        ],
+        "debug": {
+          "featuresZonas": 0,
+          "featuresLocais": 366,
+          "featuresLocaisPrisma": 366,
+          "featuresMunicipios": 158,
+          "modoPredios": "predios",
+          "nivel": "local",
+          "zoom": 9.5
+        },
+        "area": {
+          "zonas-prisma-lula": {
+            "existe": true,
+            "feicoes": 0
+          },
+          "zonas-prisma-flavio": {
+            "existe": true,
+            "feicoes": 0
+          },
+          "zonas-prisma-outros": {
+            "existe": true,
+            "feicoes": 0
+          },
+          "zonas-prisma-nao-apurado": {
+            "existe": true,
+            "feicoes": 0
+          }
+        },
+        "barra": {
+          "zonas-barra-lula": {
+            "existe": false,
+            "feicoes": 0
+          },
+          "zonas-barra-flavio": {
+            "existe": false,
+            "feicoes": 0
+          },
+          "zonas-barra-outros": {
+            "existe": false,
+            "feicoes": 0
+          },
+          "zonas-barra-nao-apurado": {
+            "existe": false,
+            "feicoes": 0
+          }
+        },
+        "amostra": null,
+        "rotulos": {
+          "baseCamadas": 11,
+          "baseOcultas": 0,
+          "baseDesenhadas": 12,
+          "municipioDesenhados": 19
+        }
+      },
+      "erros": [],
+      "requests_ruins": [],
+      "falha": null
+    },
+    {
+      "url": "http://127.0.0.1:8110/mapa?uf=CE&m=13897&z=10.5",
+      "print": "_provas/barras_cidade_antes_CE_desktop_1440x900_z10.5.png",
+      "medicao": {
+        "zoom": 10.5,
+        "pitch": 50,
+        "centro": [
+          -38.52,
+          -3.794
+        ],
+        "debug": {
+          "featuresZonas": 0,
+          "featuresLocais": 277,
+          "featuresLocaisPrisma": 277,
+          "featuresMunicipios": 67,
+          "modoPredios": "predios",
+          "nivel": "local",
+          "zoom": 10.5
+        },
+        "area": {
+          "zonas-prisma-lula": {
+            "existe": true,
+            "feicoes": 0
+          },
+          "zonas-prisma-flavio": {
+            "existe": true,
+            "feicoes": 0
+          },
+          "zonas-prisma-outros": {
+            "existe": true,
+            "feicoes": 0
+          },
+          "zonas-prisma-nao-apurado": {
+            "existe": true,
+            "feicoes": 0
+          }
+        },
+        "barra": {
+          "zonas-barra-lula": {
+            "existe": false,
+            "feicoes": 0
+          },
+          "zonas-barra-flavio": {
+            "existe": false,
+            "feicoes": 0
+          },
+          "zonas-barra-outros": {
+            "existe": false,
+            "feicoes": 0
+          },
+          "zonas-barra-nao-apurado": {
+            "existe": false,
+            "feicoes": 0
+          }
+        },
+        "amostra": null,
+        "rotulos": {
+          "baseCamadas": 11,
+          "baseOcultas": 0,
+          "baseDesenhadas": 33,
+          "municipioDesenhados": 6
+        }
+      },
+      "erros": [],
+      "requests_ruins": [],
+      "falha": null
+    },
+    {
+      "url": "http://127.0.0.1:8110/mapa?uf=CE&m=13897&z=12",
+      "print": "_provas/barras_cidade_antes_CE_desktop_1440x900_z12.png",
+      "medicao": {
+        "zoom": 12,
+        "pitch": 50,
+        "centro": [
+          -38.52,
+          -3.794
+        ],
+        "debug": {
+          "featuresZonas": 0,
+          "featuresLocais": 426,
+          "featuresLocaisPrisma": 426,
+          "featuresMunicipios": 41,
+          "modoPredios": "predios",
+          "nivel": "local",
+          "zoom": 12
+        },
+        "area": {
+          "zonas-prisma-lula": {
+            "existe": true,
+            "feicoes": 0
+          },
+          "zonas-prisma-flavio": {
+            "existe": true,
+            "feicoes": 0
+          },
+          "zonas-prisma-outros": {
+            "existe": true,
+            "feicoes": 0
+          },
+          "zonas-prisma-nao-apurado": {
+            "existe": true,
+            "feicoes": 0
+          }
+        },
+        "barra": {
+          "zonas-barra-lula": {
+            "existe": false,
+            "feicoes": 0
+          },
+          "zonas-barra-flavio": {
+            "existe": false,
+            "feicoes": 0
+          },
+          "zonas-barra-outros": {
+            "existe": false,
+            "feicoes": 0
+          },
+          "zonas-barra-nao-apurado": {
+            "existe": false,
+            "feicoes": 0
+          }
+        },
+        "amostra": null,
+        "rotulos": {
+          "baseCamadas": 11,
+          "baseOcultas": 0,
+          "baseDesenhadas": 92,
+          "municipioDesenhados": 4
+        }
+      },
+      "erros": [],
+      "requests_ruins": [],
+      "falha": null
+    },
+    {
+      "url": "http://127.0.0.1:8110/mapa?uf=CE&m=13897&z=8.5",
+      "print": "_provas/barras_cidade_antes_CE_mobile_390x844_z8.5.png",
+      "medicao": {
+        "zoom": 8.5,
+        "pitch": 30,
+        "centro": [
+          -38.52,
+          -4.224
+        ],
+        "debug": {
+          "featuresZonas": 0,
+          "featuresLocais": 0,
+          "featuresLocaisPrisma": 0,
+          "featuresMunicipios": 127,
+          "modoPredios": "predios",
+          "nivel": "municipio",
+          "zoom": 8.5
+        },
+        "area": {
+          "zonas-prisma-lula": {
+            "existe": true,
+            "feicoes": 0
+          },
+          "zonas-prisma-flavio": {
+            "existe": true,
+            "feicoes": 0
+          },
+          "zonas-prisma-outros": {
+            "existe": true,
+            "feicoes": 0
+          },
+          "zonas-prisma-nao-apurado": {
+            "existe": true,
+            "feicoes": 0
+          }
+        },
+        "barra": {
+          "zonas-barra-lula": {
+            "existe": false,
+            "feicoes": 0
+          },
+          "zonas-barra-flavio": {
+            "existe": false,
+            "feicoes": 0
+          },
+          "zonas-barra-outros": {
+            "existe": false,
+            "feicoes": 0
+          },
+          "zonas-barra-nao-apurado": {
+            "existe": false,
+            "feicoes": 0
+          }
+        },
+        "amostra": null,
+        "rotulos": {
+          "baseCamadas": 11,
+          "baseOcultas": 0,
+          "baseDesenhadas": 5,
+          "municipioDesenhados": 21
+        }
+      },
+      "erros": [],
+      "requests_ruins": [],
+      "falha": null
+    },
+    {
+      "url": "http://127.0.0.1:8110/mapa?uf=CE&m=13897&z=9.5",
+      "print": "_provas/barras_cidade_antes_CE_mobile_390x844_z9.5.png",
+      "medicao": {
+        "zoom": 9.5,
+        "pitch": 30,
+        "centro": [
+          -38.52,
+          -3.794
+        ],
+        "debug": {
+          "featuresZonas": 0,
+          "featuresLocais": 366,
+          "featuresLocaisPrisma": 366,
+          "featuresMunicipios": 81,
+          "modoPredios": "predios",
+          "nivel": "local",
+          "zoom": 9.5
+        },
+        "area": {
+          "zonas-prisma-lula": {
+            "existe": true,
+            "feicoes": 0
+          },
+          "zonas-prisma-flavio": {
+            "existe": true,
+            "feicoes": 0
+          },
+          "zonas-prisma-outros": {
+            "existe": true,
+            "feicoes": 0
+          },
+          "zonas-prisma-nao-apurado": {
+            "existe": true,
+            "feicoes": 0
+          }
+        },
+        "barra": {
+          "zonas-barra-lula": {
+            "existe": false,
+            "feicoes": 0
+          },
+          "zonas-barra-flavio": {
+            "existe": false,
+            "feicoes": 0
+          },
+          "zonas-barra-outros": {
+            "existe": false,
+            "feicoes": 0
+          },
+          "zonas-barra-nao-apurado": {
+            "existe": false,
+            "feicoes": 0
+          }
+        },
+        "amostra": null,
+        "rotulos": {
+          "baseCamadas": 11,
+          "baseOcultas": 0,
+          "baseDesenhadas": 6,
+          "municipioDesenhados": 8
+        }
+      },
+      "erros": [],
+      "requests_ruins": [],
+      "falha": null
+    },
+    {
+      "url": "http://127.0.0.1:8110/mapa?uf=CE&m=13897&z=10.5",
+      "print": "_provas/barras_cidade_antes_CE_mobile_390x844_z10.5.png",
+      "medicao": {
+        "zoom": 10.5,
+        "pitch": 30,
+        "centro": [
+          -38.52,
+          -3.794
+        ],
+        "debug": {
+          "featuresZonas": 0,
+          "featuresLocais": 259,
+          "featuresLocaisPrisma": 259,
+          "featuresMunicipios": 26,
+          "modoPredios": "predios",
+          "nivel": "local",
+          "zoom": 10.5
+        },
+        "area": {
+          "zonas-prisma-lula": {
+            "existe": true,
+            "feicoes": 0
+          },
+          "zonas-prisma-flavio": {
+            "existe": true,
+            "feicoes": 0
+          },
+          "zonas-prisma-outros": {
+            "existe": true,
+            "feicoes": 0
+          },
+          "zonas-prisma-nao-apurado": {
+            "existe": true,
+            "feicoes": 0
+          }
+        },
+        "barra": {
+          "zonas-barra-lula": {
+            "existe": false,
+            "feicoes": 0
+          },
+          "zonas-barra-flavio": {
+            "existe": false,
+            "feicoes": 0
+          },
+          "zonas-barra-outros": {
+            "existe": false,
+            "feicoes": 0
+          },
+          "zonas-barra-nao-apurado": {
+            "existe": false,
+            "feicoes": 0
+          }
+        },
+        "amostra": null,
+        "rotulos": {
+          "baseCamadas": 11,
+          "baseOcultas": 0,
+          "baseDesenhadas": 10,
+          "municipioDesenhados": 4
+        }
+      },
+      "erros": [],
+      "requests_ruins": [],
+      "falha": null
+    },
+    {
+      "url": "http://127.0.0.1:8110/mapa?uf=CE&m=13897&z=12",
+      "print": "_provas/barras_cidade_antes_CE_mobile_390x844_z12.png",
+      "medicao": {
+        "zoom": 12,
+        "pitch": 30,
+        "centro": [
+          -38.52,
+          -3.794
+        ],
+        "debug": {
+          "featuresZonas": 0,
+          "featuresLocais": 336,
+          "featuresLocaisPrisma": 336,
+          "featuresMunicipios": 11,
+          "modoPredios": "predios",
+          "nivel": "local",
+          "zoom": 12
+        },
+        "area": {
+          "zonas-prisma-lula": {
+            "existe": true,
+            "feicoes": 0
+          },
+          "zonas-prisma-flavio": {
+            "existe": true,
+            "feicoes": 0
+          },
+          "zonas-prisma-outros": {
+            "existe": true,
+            "feicoes": 0
+          },
+          "zonas-prisma-nao-apurado": {
+            "existe": true,
+            "feicoes": 0
+          }
+        },
+        "barra": {
+          "zonas-barra-lula": {
+            "existe": false,
+            "feicoes": 0
+          },
+          "zonas-barra-flavio": {
+            "existe": false,
+            "feicoes": 0
+          },
+          "zonas-barra-outros": {
+            "existe": false,
+            "feicoes": 0
+          },
+          "zonas-barra-nao-apurado": {
+            "existe": false,
+            "feicoes": 0
+          }
+        },
+        "amostra": null,
+        "rotulos": {
+          "baseCamadas": 11,
+          "baseOcultas": 0,
+          "baseDesenhadas": 42,
+          "municipioDesenhados": 2
+        }
+      },
+      "erros": [],
+      "requests_ruins": [],
+      "falha": null
+    }
+  ],
+  "problemas": [
+    "http://127.0.0.1:8110/mapa?uf=CE&m=13897&z=8.5: featuresZonas=0 (esperado > 0)",
+    "http://127.0.0.1:8110/mapa?uf=CE&m=13897&z=8.5: nenhuma barra de zona renderizada em z=8.5",
+    "http://127.0.0.1:8110/mapa?uf=CE&m=13897&z=8.5: rótulo de município do basemap desenhado na faixa das barras (11)",
+    "http://127.0.0.1:8110/mapa?uf=CE&m=13897&z=9.5: featuresZonas=0 (esperado > 0)",
+    "http://127.0.0.1:8110/mapa?uf=CE&m=13897&z=9.5: nenhuma barra de zona renderizada em z=9.5",
+    "http://127.0.0.1:8110/mapa?uf=CE&m=13897&z=9.5: rótulo de município do basemap desenhado na faixa das barras (12)",
+    "http://127.0.0.1:8110/mapa?uf=CE&m=13897&z=10.5: featuresZonas=0 (esperado > 0)",
+    "http://127.0.0.1:8110/mapa?uf=CE&m=13897&z=10.5: nenhuma barra de zona renderizada em z=10.5",
+    "http://127.0.0.1:8110/mapa?uf=CE&m=13897&z=10.5: rótulo de município do basemap desenhado na faixa das barras (33)",
+    "http://127.0.0.1:8110/mapa?uf=CE&m=13897&z=12: featuresZonas=0 (esperado > 0)",
+    "http://127.0.0.1:8110/mapa?uf=CE&m=13897&z=8.5: featuresZonas=0 (esperado > 0)",
+    "http://127.0.0.1:8110/mapa?uf=CE&m=13897&z=8.5: nenhuma barra de zona renderizada em z=8.5",
+    "http://127.0.0.1:8110/mapa?uf=CE&m=13897&z=8.5: rótulo de município do basemap desenhado na faixa das barras (5)",
+    "http://127.0.0.1:8110/mapa?uf=CE&m=13897&z=9.5: featuresZonas=0 (esperado > 0)",
+    "http://127.0.0.1:8110/mapa?uf=CE&m=13897&z=9.5: nenhuma barra de zona renderizada em z=9.5",
+    "http://127.0.0.1:8110/mapa?uf=CE&m=13897&z=9.5: rótulo de município do basemap desenhado na faixa das barras (6)",
+    "http://127.0.0.1:8110/mapa?uf=CE&m=13897&z=10.5: featuresZonas=0 (esperado > 0)",
+    "http://127.0.0.1:8110/mapa?uf=CE&m=13897&z=10.5: nenhuma barra de zona renderizada em z=10.5",
+    "http://127.0.0.1:8110/mapa?uf=CE&m=13897&z=10.5: rótulo de município do basemap desenhado na faixa das barras (10)",
+    "http://127.0.0.1:8110/mapa?uf=CE&m=13897&z=12: featuresZonas=0 (esperado > 0)"
+  ]
+}

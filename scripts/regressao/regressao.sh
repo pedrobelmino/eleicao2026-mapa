@@ -169,19 +169,22 @@ prova_R05() {
 }
 
 # ------------------------------------------------------------------- R06
-# mobile sem scroll horizontal — painel_unico mede scrollWidth > clientWidth
+# mobile sem scroll horizontal e sem dois painéis de baixo ao mesmo tempo.
+# painel_unico mede scrollWidth > clientWidth e quantos painéis de baixo estão
+# visíveis em cada caso (gaveta do placar OU sheet de detalhe, nunca os dois).
 prova_R06() {
   exigir_site || return 2
   node scripts/provas/painel_unico.mjs --base "$BASE" --out "$PASTA" --prefix painel_unico \
     >"$PASTA/R06-painel_unico.log" 2>&1
-  local arq="$PASTA/painel_unico_relatorio.json" medidas laterais
+  local arq="$PASTA/painel_unico_relatorio.json" medidas laterais duplos
   [ -f "$arq" ] || { echo "MEDIDA=nao medido: painel_unico_relatorio.json nao foi gravado (ver R06-painel_unico.log)"; return 2; }
   medidas="$(jq -r '[.. | objects | select(has("scrollLateral"))] | length' "$arq" 2>/dev/null)"
   laterais="$(jq -r '[.. | objects | select(.scrollLateral == true)] | length' "$arq" 2>/dev/null)"
-  [ -n "$medidas" ] || { echo "MEDIDA=nao medido: relatorio sem 'scrollLateral'"; return 2; }
+  duplos="$(jq -r '[.. | objects | select((.paineisDeBaixo // 0) > 1)] | length' "$arq" 2>/dev/null)"
+  [ -n "$medidas" ] && [ -n "$duplos" ] || { echo "MEDIDA=nao medido: relatorio sem 'scrollLateral'/'paineisDeBaixo'"; return 2; }
   [ "$medidas" != "0" ] || { echo "MEDIDA=nao medido: nenhuma tela medida no relatorio"; return 2; }
-  echo "MEDIDA=telas_medidas=$medidas com_scroll_lateral=$laterais"
-  [ "$laterais" = "0" ] && return 0
+  echo "MEDIDA=telas_medidas=$medidas com_scroll_lateral=$laterais com_painel_duplo=$duplos"
+  [ "$laterais" = "0" ] && [ "$duplos" = "0" ] && return 0
   return 1
 }
 

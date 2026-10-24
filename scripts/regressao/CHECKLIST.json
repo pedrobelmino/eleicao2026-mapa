@@ -49,10 +49,10 @@
     },
     {
       "id": "R06",
-      "regra": "no celular não existe scroll horizontal",
+      "regra": "no celular não existe scroll horizontal e nunca há dois painéis de baixo ao mesmo tempo",
       "prova": "node scripts/provas/painel_unico.mjs --base <base> --out <run> --prefix painel_unico",
-      "criterio": "painel_unico_relatorio.json com telas medidas > 0 e nenhum scrollLateral=true",
-      "origem": "STATE.md 22/10 — um painel por vez no mobile; _provas/painel_unico_relatorio.json com scrollLateral=false",
+      "criterio": "painel_unico_relatorio.json com telas medidas > 0, nenhum scrollLateral=true e nenhum caso com paineisDeBaixo>1 (gaveta do placar e sheet de detalhe nunca visíveis juntos)",
+      "origem": "STATE.md 22/10 — um painel por vez no mobile; _provas/painel_unico_relatorio.json com scrollLateral=false. 24/10/2026: a prova passou a abrir o painel pelo botão de detalhes ([data-prova=detalhe-toggle], o painel não abre sozinho desde a UX nova) e a medir scrollLateral/paineisDeBaixo em cada caso mobile — 8 casos + 2 do desktop, 0 com scroll lateral e no máximo 1 painel de baixo",
       "rapido": false,
       "timeout_s": 300
     },

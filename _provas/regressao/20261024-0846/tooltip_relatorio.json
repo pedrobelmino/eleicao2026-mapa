@@ -1,0 +1,859 @@
+{
+  "base": "http://127.0.0.1:8110",
+  "quando": "2026-10-24T11:53:34.091Z",
+  "zona": {
+    "municipio": "ACOPIARA",
+    "zona": 60,
+    "cdTse": 13056
+  },
+  "celular": {
+    "390x844": {
+      "visao": "390x844",
+      "prints": [
+        "/home/pedro/eleicao2026-mapa/_provas/regressao/20261024-0846/tooltip_390x844_estado_tap.png",
+        "/home/pedro/eleicao2026-mapa/_provas/regressao/20261024-0846/tooltip_390x844_estado_detalhes.png",
+        "/home/pedro/eleicao2026-mapa/_provas/regressao/20261024-0846/tooltip_390x844_local_tap.png"
+      ],
+      "avisoDispensado": true,
+      "midia": {
+        "largura820": true,
+        "ponteiroGrosso": true,
+        "hoverFino": false
+      },
+      "pontosZona": [
+        {
+          "x": 180,
+          "y": 455,
+          "canvas": {
+            "x": 180,
+            "y": 401
+          }
+        }
+      ],
+      "topoNoPontoTocado": {
+        "camada": "zonas-prisma-lula",
+        "props": {
+          "uf": null,
+          "municipio": "ACOPIARA",
+          "zona": 60,
+          "nome": null,
+          "nr_local": null
+        },
+        "dom": "CANVAS"
+      },
+      "tooltipsDepoisDeTocarZona": {
+        "total": 0,
+        "textos": [],
+        "ultimaMedida": {
+          "total": 0,
+          "visiveis": 0,
+          "textos": [],
+          "caixas": []
+        }
+      },
+      "estadoDepoisDeTocarZona": {
+        "url": "/mapa?uf=CE&z=6",
+        "vp": {
+          "w": 390,
+          "h": 844
+        },
+        "midia": {
+          "largura820": true,
+          "ponteiroGrosso": true,
+          "hoverFino": false
+        },
+        "scroll": {
+          "sw": 390,
+          "cw": 390,
+          "iguais": true
+        },
+        "botaoDetalhes": {
+          "rotulo": "Mostrar detalhes",
+          "expandido": "false",
+          "sigla": "CE",
+          "visivel": true
+        },
+        "sheet": {
+          "classe": "bottom-sheet sheet-detalhe mobile-only",
+          "kicker": "estado selecionado",
+          "titulo": "Ceará",
+          "aberto": false
+        },
+        "mapa": {
+          "zoom": 6,
+          "centro": [
+            -39.3335,
+            -5.315
+          ],
+          "nivel": "zona",
+          "municipio": null
+        }
+      },
+      "sheetAbertoPeloBotao": {
+        "classe": "bottom-sheet sheet-detalhe mobile-only is-open",
+        "kicker": "estado selecionado",
+        "titulo": "Ceará",
+        "aberto": true
+      },
+      "pontosUf": [
+        {
+          "x": 296,
+          "y": 295,
+          "canvas": {
+            "x": 296,
+            "y": 241
+          }
+        },
+        {
+          "x": 300,
+          "y": 323,
+          "canvas": {
+            "x": 300,
+            "y": 269
+          }
+        }
+      ],
+      "toqueUf": {
+        "ponto": {
+          "x": 296,
+          "y": 295,
+          "canvas": {
+            "x": 296,
+            "y": 241
+          }
+        },
+        "ok": true
+      },
+      "tooltipsDepoisDeTocarUf": {
+        "total": 0,
+        "visiveis": 0,
+        "textos": [],
+        "caixas": []
+      },
+      "estadoDepoisDeTocarUf": {
+        "url": "/mapa?z=4.2",
+        "vp": {
+          "w": 390,
+          "h": 844
+        },
+        "midia": {
+          "largura820": true,
+          "ponteiroGrosso": true,
+          "hoverFino": false
+        },
+        "scroll": {
+          "sw": 390,
+          "cw": 390,
+          "iguais": true
+        },
+        "botaoDetalhes": {
+          "rotulo": "Mostrar detalhes",
+          "expandido": "false",
+          "sigla": "CE",
+          "visivel": true
+        },
+        "sheet": {
+          "classe": "bottom-sheet sheet-detalhe mobile-only",
+          "kicker": "estado selecionado",
+          "titulo": "Ceará",
+          "aberto": false
+        },
+        "mapa": {
+          "zoom": 4.2,
+          "centro": [
+            -39.3335,
+            -7.6112
+          ],
+          "nivel": "estado",
+          "municipio": null
+        }
+      },
+      "pontosMunicipio": [
+        {
+          "x": 127,
+          "y": 135,
+          "canvas": {
+            "x": 127,
+            "y": 81
+          }
+        },
+        {
+          "x": 127,
+          "y": 184,
+          "canvas": {
+            "x": 127,
+            "y": 130
+          }
+        },
+        {
+          "x": 127,
+          "y": 217,
+          "canvas": {
+            "x": 127,
+            "y": 163
+          }
+        }
+      ],
+      "municipioAlvo": {
+        "nome": "PEDRA BRANCA",
+        "codarea": "2310506"
+      },
+      "toqueMunicipio": {
+        "ponto": {
+          "x": 127,
+          "y": 135,
+          "canvas": {
+            "x": 127,
+            "y": 81
+          }
+        },
+        "ok": true
+      },
+      "tooltipsDepoisDeTocarMunicipio": {
+        "total": 0,
+        "visiveis": 0,
+        "textos": [],
+        "caixas": []
+      },
+      "estadoDepoisDeTocarMunicipio": {
+        "url": "/mapa?uf=CE&m=13056&z=8.6",
+        "vp": {
+          "w": 390,
+          "h": 844
+        },
+        "midia": {
+          "largura820": true,
+          "ponteiroGrosso": true,
+          "hoverFino": false
+        },
+        "scroll": {
+          "sw": 390,
+          "cw": 390,
+          "iguais": true
+        },
+        "botaoDetalhes": {
+          "rotulo": "Mostrar detalhes",
+          "expandido": "false",
+          "sigla": "CE",
+          "visivel": true
+        },
+        "sheet": {
+          "classe": "bottom-sheet sheet-detalhe mobile-only",
+          "kicker": "município",
+          "titulo": "PEDRA BRANCA",
+          "aberto": false
+        },
+        "mapa": {
+          "zoom": 8.6,
+          "centro": [
+            -39.814,
+            -5.7286
+          ],
+          "nivel": "municipio",
+          "municipio": "2310506"
+        }
+      },
+      "pontosLocal": [
+        {
+          "x": 85,
+          "y": 445,
+          "canvas": {
+            "x": 85,
+            "y": 391
+          }
+        },
+        {
+          "x": 154,
+          "y": 227,
+          "canvas": {
+            "x": 154,
+            "y": 173
+          }
+        },
+        {
+          "x": 256,
+          "y": 356,
+          "canvas": {
+            "x": 256,
+            "y": 302
+          }
+        }
+      ],
+      "toqueLocal": {
+        "ponto": {
+          "x": 85,
+          "y": 445,
+          "canvas": {
+            "x": 85,
+            "y": 391
+          }
+        },
+        "ok": true
+      },
+      "tooltipsDepoisDeTocarLocal": {
+        "total": 0,
+        "visiveis": 0,
+        "textos": [],
+        "caixas": []
+      },
+      "estadoDepoisDeTocarLocal": {
+        "url": "/mapa?uf=CE&m=13897&z=11",
+        "vp": {
+          "w": 390,
+          "h": 844
+        },
+        "midia": {
+          "largura820": true,
+          "ponteiroGrosso": true,
+          "hoverFino": false
+        },
+        "scroll": {
+          "sw": 390,
+          "cw": 390,
+          "iguais": true
+        },
+        "botaoDetalhes": {
+          "rotulo": "Mostrar detalhes",
+          "expandido": "false",
+          "sigla": "CE",
+          "visivel": true
+        },
+        "sheet": {
+          "classe": "bottom-sheet sheet-detalhe mobile-only",
+          "kicker": "local de votação",
+          "titulo": "Local 1961",
+          "aberto": false
+        },
+        "mapa": {
+          "zoom": 12.6,
+          "centro": [
+            -38.5566,
+            -3.8142
+          ],
+          "nivel": "local",
+          "municipio": "2304400"
+        }
+      },
+      "console": {
+        "total": 0,
+        "erros": []
+      }
+    },
+    "390x700": {
+      "visao": "390x700",
+      "prints": [
+        "/home/pedro/eleicao2026-mapa/_provas/regressao/20261024-0846/tooltip_390x700_estado_tap.png",
+        "/home/pedro/eleicao2026-mapa/_provas/regressao/20261024-0846/tooltip_390x700_estado_detalhes.png",
+        "/home/pedro/eleicao2026-mapa/_provas/regressao/20261024-0846/tooltip_390x700_local_tap.png"
+      ],
+      "avisoDispensado": true,
+      "midia": {
+        "largura820": true,
+        "ponteiroGrosso": true,
+        "hoverFino": false
+      },
+      "pontosZona": [
+        {
+          "x": 180,
+          "y": 384,
+          "canvas": {
+            "x": 180,
+            "y": 330
+          }
+        }
+      ],
+      "topoNoPontoTocado": {
+        "camada": "zonas-prisma-lula",
+        "props": {
+          "uf": null,
+          "municipio": "ACOPIARA",
+          "zona": 60,
+          "nome": null,
+          "nr_local": null
+        },
+        "dom": "CANVAS"
+      },
+      "tooltipsDepoisDeTocarZona": {
+        "total": 0,
+        "textos": [],
+        "ultimaMedida": {
+          "total": 0,
+          "visiveis": 0,
+          "textos": [],
+          "caixas": []
+        }
+      },
+      "estadoDepoisDeTocarZona": {
+        "url": "/mapa?uf=CE&z=6",
+        "vp": {
+          "w": 390,
+          "h": 700
+        },
+        "midia": {
+          "largura820": true,
+          "ponteiroGrosso": true,
+          "hoverFino": false
+        },
+        "scroll": {
+          "sw": 390,
+          "cw": 390,
+          "iguais": true
+        },
+        "botaoDetalhes": {
+          "rotulo": "Mostrar detalhes",
+          "expandido": "false",
+          "sigla": "CE",
+          "visivel": true
+        },
+        "sheet": {
+          "classe": "bottom-sheet sheet-detalhe mobile-only",
+          "kicker": "estado selecionado",
+          "titulo": "Ceará",
+          "aberto": false
+        },
+        "mapa": {
+          "zoom": 6,
+          "centro": [
+            -39.3336,
+            -5.3149
+          ],
+          "nivel": "zona",
+          "municipio": null
+        }
+      },
+      "sheetAbertoPeloBotao": {
+        "classe": "bottom-sheet sheet-detalhe mobile-only is-open",
+        "kicker": "estado selecionado",
+        "titulo": "Ceará",
+        "aberto": true
+      },
+      "pontosUf": [
+        {
+          "x": 296,
+          "y": 223,
+          "canvas": {
+            "x": 296,
+            "y": 169
+          }
+        },
+        {
+          "x": 300,
+          "y": 251,
+          "canvas": {
+            "x": 300,
+            "y": 197
+          }
+        }
+      ],
+      "toqueUf": {
+        "ponto": {
+          "x": 296,
+          "y": 223,
+          "canvas": {
+            "x": 296,
+            "y": 169
+          }
+        },
+        "ok": true
+      },
+      "tooltipsDepoisDeTocarUf": {
+        "total": 0,
+        "visiveis": 0,
+        "textos": [],
+        "caixas": []
+      },
+      "estadoDepoisDeTocarUf": {
+        "url": "/mapa?z=4.2",
+        "vp": {
+          "w": 390,
+          "h": 700
+        },
+        "midia": {
+          "largura820": true,
+          "ponteiroGrosso": true,
+          "hoverFino": false
+        },
+        "scroll": {
+          "sw": 390,
+          "cw": 390,
+          "iguais": true
+        },
+        "botaoDetalhes": {
+          "rotulo": "Mostrar detalhes",
+          "expandido": "false",
+          "sigla": "CE",
+          "visivel": true
+        },
+        "sheet": {
+          "classe": "bottom-sheet sheet-detalhe mobile-only",
+          "kicker": "estado selecionado",
+          "titulo": "Ceará",
+          "aberto": false
+        },
+        "mapa": {
+          "zoom": 4.2,
+          "centro": [
+            -39.3336,
+            -7.6004
+          ],
+          "nivel": "estado",
+          "municipio": null
+        }
+      },
+      "pontosMunicipio": [
+        {
+          "x": 130,
+          "y": 135,
+          "canvas": {
+            "x": 130,
+            "y": 81
+          }
+        },
+        {
+          "x": 151,
+          "y": 104,
+          "canvas": {
+            "x": 151,
+            "y": 50
+          }
+        },
+        {
+          "x": 172,
+          "y": 135,
+          "canvas": {
+            "x": 172,
+            "y": 81
+          }
+        }
+      ],
+      "municipioAlvo": {
+        "nome": "MOMBAÇA",
+        "codarea": "2308500"
+      },
+      "toqueMunicipio": {
+        "ponto": {
+          "x": 130,
+          "y": 135,
+          "canvas": {
+            "x": 130,
+            "y": 81
+          }
+        },
+        "ok": true
+      },
+      "tooltipsDepoisDeTocarMunicipio": {
+        "total": 0,
+        "visiveis": 0,
+        "textos": [],
+        "caixas": []
+      },
+      "estadoDepoisDeTocarMunicipio": {
+        "url": "/mapa?uf=CE&m=13056&z=8.6",
+        "vp": {
+          "w": 390,
+          "h": 700
+        },
+        "midia": {
+          "largura820": true,
+          "ponteiroGrosso": true,
+          "hoverFino": false
+        },
+        "scroll": {
+          "sw": 390,
+          "cw": 390,
+          "iguais": true
+        },
+        "botaoDetalhes": {
+          "rotulo": "Mostrar detalhes",
+          "expandido": "false",
+          "sigla": "CE",
+          "visivel": true
+        },
+        "sheet": {
+          "classe": "bottom-sheet sheet-detalhe mobile-only",
+          "kicker": "município",
+          "titulo": "MOMBAÇA",
+          "aberto": false
+        },
+        "mapa": {
+          "zoom": 8.6,
+          "centro": [
+            -39.7434,
+            -5.836
+          ],
+          "nivel": "municipio",
+          "municipio": "2308500"
+        }
+      },
+      "pontosLocal": [
+        {
+          "x": 84,
+          "y": 374,
+          "canvas": {
+            "x": 84,
+            "y": 320
+          }
+        },
+        {
+          "x": 5,
+          "y": 135,
+          "canvas": {
+            "x": 5,
+            "y": 81
+          }
+        },
+        {
+          "x": 155,
+          "y": 159,
+          "canvas": {
+            "x": 155,
+            "y": 105
+          }
+        }
+      ],
+      "toqueLocal": {
+        "ponto": {
+          "x": 84,
+          "y": 374,
+          "canvas": {
+            "x": 84,
+            "y": 320
+          }
+        },
+        "ok": true
+      },
+      "tooltipsDepoisDeTocarLocal": {
+        "total": 0,
+        "visiveis": 0,
+        "textos": [],
+        "caixas": []
+      },
+      "estadoDepoisDeTocarLocal": {
+        "url": "/mapa?uf=CE&m=13897&z=11",
+        "vp": {
+          "w": 390,
+          "h": 700
+        },
+        "midia": {
+          "largura820": true,
+          "ponteiroGrosso": true,
+          "hoverFino": false
+        },
+        "scroll": {
+          "sw": 390,
+          "cw": 390,
+          "iguais": true
+        },
+        "botaoDetalhes": {
+          "rotulo": "Mostrar detalhes",
+          "expandido": "false",
+          "sigla": "CE",
+          "visivel": true
+        },
+        "sheet": {
+          "classe": "bottom-sheet sheet-detalhe mobile-only",
+          "kicker": "local de votação",
+          "titulo": "Local 1961",
+          "aberto": false
+        },
+        "mapa": {
+          "zoom": 12.6,
+          "centro": [
+            -38.5566,
+            -3.8142
+          ],
+          "nivel": "local",
+          "municipio": "2304400"
+        }
+      },
+      "console": {
+        "total": 0,
+        "erros": []
+      }
+    }
+  },
+  "desktop": {
+    "visao": "1440x900",
+    "prints": [
+      "/home/pedro/eleicao2026-mapa/_provas/regressao/20261024-0846/tooltip_desktop_1440x900_hover_zona.png",
+      "/home/pedro/eleicao2026-mapa/_provas/regressao/20261024-0846/tooltip_desktop_1440x900_hover_uf.png",
+      "/home/pedro/eleicao2026-mapa/_provas/regressao/20261024-0846/tooltip_desktop_1440x900_hover_municipio.png",
+      "/home/pedro/eleicao2026-mapa/_provas/regressao/20261024-0846/tooltip_desktop_1440x900_hover_local.png"
+    ],
+    "pontosZona": [
+      {
+        "x": 515,
+        "y": 477,
+        "canvas": {
+          "x": 515,
+          "y": 401
+        }
+      }
+    ],
+    "tooltipsHoverZona": {
+      "total": 1,
+      "visiveis": 1,
+      "textos": [
+        "ACOPIARA · zona 60LULA (PT)margem 56,50 pts · 76,59%32.404 votos · 146 seções"
+      ],
+      "caixas": [
+        {
+          "x": 434,
+          "y": 380,
+          "w": 162,
+          "h": 83
+        }
+      ]
+    },
+    "pontosUf": [
+      {
+        "x": 726,
+        "y": 238,
+        "canvas": {
+          "x": 726,
+          "y": 162
+        }
+      },
+      {
+        "x": 726,
+        "y": 266,
+        "canvas": {
+          "x": 726,
+          "y": 190
+        }
+      },
+      {
+        "x": 734,
+        "y": 302,
+        "canvas": {
+          "x": 734,
+          "y": 226
+        }
+      }
+    ],
+    "tooltipsHoverUf": {
+      "total": 1,
+      "visiveis": 1,
+      "textos": [
+        "CE · CearáLULA (PT)margem 32,01 pts · 63,29%"
+      ],
+      "caixas": [
+        {
+          "x": 645,
+          "y": 156,
+          "w": 162,
+          "h": 68
+        }
+      ]
+    },
+    "tooltipsForaDaUf": {
+      "total": 0,
+      "visiveis": 0,
+      "textos": [],
+      "caixas": []
+    },
+    "pontosMunicipio": [
+      {
+        "x": 36,
+        "y": 119,
+        "canvas": {
+          "x": 36,
+          "y": 43
+        }
+      },
+      {
+        "x": 67,
+        "y": 119,
+        "canvas": {
+          "x": 67,
+          "y": 43
+        }
+      },
+      {
+        "x": 98,
+        "y": 119,
+        "canvas": {
+          "x": 98,
+          "y": 43
+        }
+      }
+    ],
+    "municipioAlvo": {
+      "nome": "IPAPORANGA",
+      "codarea": "2305654"
+    },
+    "tooltipsHoverMunicipio": {
+      "total": 1,
+      "visiveis": 1,
+      "textos": [
+        "IPAPORANGALULA (PT)margem 49,29 pts · 73,06%7.874 válidos · 8.297 votos"
+      ],
+      "caixas": [
+        {
+          "x": 46,
+          "y": 129,
+          "w": 162,
+          "h": 83
+        }
+      ]
+    },
+    "pontosLocal": [
+      {
+        "x": 418,
+        "y": 469,
+        "canvas": {
+          "x": 418,
+          "y": 393
+        }
+      },
+      {
+        "x": 344,
+        "y": 295,
+        "canvas": {
+          "x": 344,
+          "y": 219
+        }
+      },
+      {
+        "x": 491,
+        "y": 312,
+        "canvas": {
+          "x": 491,
+          "y": 236
+        }
+      }
+    ],
+    "tooltipsHoverLocal": {
+      "total": 1,
+      "visiveis": 1,
+      "textos": [
+        "local 1961LULA (PT) · 58,39%margem 23,12 pts100% apurado · 3 de 3 seções1.057 votos · 3 seções"
+      ],
+      "caixas": [
+        {
+          "x": 331,
+          "y": 355,
+          "w": 174,
+          "h": 100
+        }
+      ]
+    },
+    "midia": {
+      "largura820": false,
+      "ponteiroGrosso": false,
+      "hoverFino": true
+    },
+    "scroll": {
+      "sw": 1440,
+      "cw": 1440,
+      "iguais": true
+    },
+    "console": {
+      "total": 0,
+      "erros": []
+    }
+  },
+  "falhas": [],
+  "ok": true,
+  "gerado": "2026-10-24T11:55:09.879Z"
+}

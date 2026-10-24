@@ -1,0 +1,7 @@
+REGRESSAO eleicao2026 2026-10-24 08:22:53 -03 | modo=rapido base=http://127.0.0.1:8110 commit=244977d | pasta=_provas/regressao/20261024-0822
+R01 PASS          0s  /=200 /eleicao=200 /mapa=200 
+R02 PASS         15s  desktop_1440x900=0.789% mobile_390x844=0.000%| pior=0,789% limiar=2.0% 
+R03 PASS        226s  cenarios=12 falhas=0 
+R07 PASS          5s  console.errors=0 requests>=400=0 
+R08 PASS          1s  go_build rc=0 (0s) npm_build rc=0 (2s) 
+TOTAIS PASS=5 FAIL=0 NAO_MEDIDO=0 | exit=0

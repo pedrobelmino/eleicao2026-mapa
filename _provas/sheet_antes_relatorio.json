@@ -1,0 +1,677 @@
+{
+  "base": "http://127.0.0.1:8110",
+  "quando": "2026-10-23T02:22:27.433Z",
+  "telas": {
+    "390x844": {
+      "peek": {
+        "url": "/mapa?uf=CE&z=5.8",
+        "viewport": {
+          "w": 390,
+          "h": 844
+        },
+        "barra": {
+          "x": 0,
+          "y": 54,
+          "w": 390,
+          "h": 46,
+          "display": "grid",
+          "visibility": "visible",
+          "maxHeight": "none"
+        },
+        "gaveta": {
+          "x": 0,
+          "y": 662,
+          "w": 390,
+          "h": 70,
+          "display": "flex",
+          "visibility": "visible",
+          "maxHeight": "70px",
+          "classe": "bottom-sheet placar-gaveta mobile-only is-peek"
+        },
+        "sheet": {
+          "x": 0,
+          "y": 336,
+          "w": 390,
+          "h": 325,
+          "display": "flex",
+          "visibility": "visible",
+          "maxHeight": "48%"
+        },
+        "sheetClasse": "bottom-sheet sheet-detalhe mobile-only is-open",
+        "sheetToque": null,
+        "sheetChevron": null,
+        "sheetCorpo": {
+          "x": 0,
+          "y": 410,
+          "w": 390,
+          "h": 251,
+          "display": "block",
+          "visibility": "visible",
+          "maxHeight": "none"
+        },
+        "peekKicker": "estado selecionado",
+        "peekTitulo": "Ceará",
+        "peekLider": null,
+        "palco": {
+          "x": 0,
+          "y": 54,
+          "w": 390,
+          "h": 678,
+          "display": "block",
+          "visibility": "visible",
+          "maxHeight": "none"
+        },
+        "mapaVisivelPx": 282,
+        "mapaVisivelPct": 41.6,
+        "prisasDeZona": {
+          "lula": 205,
+          "flavio": 205,
+          "outros": 205,
+          "nao_apurado": 205
+        },
+        "prisasTotal": 820,
+        "zoom": 5.8,
+        "pitch": 52
+      },
+      "aberto": {
+        "url": "/mapa?uf=CE&z=5.8",
+        "viewport": {
+          "w": 390,
+          "h": 844
+        },
+        "barra": {
+          "x": 0,
+          "y": 54,
+          "w": 390,
+          "h": 46,
+          "display": "grid",
+          "visibility": "visible",
+          "maxHeight": "none"
+        },
+        "gaveta": {
+          "x": 0,
+          "y": 662,
+          "w": 390,
+          "h": 70,
+          "display": "flex",
+          "visibility": "visible",
+          "maxHeight": "70px",
+          "classe": "bottom-sheet placar-gaveta mobile-only is-peek"
+        },
+        "sheet": {
+          "x": 0,
+          "y": 336,
+          "w": 390,
+          "h": 325,
+          "display": "flex",
+          "visibility": "visible",
+          "maxHeight": "48%"
+        },
+        "sheetClasse": "bottom-sheet sheet-detalhe mobile-only is-open",
+        "sheetToque": null,
+        "sheetChevron": null,
+        "sheetCorpo": {
+          "x": 0,
+          "y": 410,
+          "w": 390,
+          "h": 251,
+          "display": "block",
+          "visibility": "visible",
+          "maxHeight": "none"
+        },
+        "peekKicker": "estado selecionado",
+        "peekTitulo": "Ceará",
+        "peekLider": null,
+        "palco": {
+          "x": 0,
+          "y": 54,
+          "w": 390,
+          "h": 678,
+          "display": "block",
+          "visibility": "visible",
+          "maxHeight": "none"
+        },
+        "mapaVisivelPx": 282,
+        "mapaVisivelPct": 41.6,
+        "prisasDeZona": {
+          "lula": 205,
+          "flavio": 205,
+          "outros": 205,
+          "nao_apurado": 205
+        },
+        "prisasTotal": 820,
+        "zoom": 5.8,
+        "pitch": 52
+      },
+      "recolhido": {
+        "url": "/mapa?uf=CE&z=5.8",
+        "viewport": {
+          "w": 390,
+          "h": 844
+        },
+        "barra": {
+          "x": 0,
+          "y": 54,
+          "w": 390,
+          "h": 46,
+          "display": "grid",
+          "visibility": "visible",
+          "maxHeight": "none"
+        },
+        "gaveta": {
+          "x": 0,
+          "y": 662,
+          "w": 390,
+          "h": 70,
+          "display": "flex",
+          "visibility": "visible",
+          "maxHeight": "70px",
+          "classe": "bottom-sheet placar-gaveta mobile-only is-peek"
+        },
+        "sheet": {
+          "x": 0,
+          "y": 336,
+          "w": 390,
+          "h": 325,
+          "display": "flex",
+          "visibility": "visible",
+          "maxHeight": "48%"
+        },
+        "sheetClasse": "bottom-sheet sheet-detalhe mobile-only is-open",
+        "sheetToque": null,
+        "sheetChevron": null,
+        "sheetCorpo": {
+          "x": 0,
+          "y": 410,
+          "w": 390,
+          "h": 251,
+          "display": "block",
+          "visibility": "visible",
+          "maxHeight": "none"
+        },
+        "peekKicker": "estado selecionado",
+        "peekTitulo": "Ceará",
+        "peekLider": null,
+        "palco": {
+          "x": 0,
+          "y": 54,
+          "w": 390,
+          "h": 678,
+          "display": "block",
+          "visibility": "visible",
+          "maxHeight": "none"
+        },
+        "mapaVisivelPx": 282,
+        "mapaVisivelPct": 41.6,
+        "prisasDeZona": {
+          "lula": 205,
+          "flavio": 205,
+          "outros": 205,
+          "nao_apurado": 205
+        },
+        "prisasTotal": 820,
+        "zoom": 5.8,
+        "pitch": 52
+      },
+      "abriuPorToque": false,
+      "abriuPorArraste": true,
+      "zonasIniciais": 820,
+      "console": {
+        "total": 4,
+        "errosDoApp": [],
+        "avisos": []
+      },
+      "prints": [
+        "_provas/sheet_antes_390x844_peek.png",
+        "_provas/sheet_antes_390x844_expandido.png",
+        "_provas/sheet_antes_390x844_recolhido.png"
+      ]
+    },
+    "390x700": {
+      "peek": {
+        "url": "/mapa?uf=CE&z=5.8",
+        "viewport": {
+          "w": 390,
+          "h": 700
+        },
+        "barra": {
+          "x": 0,
+          "y": 54,
+          "w": 390,
+          "h": 46,
+          "display": "grid",
+          "visibility": "visible",
+          "maxHeight": "none"
+        },
+        "gaveta": {
+          "x": 0,
+          "y": 518,
+          "w": 390,
+          "h": 70,
+          "display": "flex",
+          "visibility": "visible",
+          "maxHeight": "70px",
+          "classe": "bottom-sheet placar-gaveta mobile-only is-peek"
+        },
+        "sheet": {
+          "x": 0,
+          "y": 262,
+          "w": 390,
+          "h": 256,
+          "display": "flex",
+          "visibility": "visible",
+          "maxHeight": "48%"
+        },
+        "sheetClasse": "bottom-sheet sheet-detalhe mobile-only is-open",
+        "sheetToque": null,
+        "sheetChevron": null,
+        "sheetCorpo": {
+          "x": 0,
+          "y": 336,
+          "w": 390,
+          "h": 182,
+          "display": "block",
+          "visibility": "visible",
+          "maxHeight": "none"
+        },
+        "peekKicker": "estado selecionado",
+        "peekTitulo": "Ceará",
+        "peekLider": null,
+        "palco": {
+          "x": 0,
+          "y": 54,
+          "w": 390,
+          "h": 534,
+          "display": "block",
+          "visibility": "visible",
+          "maxHeight": "none"
+        },
+        "mapaVisivelPx": 208,
+        "mapaVisivelPct": 39,
+        "prisasDeZona": {
+          "lula": 205,
+          "flavio": 205,
+          "outros": 205,
+          "nao_apurado": 205
+        },
+        "prisasTotal": 820,
+        "zoom": 5.8,
+        "pitch": 52
+      },
+      "aberto": {
+        "url": "/mapa?uf=CE&z=5.8",
+        "viewport": {
+          "w": 390,
+          "h": 700
+        },
+        "barra": {
+          "x": 0,
+          "y": 54,
+          "w": 390,
+          "h": 46,
+          "display": "grid",
+          "visibility": "visible",
+          "maxHeight": "none"
+        },
+        "gaveta": {
+          "x": 0,
+          "y": 518,
+          "w": 390,
+          "h": 70,
+          "display": "flex",
+          "visibility": "visible",
+          "maxHeight": "70px",
+          "classe": "bottom-sheet placar-gaveta mobile-only is-peek"
+        },
+        "sheet": {
+          "x": 0,
+          "y": 262,
+          "w": 390,
+          "h": 256,
+          "display": "flex",
+          "visibility": "visible",
+          "maxHeight": "48%"
+        },
+        "sheetClasse": "bottom-sheet sheet-detalhe mobile-only is-open",
+        "sheetToque": null,
+        "sheetChevron": null,
+        "sheetCorpo": {
+          "x": 0,
+          "y": 336,
+          "w": 390,
+          "h": 182,
+          "display": "block",
+          "visibility": "visible",
+          "maxHeight": "none"
+        },
+        "peekKicker": "estado selecionado",
+        "peekTitulo": "Ceará",
+        "peekLider": null,
+        "palco": {
+          "x": 0,
+          "y": 54,
+          "w": 390,
+          "h": 534,
+          "display": "block",
+          "visibility": "visible",
+          "maxHeight": "none"
+        },
+        "mapaVisivelPx": 208,
+        "mapaVisivelPct": 39,
+        "prisasDeZona": {
+          "lula": 205,
+          "flavio": 205,
+          "outros": 205,
+          "nao_apurado": 205
+        },
+        "prisasTotal": 820,
+        "zoom": 5.8,
+        "pitch": 52
+      },
+      "recolhido": {
+        "url": "/mapa?uf=CE&z=5.8",
+        "viewport": {
+          "w": 390,
+          "h": 700
+        },
+        "barra": {
+          "x": 0,
+          "y": 54,
+          "w": 390,
+          "h": 46,
+          "display": "grid",
+          "visibility": "visible",
+          "maxHeight": "none"
+        },
+        "gaveta": {
+          "x": 0,
+          "y": 518,
+          "w": 390,
+          "h": 70,
+          "display": "flex",
+          "visibility": "visible",
+          "maxHeight": "70px",
+          "classe": "bottom-sheet placar-gaveta mobile-only is-peek"
+        },
+        "sheet": {
+          "x": 0,
+          "y": 262,
+          "w": 390,
+          "h": 256,
+          "display": "flex",
+          "visibility": "visible",
+          "maxHeight": "48%"
+        },
+        "sheetClasse": "bottom-sheet sheet-detalhe mobile-only is-open",
+        "sheetToque": null,
+        "sheetChevron": null,
+        "sheetCorpo": {
+          "x": 0,
+          "y": 336,
+          "w": 390,
+          "h": 182,
+          "display": "block",
+          "visibility": "visible",
+          "maxHeight": "none"
+        },
+        "peekKicker": "estado selecionado",
+        "peekTitulo": "Ceará",
+        "peekLider": null,
+        "palco": {
+          "x": 0,
+          "y": 54,
+          "w": 390,
+          "h": 534,
+          "display": "block",
+          "visibility": "visible",
+          "maxHeight": "none"
+        },
+        "mapaVisivelPx": 208,
+        "mapaVisivelPct": 39,
+        "prisasDeZona": {
+          "lula": 205,
+          "flavio": 205,
+          "outros": 205,
+          "nao_apurado": 205
+        },
+        "prisasTotal": 820,
+        "zoom": 5.8,
+        "pitch": 52
+      },
+      "abriuPorToque": false,
+      "abriuPorArraste": true,
+      "zonasIniciais": 820,
+      "console": {
+        "total": 0,
+        "errosDoApp": [],
+        "avisos": []
+      },
+      "prints": [
+        "_provas/sheet_antes_390x700_peek.png",
+        "_provas/sheet_antes_390x700_expandido.png",
+        "_provas/sheet_antes_390x700_recolhido.png"
+      ]
+    },
+    "desktop": {
+      "medida": {
+        "viewport": {
+          "w": 1440,
+          "h": 900
+        },
+        "palco": {
+          "x": 0,
+          "y": 76,
+          "w": 1060,
+          "h": 708,
+          "display": "block"
+        },
+        "painel": {
+          "x": 1060,
+          "y": 76,
+          "w": 380,
+          "h": 708,
+          "display": "flex"
+        },
+        "sheet": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "display": "none"
+        },
+        "detalheCard": {
+          "x": 1081,
+          "y": 303,
+          "w": 339,
+          "h": 697,
+          "display": "block"
+        },
+        "titulo": "Ceará",
+        "scrollLateral": false
+      },
+      "console": {
+        "total": 0,
+        "errosDoApp": [],
+        "avisos": []
+      },
+      "prints": [
+        "_provas/sheet_antes_desktop_1440x900.png"
+      ]
+    }
+  },
+  "resumo": {
+    "390x844": {
+      "peek": {
+        "classe": "is-open",
+        "sheetH": 325,
+        "sheetY": 336,
+        "mapaVisivelPx": 282,
+        "mapaVisivelPct": 41.6,
+        "palcoH": 678,
+        "zonas": 820,
+        "zonasPorCamada": {
+          "lula": 205,
+          "flavio": 205,
+          "outros": 205,
+          "nao_apurado": 205
+        },
+        "kicker": "estado selecionado",
+        "titulo": "Ceará",
+        "lider": null,
+        "chevron": null,
+        "corpoDisplay": "block"
+      },
+      "expandido": {
+        "classe": "is-open",
+        "sheetH": 325,
+        "sheetY": 336,
+        "mapaVisivelPx": 282,
+        "mapaVisivelPct": 41.6,
+        "palcoH": 678,
+        "zonas": 820,
+        "zonasPorCamada": {
+          "lula": 205,
+          "flavio": 205,
+          "outros": 205,
+          "nao_apurado": 205
+        },
+        "kicker": "estado selecionado",
+        "titulo": "Ceará",
+        "lider": null,
+        "chevron": null,
+        "corpoDisplay": "block"
+      },
+      "recolhido": {
+        "classe": "is-open",
+        "sheetH": 325,
+        "sheetY": 336,
+        "mapaVisivelPx": 282,
+        "mapaVisivelPct": 41.6,
+        "palcoH": 678,
+        "zonas": 820,
+        "zonasPorCamada": {
+          "lula": 205,
+          "flavio": 205,
+          "outros": 205,
+          "nao_apurado": 205
+        },
+        "kicker": "estado selecionado",
+        "titulo": "Ceará",
+        "lider": null,
+        "chevron": null,
+        "corpoDisplay": "block"
+      },
+      "abriuPorToque": false,
+      "abriuPorArraste": true,
+      "console": {
+        "total": 4,
+        "errosDoApp": [],
+        "avisos": []
+      }
+    },
+    "390x700": {
+      "peek": {
+        "classe": "is-open",
+        "sheetH": 256,
+        "sheetY": 262,
+        "mapaVisivelPx": 208,
+        "mapaVisivelPct": 39,
+        "palcoH": 534,
+        "zonas": 820,
+        "zonasPorCamada": {
+          "lula": 205,
+          "flavio": 205,
+          "outros": 205,
+          "nao_apurado": 205
+        },
+        "kicker": "estado selecionado",
+        "titulo": "Ceará",
+        "lider": null,
+        "chevron": null,
+        "corpoDisplay": "block"
+      },
+      "expandido": {
+        "classe": "is-open",
+        "sheetH": 256,
+        "sheetY": 262,
+        "mapaVisivelPx": 208,
+        "mapaVisivelPct": 39,
+        "palcoH": 534,
+        "zonas": 820,
+        "zonasPorCamada": {
+          "lula": 205,
+          "flavio": 205,
+          "outros": 205,
+          "nao_apurado": 205
+        },
+        "kicker": "estado selecionado",
+        "titulo": "Ceará",
+        "lider": null,
+        "chevron": null,
+        "corpoDisplay": "block"
+      },
+      "recolhido": {
+        "classe": "is-open",
+        "sheetH": 256,
+        "sheetY": 262,
+        "mapaVisivelPx": 208,
+        "mapaVisivelPct": 39,
+        "palcoH": 534,
+        "zonas": 820,
+        "zonasPorCamada": {
+          "lula": 205,
+          "flavio": 205,
+          "outros": 205,
+          "nao_apurado": 205
+        },
+        "kicker": "estado selecionado",
+        "titulo": "Ceará",
+        "lider": null,
+        "chevron": null,
+        "corpoDisplay": "block"
+      },
+      "abriuPorToque": false,
+      "abriuPorArraste": true,
+      "console": {
+        "total": 0,
+        "errosDoApp": [],
+        "avisos": []
+      }
+    },
+    "desktop": {
+      "palco": {
+        "x": 0,
+        "y": 76,
+        "w": 1060,
+        "h": 708,
+        "display": "block"
+      },
+      "painel": {
+        "x": 1060,
+        "y": 76,
+        "w": 380,
+        "h": 708,
+        "display": "flex"
+      },
+      "sheet": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0,
+        "display": "none"
+      },
+      "detalheCard": {
+        "x": 1081,
+        "y": 303,
+        "w": 339,
+        "h": 697,
+        "display": "block"
+      },
+      "console": {
+        "total": 0,
+        "errosDoApp": [],
+        "avisos": []
+      }
+    }
+  }
+}

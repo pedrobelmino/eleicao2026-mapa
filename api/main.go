@@ -179,6 +179,12 @@ type publico struct {
 	Fonte    string          `json:"fonte"`
 	Nacional json.RawMessage `json:"nacional"`
 	UFs      []ufPublico     `json:"ufs"`
+	// Procedência declarada PELO ARQUIVO (snapshot_publico.py grava `eleicao` e
+	// `turno`). Serve para o painel não rotular dado de um turno com o rótulo
+	// do outro quando o snapshot em disco está atrasado.
+	Eleicao string `json:"eleicao"`
+	Turno   string `json:"turno"`
+	SemDado bool   `json:"sem_dado"`
 }
 
 type featureEntrada struct {
@@ -671,6 +677,17 @@ type estadosResposta struct {
 	Fonte    string          `json:"fonte"`
 	Nacional json.RawMessage `json:"nacional"`
 	UFs      []ufResposta    `json:"ufs"`
+	// Procedência do dado municipal/urna (dump por seção). `aviso` preenchido
+	// quando o arquivo municipal não é do turno em exibição — a tela repete
+	// isso ao usuário, nunca mostra número de outro turno sem dizer.
+	Municipal procedenciaMunicipal `json:"municipal"`
+	// Procedência do snapshot nacional/UF (publico.json). Mesma regra: se o
+	// arquivo é de outra eleição, a tela diz, em vez de rotular dado velho com
+	// o turno configurado.
+	DadosEleicao string `json:"dados_eleicao"`
+	DadosTurno   string `json:"dados_turno"`
+	DadosSemDado bool   `json:"dados_sem_dado"`
+	DadosAviso   string `json:"dados_aviso"`
 }
 
 func (a *app) handleEstados(w http.ResponseWriter, _ *http.Request) {
@@ -701,12 +718,17 @@ func (a *app) handleEstados(w http.ResponseWriter, _ *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, estadosResposta{
-		Eleicao:  a.cfg.Eleicao,
-		Turno:    a.cfg.Turno,
-		GeradoEm: a.dados.Publico.GeradoEm,
-		Fonte:    a.dados.Publico.Fonte,
-		Nacional: a.dados.Publico.Nacional,
-		UFs:      ufs,
+		Eleicao:      a.cfg.Eleicao,
+		Turno:        a.cfg.Turno,
+		GeradoEm:     a.dados.Publico.GeradoEm,
+		Fonte:        a.dados.Publico.Fonte,
+		Nacional:     a.dados.Publico.Nacional,
+		UFs:          ufs,
+		Municipal:    a.procedenciaDoMunicipal(),
+		DadosEleicao: a.dados.Publico.Eleicao,
+		DadosTurno:   a.dados.Publico.Turno,
+		DadosSemDado: a.dados.Publico.SemDado,
+		DadosAviso:   a.avisoDoSnapshot(),
 	})
 }
 

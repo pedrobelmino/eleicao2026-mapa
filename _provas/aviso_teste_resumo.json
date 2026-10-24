@@ -1,0 +1,14 @@
+{
+ "base": "http://127.0.0.1:8100",
+ "gerado": "2026-10-24T12:27:30.214Z",
+ "problemas": [],
+ "turno": "2",
+ "eleicao": "6258",
+ "dados_eleicao": "6257",
+ "municipal_aviso_api": "município, zona e local de votação: dados do 1º turno (eleição 6257) — o TSE publica o dump por seção só ao final de cada turno",
+ "dados_aviso_api": "placar, estados e margens: dados do 1º turno (eleição 6257) — o 2º turno ainda não tem voto publicado no TSE",
+ "municipal_aviso_tela": "Atenção município, zona e local de votação: dados do 1º turno (eleição 6257) — o TSE publica o dump por seção só ao final de cada turno",
+ "dados_aviso_tela": "Atenção placar, estados e margens: dados do 1º turno (eleição 6257) — o 2º turno ainda não tem voto publicado no TSE",
+ "header": "2º turno · apuração 100% · atualizado 24/10/2026 09:24",
+ "ok": true
+}

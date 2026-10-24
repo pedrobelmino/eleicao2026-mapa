@@ -1,0 +1,48 @@
+{
+  "e": "2026",
+  "ele": "6258",
+  "t": "2",
+  "and": "s",
+  "dg": "25/10/2026",
+  "hg": "17:42:10",
+  "tf": "n",
+  "_nota": "FIXTURE DE ENSAIO. Estrutura copiada do arquivo nacional real de 6258 (br-c0001-e006258-u.json), com vap preenchido para exercitar a virada. Não é dado oficial e nunca é gravado em dados/.",
+  "carg": [
+    {
+      "cd": "1",
+      "nmn": "Presidente",
+      "agr": [
+        {
+          "n": "1",
+          "nm": "FLAVIO NANTES BOLSONARO",
+          "tp": "c",
+          "par": [
+            {
+              "n": "22",
+              "sg": "PL",
+              "nm": "PARTIDO LIBERAL",
+              "cand": [
+                {"n": "22", "nm": "FLAVIO NANTES BOLSONARO", "nmu": "FLAVIO BOLSONARO", "vap": "18420113"}
+              ]
+            }
+          ]
+        },
+        {
+          "n": "2",
+          "nm": "LUIZ INACIO LULA DA SILVA",
+          "tp": "c",
+          "par": [
+            {
+              "n": "13",
+              "sg": "PT",
+              "nm": "PARTIDO DOS TRABALHADORES",
+              "cand": [
+                {"n": "13", "nm": "LUIZ INACIO LULA DA SILVA", "nmu": "LULA", "vap": "21755602"}
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

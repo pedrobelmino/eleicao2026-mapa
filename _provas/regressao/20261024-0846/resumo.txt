@@ -1,0 +1,11 @@
+REGRESSAO eleicao2026 2026-10-24 08:46:24 -03 | modo=completo base=http://127.0.0.1:8110 commit=9ba1e5b | pasta=_provas/regressao/20261024-0846
+R01 PASS          0s  /=200 /eleicao=200 /mapa=200 
+R02 PASS         14s  desktop_1440x900=0.789% mobile_390x844=0.000%| pior=0,789% limiar=2.0% 
+R03 PASS        256s  cenarios=12 falhas=0 
+R04 PASS         42s  ok=true problemas=0 gerado=2026-10-24T11:51:37.949Z 
+R05 PASS         55s  ok=true problemas=0 gerado=2026-10-24T11:52:33.015Z 
+R06 NAO_MEDIDO   53s  nao medido: painel_unico_relatorio.json nao foi gravado (ver R06-painel_unico.log) 
+R07 PASS          5s  console.errors=0 requests>=400=0 
+R08 PASS          1s  go_build rc=0 (0s) npm_build rc=0 (1s) 
+R09 PASS         96s  celular_popups(pior)=0 desktop_hover(zona/uf/municipio/local)=1/1/1/1 falhas=0 ok=true 
+TOTAIS PASS=8 FAIL=0 NAO_MEDIDO=1 | exit=2

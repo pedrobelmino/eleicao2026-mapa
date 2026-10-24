@@ -155,6 +155,15 @@ const MEDIR = () => {
         : null,
     textoSheetInicio: textoSheet ? textoSheet.slice(0, 160) : null,
     textoGavetaInicio: textoGaveta ? textoGaveta.slice(0, 160) : null,
+    // regra do R06 medida no próprio celular: nada de rolagem horizontal
+    scrollLateral:
+      document.documentElement.scrollWidth > document.documentElement.clientWidth,
+    scrollLarguras: {
+      sw: document.documentElement.scrollWidth,
+      cw: document.documentElement.clientWidth,
+    },
+    // e um painel por vez: no máximo UM painel de baixo (gaveta OU sheet)
+    paineisDeBaixo: paineis.filter((p) => p.nome !== 'barra-placar').length,
     prismas,
     prismasTotal: Object.values(prismas).reduce(
       (soma, n) => soma + (Number.isFinite(n) ? n : 0),
@@ -209,6 +218,26 @@ function filtroConsole(linhas) {
     errosDoApp: linhas.filter((l) => /^(error|pageerror):/.test(l) && !deAmbiente(l)),
     avisos: linhas.filter((l) => /^warning:/.test(l) && !deAmbiente(l)),
   }
+}
+
+// O painel de detalhes não abre sozinho desde a UX de 24/10: quem abre é o botão
+// flutuante. Mesmo seletor usado por mobile_ux.mjs e tooltip_mobile.mjs.
+const BOTAO_DETALHE = '[data-prova="detalhe-toggle"]'
+
+async function abrirPainelDetalhe(page) {
+  const botao = page.locator(BOTAO_DETALHE)
+  if (!(await botao.count())) return false
+  await botao.click()
+  await page
+    .waitForFunction(
+      () => document.querySelector('.sheet-detalhe')?.classList.contains('is-open'),
+      null,
+      { timeout: 5000 },
+    )
+    .catch(() => {})
+  return page.evaluate(() =>
+    Boolean(document.querySelector('.sheet-detalhe')?.classList.contains('is-open')),
+  )
 }
 
 async function abrir(page, base, consulta, zoom) {
@@ -269,9 +298,8 @@ async function principal() {
     })
 
     // ---- 4. com seleção, sheet expandido --------------------------------
-    // Só existe alternância depois da mudança (build antigo já nasce aberto).
-    if (await page.locator('.sheet-detalhe .sheet-header-toque').count()) {
-      await page.click('.sheet-detalhe .sheet-header-toque')
+    // Abre pelo botão flutuante de detalhes (único caminho desde a UX de 24/10).
+    if (await abrirPainelDetalhe(page)) {
       await page.waitForTimeout(800)
       caso.com_selecao_aberta = await page.evaluate(MEDIR)
       await page.screenshot({
@@ -365,6 +393,8 @@ async function principal() {
           sheetVisivel: m.sheetVisivel,
           gavetaResumo: m.gavetaResumo,
           repetiuNoSheet: m.repetiuPlacarNacionalNoSheet,
+          scrollLateral: m.scrollLateral,
+          paineisDeBaixo: m.paineisDeBaixo,
           zonas: m.prismasTotal,
           zonasPorCamada: m.prismas,
         }

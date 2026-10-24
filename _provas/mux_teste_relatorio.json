@@ -1,0 +1,892 @@
+{
+  "base": "http://127.0.0.1:8100",
+  "quando": "2026-10-24T11:13:10.687Z",
+  "telas": {
+    "390x844": {
+      "prints": [
+        "_provas/mux_teste_390x844_macro_aviso.png",
+        "_provas/mux_teste_390x844_macro_fechado.png",
+        "_provas/mux_teste_390x844_estado_fechado.png",
+        "_provas/mux_teste_390x844_estado_aberto.png",
+        "_provas/mux_teste_390x844_municipio_fechado.png",
+        "_provas/mux_teste_390x844_municipio_aberto.png"
+      ],
+      "macroAvivo": {
+        "palcoH": 678,
+        "palcoW": 390,
+        "barraH": 46,
+        "gaveta": {
+          "w": 157,
+          "h": 44,
+          "visivel": true,
+          "classe": "is-peek"
+        },
+        "sheet": {
+          "y": 737,
+          "w": 390,
+          "h": 96,
+          "visivel": false,
+          "classe": "",
+          "ariaHidden": "true"
+        },
+        "botao": null,
+        "aviso": {
+          "w": 374,
+          "h": 66,
+          "y": 100,
+          "visivel": true
+        },
+        "areas": {
+          "palcoPx2": 264304,
+          "cobertoPaineisPx2": 49529,
+          "cobertoTotalPx2": 74884,
+          "livreDePaineisPct": 81.3,
+          "livreTotalPct": 71.7,
+          "faixaVisivelH": 632,
+          "faixaVisivelPct": 93.2
+        },
+        "zoom": 2.5318,
+        "centro": [
+          -53.1992,
+          -15.1231
+        ],
+        "scroll": {
+          "sw": 390,
+          "cw": 390,
+          "iguais": true
+        },
+        "selecao": {
+          "temSelecao": false,
+          "tituloSheet": "seleção",
+          "siglaBotao": null,
+          "detalheAtivo": false,
+          "nivel": "estado",
+          "featuresZonas": 0,
+          "municipio": null
+        }
+      },
+      "macroFechado": {
+        "palcoH": 678,
+        "palcoW": 390,
+        "barraH": 46,
+        "gaveta": {
+          "w": 157,
+          "h": 44,
+          "visivel": true,
+          "classe": "is-peek"
+        },
+        "sheet": {
+          "y": 737,
+          "w": 390,
+          "h": 96,
+          "visivel": false,
+          "classe": "",
+          "ariaHidden": "true"
+        },
+        "botao": null,
+        "aviso": null,
+        "areas": {
+          "palcoPx2": 264304,
+          "cobertoPaineisPx2": 24845,
+          "cobertoTotalPx2": 50200,
+          "livreDePaineisPct": 90.6,
+          "livreTotalPct": 81,
+          "faixaVisivelH": 632,
+          "faixaVisivelPct": 93.2
+        },
+        "zoom": 2.5318,
+        "centro": [
+          -53.1992,
+          -15.1231
+        ],
+        "scroll": {
+          "sw": 390,
+          "cw": 390,
+          "iguais": true
+        },
+        "selecao": {
+          "temSelecao": false,
+          "tituloSheet": "seleção",
+          "siglaBotao": null,
+          "detalheAtivo": false,
+          "nivel": "estado",
+          "featuresZonas": 0,
+          "municipio": null
+        }
+      },
+      "estadoFechado": {
+        "palcoH": 678,
+        "palcoW": 390,
+        "barraH": 46,
+        "gaveta": {
+          "w": 157,
+          "h": 44,
+          "visivel": false,
+          "classe": "is-peek"
+        },
+        "sheet": {
+          "y": 762,
+          "w": 390,
+          "h": 608,
+          "visivel": false,
+          "classe": "",
+          "ariaHidden": "true"
+        },
+        "botao": {
+          "w": 56,
+          "h": 56,
+          "x": 326,
+          "y": 668,
+          "rotulo": "Mostrar detalhes",
+          "expandido": "false",
+          "visivel": true
+        },
+        "aviso": null,
+        "areas": {
+          "palcoPx2": 264304,
+          "cobertoPaineisPx2": 21076,
+          "cobertoTotalPx2": 47098,
+          "livreDePaineisPct": 92,
+          "livreTotalPct": 82.2,
+          "faixaVisivelH": 632,
+          "faixaVisivelPct": 93.2
+        },
+        "zoom": 5.8,
+        "centro": [
+          -39.3336,
+          -5.315
+        ],
+        "scroll": {
+          "sw": 390,
+          "cw": 390,
+          "iguais": true
+        },
+        "selecao": {
+          "temSelecao": true,
+          "tituloSheet": "Ceará",
+          "siglaBotao": "CE",
+          "detalheAtivo": true,
+          "nivel": "zona",
+          "featuresZonas": 491,
+          "municipio": null
+        }
+      },
+      "estadoAberto": {
+        "palcoH": 678,
+        "palcoW": 390,
+        "barraH": 46,
+        "gaveta": {
+          "w": 157,
+          "h": 44,
+          "visivel": false,
+          "classe": "is-peek"
+        },
+        "sheet": {
+          "y": 461,
+          "w": 390,
+          "h": 271,
+          "visivel": true,
+          "classe": "is-open",
+          "ariaHidden": "false"
+        },
+        "botao": {
+          "w": 56,
+          "h": 56,
+          "x": 326,
+          "y": 397,
+          "rotulo": "Esconder detalhes",
+          "expandido": "true",
+          "visivel": true
+        },
+        "aviso": null,
+        "areas": {
+          "palcoPx2": 264304,
+          "cobertoPaineisPx2": 126796,
+          "cobertoTotalPx2": 152818,
+          "livreDePaineisPct": 52,
+          "livreTotalPct": 42.2,
+          "faixaVisivelH": 361,
+          "faixaVisivelPct": 53.3
+        },
+        "zoom": 5.8,
+        "centro": [
+          -39.3336,
+          -5.315
+        ],
+        "scroll": {
+          "sw": 390,
+          "cw": 390,
+          "iguais": true
+        },
+        "selecao": {
+          "temSelecao": true,
+          "tituloSheet": "Ceará",
+          "siglaBotao": "CE",
+          "detalheAtivo": true,
+          "nivel": "zona",
+          "featuresZonas": 491,
+          "municipio": null
+        }
+      },
+      "estadoRefechado": {
+        "palcoH": 678,
+        "palcoW": 390,
+        "barraH": 46,
+        "gaveta": {
+          "w": 157,
+          "h": 44,
+          "visivel": false,
+          "classe": "is-peek"
+        },
+        "sheet": {
+          "y": 762,
+          "w": 390,
+          "h": 608,
+          "visivel": false,
+          "classe": "",
+          "ariaHidden": "true"
+        },
+        "botao": {
+          "w": 56,
+          "h": 56,
+          "x": 326,
+          "y": 668,
+          "rotulo": "Mostrar detalhes",
+          "expandido": "false",
+          "visivel": true
+        },
+        "aviso": null,
+        "areas": {
+          "palcoPx2": 264304,
+          "cobertoPaineisPx2": 21076,
+          "cobertoTotalPx2": 47098,
+          "livreDePaineisPct": 92,
+          "livreTotalPct": 82.2,
+          "faixaVisivelH": 632,
+          "faixaVisivelPct": 93.2
+        },
+        "zoom": 5.8,
+        "centro": [
+          -39.3336,
+          -5.315
+        ],
+        "scroll": {
+          "sw": 390,
+          "cw": 390,
+          "iguais": true
+        },
+        "selecao": {
+          "temSelecao": true,
+          "tituloSheet": "Ceará",
+          "siglaBotao": "CE",
+          "detalheAtivo": true,
+          "nivel": "zona",
+          "featuresZonas": 491,
+          "municipio": null
+        }
+      },
+      "municipioFechado": {
+        "palcoH": 678,
+        "palcoW": 390,
+        "barraH": 46,
+        "gaveta": {
+          "w": 157,
+          "h": 44,
+          "visivel": false,
+          "classe": "is-peek"
+        },
+        "sheet": {
+          "y": 762,
+          "w": 390,
+          "h": 608,
+          "visivel": false,
+          "classe": "",
+          "ariaHidden": "true"
+        },
+        "botao": {
+          "w": 56,
+          "h": 56,
+          "x": 326,
+          "y": 668,
+          "rotulo": "Mostrar detalhes",
+          "expandido": "false",
+          "visivel": true
+        },
+        "aviso": null,
+        "areas": {
+          "palcoPx2": 264304,
+          "cobertoPaineisPx2": 21076,
+          "cobertoTotalPx2": 47266,
+          "livreDePaineisPct": 92,
+          "livreTotalPct": 82.1,
+          "faixaVisivelH": 632,
+          "faixaVisivelPct": 93.2
+        },
+        "zoom": 10.5,
+        "centro": [
+          -38.5198,
+          -3.794
+        ],
+        "scroll": {
+          "sw": 390,
+          "cw": 390,
+          "iguais": true
+        },
+        "selecao": {
+          "temSelecao": true,
+          "tituloSheet": "FORTALEZA",
+          "siglaBotao": "CE",
+          "detalheAtivo": true,
+          "nivel": "local",
+          "featuresZonas": 173,
+          "municipio": "2304400"
+        }
+      },
+      "municipioAberto": {
+        "palcoH": 678,
+        "palcoW": 390,
+        "barraH": 46,
+        "gaveta": {
+          "w": 157,
+          "h": 44,
+          "visivel": false,
+          "classe": "is-peek"
+        },
+        "sheet": {
+          "y": 461,
+          "w": 390,
+          "h": 271,
+          "visivel": true,
+          "classe": "is-open",
+          "ariaHidden": "false"
+        },
+        "botao": {
+          "w": 56,
+          "h": 56,
+          "x": 326,
+          "y": 397,
+          "rotulo": "Esconder detalhes",
+          "expandido": "true",
+          "visivel": true
+        },
+        "aviso": null,
+        "areas": {
+          "palcoPx2": 264304,
+          "cobertoPaineisPx2": 126796,
+          "cobertoTotalPx2": 152987,
+          "livreDePaineisPct": 52,
+          "livreTotalPct": 42.1,
+          "faixaVisivelH": 361,
+          "faixaVisivelPct": 53.3
+        },
+        "zoom": 10.5,
+        "centro": [
+          -38.5198,
+          -3.794
+        ],
+        "scroll": {
+          "sw": 390,
+          "cw": 390,
+          "iguais": true
+        },
+        "selecao": {
+          "temSelecao": true,
+          "tituloSheet": "FORTALEZA",
+          "siglaBotao": "CE",
+          "detalheAtivo": true,
+          "nivel": "local",
+          "featuresZonas": 173,
+          "municipio": "2304400"
+        }
+      },
+      "fechouPorArraste": true,
+      "console": {
+        "total": 0,
+        "erros": []
+      }
+    },
+    "390x700": {
+      "prints": [
+        "_provas/mux_teste_390x700_macro_aviso.png",
+        "_provas/mux_teste_390x700_macro_fechado.png",
+        "_provas/mux_teste_390x700_estado_fechado.png",
+        "_provas/mux_teste_390x700_estado_aberto.png",
+        "_provas/mux_teste_390x700_municipio_fechado.png",
+        "_provas/mux_teste_390x700_municipio_aberto.png"
+      ],
+      "macroAvivo": {
+        "palcoH": 534,
+        "palcoW": 390,
+        "barraH": 46,
+        "gaveta": {
+          "w": 157,
+          "h": 44,
+          "visivel": true,
+          "classe": "is-peek"
+        },
+        "sheet": {
+          "y": 593,
+          "w": 390,
+          "h": 96,
+          "visivel": false,
+          "classe": "",
+          "ariaHidden": "true"
+        },
+        "botao": null,
+        "aviso": {
+          "w": 374,
+          "h": 66,
+          "y": 100,
+          "visivel": true
+        },
+        "areas": {
+          "palcoPx2": 208144,
+          "cobertoPaineisPx2": 49529,
+          "cobertoTotalPx2": 74884,
+          "livreDePaineisPct": 76.2,
+          "livreTotalPct": 64,
+          "faixaVisivelH": 488,
+          "faixaVisivelPct": 91.4
+        },
+        "zoom": 2.5318,
+        "centro": [
+          -53.1992,
+          -15.1231
+        ],
+        "scroll": {
+          "sw": 390,
+          "cw": 390,
+          "iguais": true
+        },
+        "selecao": {
+          "temSelecao": false,
+          "tituloSheet": "seleção",
+          "siglaBotao": null,
+          "detalheAtivo": false,
+          "nivel": "estado",
+          "featuresZonas": 0,
+          "municipio": null
+        }
+      },
+      "macroFechado": {
+        "palcoH": 534,
+        "palcoW": 390,
+        "barraH": 46,
+        "gaveta": {
+          "w": 157,
+          "h": 44,
+          "visivel": true,
+          "classe": "is-peek"
+        },
+        "sheet": {
+          "y": 593,
+          "w": 390,
+          "h": 96,
+          "visivel": false,
+          "classe": "",
+          "ariaHidden": "true"
+        },
+        "botao": null,
+        "aviso": null,
+        "areas": {
+          "palcoPx2": 208144,
+          "cobertoPaineisPx2": 24845,
+          "cobertoTotalPx2": 50200,
+          "livreDePaineisPct": 88.1,
+          "livreTotalPct": 75.9,
+          "faixaVisivelH": 488,
+          "faixaVisivelPct": 91.4
+        },
+        "zoom": 2.5318,
+        "centro": [
+          -53.1992,
+          -15.1231
+        ],
+        "scroll": {
+          "sw": 390,
+          "cw": 390,
+          "iguais": true
+        },
+        "selecao": {
+          "temSelecao": false,
+          "tituloSheet": "seleção",
+          "siglaBotao": null,
+          "detalheAtivo": false,
+          "nivel": "estado",
+          "featuresZonas": 0,
+          "municipio": null
+        }
+      },
+      "estadoFechado": {
+        "palcoH": 534,
+        "palcoW": 390,
+        "barraH": 46,
+        "gaveta": {
+          "w": 157,
+          "h": 44,
+          "visivel": false,
+          "classe": "is-peek"
+        },
+        "sheet": {
+          "y": 613,
+          "w": 390,
+          "h": 504,
+          "visivel": false,
+          "classe": "",
+          "ariaHidden": "true"
+        },
+        "botao": {
+          "w": 56,
+          "h": 56,
+          "x": 326,
+          "y": 524,
+          "rotulo": "Mostrar detalhes",
+          "expandido": "false",
+          "visivel": true
+        },
+        "aviso": null,
+        "areas": {
+          "palcoPx2": 208144,
+          "cobertoPaineisPx2": 21076,
+          "cobertoTotalPx2": 47098,
+          "livreDePaineisPct": 89.9,
+          "livreTotalPct": 77.4,
+          "faixaVisivelH": 488,
+          "faixaVisivelPct": 91.4
+        },
+        "zoom": 5.8,
+        "centro": [
+          -39.3335,
+          -5.315
+        ],
+        "scroll": {
+          "sw": 390,
+          "cw": 390,
+          "iguais": true
+        },
+        "selecao": {
+          "temSelecao": true,
+          "tituloSheet": "Ceará",
+          "siglaBotao": "CE",
+          "detalheAtivo": true,
+          "nivel": "zona",
+          "featuresZonas": 491,
+          "municipio": null
+        }
+      },
+      "estadoAberto": {
+        "palcoH": 534,
+        "palcoW": 390,
+        "barraH": 46,
+        "gaveta": {
+          "w": 157,
+          "h": 44,
+          "visivel": false,
+          "classe": "is-peek"
+        },
+        "sheet": {
+          "y": 374,
+          "w": 390,
+          "h": 213,
+          "visivel": true,
+          "classe": "is-open",
+          "ariaHidden": "false"
+        },
+        "botao": {
+          "w": 56,
+          "h": 56,
+          "x": 326,
+          "y": 311,
+          "rotulo": "Esconder detalhes",
+          "expandido": "true",
+          "visivel": true
+        },
+        "aviso": null,
+        "areas": {
+          "palcoPx2": 208144,
+          "cobertoPaineisPx2": 104329,
+          "cobertoTotalPx2": 130351,
+          "livreDePaineisPct": 49.9,
+          "livreTotalPct": 37.4,
+          "faixaVisivelH": 274,
+          "faixaVisivelPct": 51.3
+        },
+        "zoom": 5.8,
+        "centro": [
+          -39.3335,
+          -5.315
+        ],
+        "scroll": {
+          "sw": 390,
+          "cw": 390,
+          "iguais": true
+        },
+        "selecao": {
+          "temSelecao": true,
+          "tituloSheet": "Ceará",
+          "siglaBotao": "CE",
+          "detalheAtivo": true,
+          "nivel": "zona",
+          "featuresZonas": 491,
+          "municipio": null
+        }
+      },
+      "estadoRefechado": {
+        "palcoH": 534,
+        "palcoW": 390,
+        "barraH": 46,
+        "gaveta": {
+          "w": 157,
+          "h": 44,
+          "visivel": false,
+          "classe": "is-peek"
+        },
+        "sheet": {
+          "y": 613,
+          "w": 390,
+          "h": 504,
+          "visivel": false,
+          "classe": "",
+          "ariaHidden": "true"
+        },
+        "botao": {
+          "w": 56,
+          "h": 56,
+          "x": 326,
+          "y": 524,
+          "rotulo": "Mostrar detalhes",
+          "expandido": "false",
+          "visivel": true
+        },
+        "aviso": null,
+        "areas": {
+          "palcoPx2": 208144,
+          "cobertoPaineisPx2": 21076,
+          "cobertoTotalPx2": 47098,
+          "livreDePaineisPct": 89.9,
+          "livreTotalPct": 77.4,
+          "faixaVisivelH": 488,
+          "faixaVisivelPct": 91.4
+        },
+        "zoom": 5.8,
+        "centro": [
+          -39.3335,
+          -5.315
+        ],
+        "scroll": {
+          "sw": 390,
+          "cw": 390,
+          "iguais": true
+        },
+        "selecao": {
+          "temSelecao": true,
+          "tituloSheet": "Ceará",
+          "siglaBotao": "CE",
+          "detalheAtivo": true,
+          "nivel": "zona",
+          "featuresZonas": 491,
+          "municipio": null
+        }
+      },
+      "municipioFechado": {
+        "palcoH": 534,
+        "palcoW": 390,
+        "barraH": 46,
+        "gaveta": {
+          "w": 157,
+          "h": 44,
+          "visivel": false,
+          "classe": "is-peek"
+        },
+        "sheet": {
+          "y": 613,
+          "w": 390,
+          "h": 504,
+          "visivel": false,
+          "classe": "",
+          "ariaHidden": "true"
+        },
+        "botao": {
+          "w": 56,
+          "h": 56,
+          "x": 326,
+          "y": 524,
+          "rotulo": "Mostrar detalhes",
+          "expandido": "false",
+          "visivel": true
+        },
+        "aviso": null,
+        "areas": {
+          "palcoPx2": 208144,
+          "cobertoPaineisPx2": 21076,
+          "cobertoTotalPx2": 47266,
+          "livreDePaineisPct": 89.9,
+          "livreTotalPct": 77.3,
+          "faixaVisivelH": 488,
+          "faixaVisivelPct": 91.4
+        },
+        "zoom": 10.5,
+        "centro": [
+          -38.5198,
+          -3.7941
+        ],
+        "scroll": {
+          "sw": 390,
+          "cw": 390,
+          "iguais": true
+        },
+        "selecao": {
+          "temSelecao": true,
+          "tituloSheet": "FORTALEZA",
+          "siglaBotao": "CE",
+          "detalheAtivo": true,
+          "nivel": "local",
+          "featuresZonas": 173,
+          "municipio": "2304400"
+        }
+      },
+      "municipioAberto": {
+        "palcoH": 534,
+        "palcoW": 390,
+        "barraH": 46,
+        "gaveta": {
+          "w": 157,
+          "h": 44,
+          "visivel": false,
+          "classe": "is-peek"
+        },
+        "sheet": {
+          "y": 374,
+          "w": 390,
+          "h": 213,
+          "visivel": true,
+          "classe": "is-open",
+          "ariaHidden": "false"
+        },
+        "botao": {
+          "w": 56,
+          "h": 56,
+          "x": 326,
+          "y": 311,
+          "rotulo": "Esconder detalhes",
+          "expandido": "true",
+          "visivel": true
+        },
+        "aviso": null,
+        "areas": {
+          "palcoPx2": 208144,
+          "cobertoPaineisPx2": 104329,
+          "cobertoTotalPx2": 130519,
+          "livreDePaineisPct": 49.9,
+          "livreTotalPct": 37.3,
+          "faixaVisivelH": 274,
+          "faixaVisivelPct": 51.3
+        },
+        "zoom": 10.5,
+        "centro": [
+          -38.5198,
+          -3.7941
+        ],
+        "scroll": {
+          "sw": 390,
+          "cw": 390,
+          "iguais": true
+        },
+        "selecao": {
+          "temSelecao": true,
+          "tituloSheet": "FORTALEZA",
+          "siglaBotao": "CE",
+          "detalheAtivo": true,
+          "nivel": "local",
+          "featuresZonas": 173,
+          "municipio": "2304400"
+        }
+      },
+      "fechouPorArraste": true,
+      "console": {
+        "total": 0,
+        "erros": []
+      }
+    },
+    "desktop": {
+      "medida": {
+        "vp": {
+          "w": 1440,
+          "h": 900
+        },
+        "palco": {
+          "x": 0,
+          "y": 76,
+          "w": 1060,
+          "h": 708,
+          "display": "block",
+          "visibility": "visible"
+        },
+        "painelLateral": {
+          "x": 1060,
+          "y": 76,
+          "w": 380,
+          "h": 708,
+          "display": "flex",
+          "visibility": "visible"
+        },
+        "detalheCard": {
+          "x": 1081,
+          "y": 303,
+          "w": 324,
+          "h": 865,
+          "display": "block",
+          "visibility": "visible"
+        },
+        "titulo": "Ceará",
+        "aviso": null,
+        "botaoDetalhe": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "display": "none",
+          "visibility": "visible"
+        },
+        "sheetDetalhe": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "display": "none",
+          "visibility": "hidden"
+        },
+        "gaveta": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "display": "none",
+          "visibility": "hidden"
+        },
+        "barraMobile": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "display": "none",
+          "visibility": "visible"
+        },
+        "scroll": {
+          "sw": 1440,
+          "cw": 1440
+        },
+        "zoom": 6.3
+      },
+      "console": {
+        "total": 0,
+        "erros": []
+      },
+      "prints": [
+        "_provas/mux_teste_desktop_1440x900.png"
+      ]
+    }
+  },
+  "falhas": [],
+  "ok": true
+}

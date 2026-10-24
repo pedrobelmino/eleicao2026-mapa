@@ -1,0 +1,1 @@
+{"id":"R01","status":"PASS","medida":"/=200 /eleicao=200 /mapa=200 ","duracao_s":0,"rc":0,"regra":"as três rotas públicas respondem 200","prova":"curl -s -o /dev/null -w '%{http_code}' <base>{/,/eleicao,/mapa}","criterio":"as 3 rotas devolvem exatamente 200","origem":"STATE.md 23/10 23:20 — curls 6/6=200 no 8110 no deploy do 6493d46","log":"R01.log"}

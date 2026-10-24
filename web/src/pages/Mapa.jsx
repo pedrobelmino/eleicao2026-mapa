@@ -119,6 +119,8 @@ export default function Mapa() {
         eleicao={dados.estados?.eleicao}
         turno={dados.estados ? rotuloTurno(dados.estados.turno) : null}
         geradoEm={dados.estados?.gerado_em}
+        municipalAviso={dados.estados?.municipal?.aviso || null}
+        dadosAviso={dados.estados?.dados_aviso || null}
       />
     </div>
   )

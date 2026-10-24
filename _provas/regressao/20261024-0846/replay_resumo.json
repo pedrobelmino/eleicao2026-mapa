@@ -1,0 +1,441 @@
+{
+  "gerado": "2026-10-24T11:51:37.949Z",
+  "base": "http://127.0.0.1:8110",
+  "serie": {
+    "eixo": "ordem_de_secoes",
+    "relogio": "indisponivel",
+    "passos": 61,
+    "secoes_total": 497897,
+    "ufs_base": 27,
+    "candidatos": [
+      "LULA",
+      "FLAVIO BOLSONARO"
+    ],
+    "nota": "Relógio do TSE indisponível — o dump por seção não traz o horário de fechamento de cada seção, então o replay usa a ORDEM DE SEÇÕES como eixo e não mostra horário inventado. Os votos de cada seção e o total são reais; só a ordem em que elas entram é derivada."
+  },
+  "momentos_pedidos": [
+    {
+      "alvo": 0,
+      "indice": 0,
+      "pct_serie": 0
+    },
+    {
+      "alvo": 40,
+      "indice": 24,
+      "pct_serie": 40
+    },
+    {
+      "alvo": 85,
+      "indice": 51,
+      "pct_serie": 85
+    },
+    {
+      "alvo": 100,
+      "indice": 60,
+      "pct_serie": 100
+    }
+  ],
+  "viewports": {
+    "desktop_1440x900": {
+      "momentos": [
+        {
+          "pedido": 0,
+          "indice": 0,
+          "pct_serie": 0,
+          "pct_barra": "0%",
+          "carimbo": "1/61",
+          "rotulo_carimbo": "passo (sem relógio do TSE)",
+          "fechadas": "0/27",
+          "secoes": "0",
+          "posicao": "1/61",
+          "placar": [
+            {
+              "nome": "LULA",
+              "votos": "0",
+              "pct": "0%"
+            },
+            {
+              "nome": "FLAVIO BOLSONARO",
+              "votos": "0",
+              "pct": "0%"
+            }
+          ],
+          "ufs_fechadas": 0,
+          "ufs_total": 27,
+          "featuresZonas": 0,
+          "barra": {
+            "topo": 509,
+            "altura": 264,
+            "largura": 430,
+            "esquerda": 12,
+            "fundo": 772
+          },
+          "arquivo": "_provas/regressao/20261024-0846/replay_000_desktop_1440x900.png"
+        },
+        {
+          "pedido": 40,
+          "indice": 24,
+          "pct_serie": 40,
+          "pct_barra": "40%",
+          "carimbo": "25/61",
+          "rotulo_carimbo": "passo (sem relógio do TSE)",
+          "fechadas": "20/27",
+          "secoes": "199.159",
+          "posicao": "25/61",
+          "placar": [
+            {
+              "nome": "LULA",
+              "votos": "23.059.156",
+              "pct": "48,4%"
+            },
+            {
+              "nome": "FLAVIO BOLSONARO",
+              "votos": "21.213.342",
+              "pct": "44,6%"
+            }
+          ],
+          "ufs_fechadas": 20,
+          "ufs_total": 27,
+          "featuresZonas": 0,
+          "barra": {
+            "topo": 509,
+            "altura": 264,
+            "largura": 430,
+            "esquerda": 12,
+            "fundo": 772
+          },
+          "arquivo": "_provas/regressao/20261024-0846/replay_040_desktop_1440x900.png"
+        },
+        {
+          "pedido": 85,
+          "indice": 51,
+          "pct_serie": 85,
+          "pct_barra": "85%",
+          "carimbo": "52/61",
+          "rotulo_carimbo": "passo (sem relógio do TSE)",
+          "fechadas": "26/27",
+          "secoes": "423.212",
+          "posicao": "52/61",
+          "placar": [
+            {
+              "nome": "LULA",
+              "votos": "46.723.193",
+              "pct": "46,3%"
+            },
+            {
+              "nome": "FLAVIO BOLSONARO",
+              "votos": "46.787.082",
+              "pct": "46,3%"
+            }
+          ],
+          "ufs_fechadas": 26,
+          "ufs_total": 27,
+          "featuresZonas": 0,
+          "barra": {
+            "topo": 509,
+            "altura": 264,
+            "largura": 430,
+            "esquerda": 12,
+            "fundo": 772
+          },
+          "arquivo": "_provas/regressao/20261024-0846/replay_085_desktop_1440x900.png"
+        },
+        {
+          "pedido": 100,
+          "indice": 60,
+          "pct_serie": 100,
+          "pct_barra": "100%",
+          "carimbo": "61/61",
+          "rotulo_carimbo": "passo (sem relógio do TSE)",
+          "fechadas": "27/27",
+          "secoes": "497.897",
+          "posicao": "61/61",
+          "placar": [
+            {
+              "nome": "LULA",
+              "votos": "53.722.151",
+              "pct": "45,2%"
+            },
+            {
+              "nome": "FLAVIO BOLSONARO",
+              "votos": "55.960.603",
+              "pct": "47%"
+            }
+          ],
+          "ufs_fechadas": 27,
+          "ufs_total": 27,
+          "featuresZonas": 0,
+          "barra": {
+            "topo": 509,
+            "altura": 264,
+            "largura": 430,
+            "esquerda": 12,
+            "fundo": 772
+          },
+          "arquivo": "_provas/regressao/20261024-0846/replay_100_desktop_1440x900.png"
+        }
+      ],
+      "play": {
+        "inicio": {
+          "frame": 0,
+          "pct": "0%",
+          "posicao": "1/61"
+        },
+        "depois_1x_2500ms": {
+          "frame": 3,
+          "pct": "5%",
+          "posicao": "4/61"
+        },
+        "pausado": {
+          "frame": 3,
+          "posicao": "4/61"
+        },
+        "pausado_1300ms_depois": {
+          "frame": 3,
+          "posicao": "4/61"
+        },
+        "velocidade_ativa": "1x",
+        "fim": {
+          "frame": 60,
+          "pct": "100%",
+          "posicao": "61/61",
+          "ufs_fechadas": 27,
+          "ufs_total": 27,
+          "velocidade_ativa": "60x"
+        }
+      },
+      "barra": {
+        "viewport": "desktop_1440x900",
+        "caixa": {
+          "topo": 509,
+          "altura": 264,
+          "largura": 430,
+          "esquerda": 12,
+          "fundo": 772
+        },
+        "altura_fracao_tela": 0.293,
+        "fundo_fracao_tela": 0.858,
+        "scroll": {
+          "largura": 1440,
+          "altura": 900,
+          "scrollWidth": 1440,
+          "clientWidth": 1440,
+          "bodyScrollWidth": 1440
+        }
+      },
+      "console": {
+        "erros": [],
+        "respostas_ruins": []
+      }
+    },
+    "mobile_390x844": {
+      "momentos": [
+        {
+          "pedido": 0,
+          "indice": 0,
+          "pct_serie": 0,
+          "pct_barra": "0%",
+          "carimbo": "1/61",
+          "rotulo_carimbo": "passo (sem relógio do TSE)",
+          "fechadas": "0/27",
+          "secoes": "0",
+          "posicao": "1/61",
+          "placar": [
+            {
+              "nome": "LULA",
+              "votos": "0",
+              "pct": "0%"
+            },
+            {
+              "nome": "FLAVIO BOLSONARO",
+              "votos": "0",
+              "pct": "0%"
+            }
+          ],
+          "ufs_fechadas": 0,
+          "ufs_total": 27,
+          "featuresZonas": 0,
+          "barra": {
+            "topo": 208,
+            "altura": 255,
+            "largura": 374,
+            "esquerda": 8,
+            "fundo": 463
+          },
+          "arquivo": "_provas/regressao/20261024-0846/replay_000_mobile_390x844.png"
+        },
+        {
+          "pedido": 40,
+          "indice": 24,
+          "pct_serie": 40,
+          "pct_barra": "40%",
+          "carimbo": "25/61",
+          "rotulo_carimbo": "passo (sem relógio do TSE)",
+          "fechadas": "20/27",
+          "secoes": "199.159",
+          "posicao": "25/61",
+          "placar": [
+            {
+              "nome": "LULA",
+              "votos": "23.059.156",
+              "pct": "48,4%"
+            },
+            {
+              "nome": "FLAVIO BOLSONARO",
+              "votos": "21.213.342",
+              "pct": "44,6%"
+            }
+          ],
+          "ufs_fechadas": 20,
+          "ufs_total": 27,
+          "featuresZonas": 0,
+          "barra": {
+            "topo": 208,
+            "altura": 255,
+            "largura": 374,
+            "esquerda": 8,
+            "fundo": 463
+          },
+          "arquivo": "_provas/regressao/20261024-0846/replay_040_mobile_390x844.png"
+        },
+        {
+          "pedido": 85,
+          "indice": 51,
+          "pct_serie": 85,
+          "pct_barra": "85%",
+          "carimbo": "52/61",
+          "rotulo_carimbo": "passo (sem relógio do TSE)",
+          "fechadas": "26/27",
+          "secoes": "423.212",
+          "posicao": "52/61",
+          "placar": [
+            {
+              "nome": "LULA",
+              "votos": "46.723.193",
+              "pct": "46,3%"
+            },
+            {
+              "nome": "FLAVIO BOLSONARO",
+              "votos": "46.787.082",
+              "pct": "46,3%"
+            }
+          ],
+          "ufs_fechadas": 26,
+          "ufs_total": 27,
+          "featuresZonas": 0,
+          "barra": {
+            "topo": 208,
+            "altura": 255,
+            "largura": 374,
+            "esquerda": 8,
+            "fundo": 463
+          },
+          "arquivo": "_provas/regressao/20261024-0846/replay_085_mobile_390x844.png"
+        },
+        {
+          "pedido": 100,
+          "indice": 60,
+          "pct_serie": 100,
+          "pct_barra": "100%",
+          "carimbo": "61/61",
+          "rotulo_carimbo": "passo (sem relógio do TSE)",
+          "fechadas": "27/27",
+          "secoes": "497.897",
+          "posicao": "61/61",
+          "placar": [
+            {
+              "nome": "LULA",
+              "votos": "53.722.151",
+              "pct": "45,2%"
+            },
+            {
+              "nome": "FLAVIO BOLSONARO",
+              "votos": "55.960.603",
+              "pct": "47%"
+            }
+          ],
+          "ufs_fechadas": 27,
+          "ufs_total": 27,
+          "featuresZonas": 0,
+          "barra": {
+            "topo": 208,
+            "altura": 255,
+            "largura": 374,
+            "esquerda": 8,
+            "fundo": 463
+          },
+          "arquivo": "_provas/regressao/20261024-0846/replay_100_mobile_390x844.png"
+        }
+      ],
+      "play": {
+        "inicio": {
+          "frame": 0,
+          "pct": "0%",
+          "posicao": "1/61"
+        },
+        "depois_1x_2500ms": {
+          "frame": 3,
+          "pct": "5%",
+          "posicao": "4/61"
+        },
+        "pausado": {
+          "frame": 3,
+          "posicao": "4/61"
+        },
+        "pausado_1300ms_depois": {
+          "frame": 3,
+          "posicao": "4/61"
+        },
+        "velocidade_ativa": "1x",
+        "fim": {
+          "frame": 60,
+          "pct": "100%",
+          "posicao": "61/61",
+          "ufs_fechadas": 27,
+          "ufs_total": 27,
+          "velocidade_ativa": "60x"
+        }
+      },
+      "barra": {
+        "viewport": "mobile_390x844",
+        "caixa": {
+          "topo": 208,
+          "altura": 255,
+          "largura": 374,
+          "esquerda": 8,
+          "fundo": 463
+        },
+        "altura_fracao_tela": 0.302,
+        "fundo_fracao_tela": 0.549,
+        "scroll": {
+          "largura": 390,
+          "altura": 844,
+          "scrollWidth": 390,
+          "clientWidth": 390,
+          "bodyScrollWidth": 390
+        }
+      },
+      "console": {
+        "erros": [],
+        "respostas_ruins": []
+      }
+    }
+  },
+  "zonas": {
+    "uf": "CE",
+    "antes": {
+      "pct": "0%",
+      "featuresZonas": 835,
+      "zonasBarras": 410
+    },
+    "depois": {
+      "pct": "100%",
+      "featuresZonas": 835,
+      "zonasBarras": 410
+    },
+    "arquivo": "_provas/regressao/20261024-0846/replay_zonas_CE_desktop_1440x900.png",
+    "console": []
+  },
+  "problemas": [],
+  "ok": true
+}
