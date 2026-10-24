@@ -24,3 +24,6 @@ dados/mapa_ufs.json
 
 # segredos locais do compose (token do painel privado)
 .env
+
+# backup de dado antigo movido de dados/ (dados/ e montado read-only no container)
+_provas/backup_dados/

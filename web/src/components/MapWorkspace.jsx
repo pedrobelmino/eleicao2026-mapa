@@ -113,6 +113,38 @@ function EmptyDetail({ resumo }) {
   )
 }
 
+// Aviso de primeira visita no celular (24/10/2026): o /mapa foi desenhado para
+// mouse e tela grande. O aviso é um card pequeno no topo, fechável, e a dispensa
+// fica no localStorage — quem já leu não vê de novo. No desktop não existe.
+const CHAVE_AVISO = 'mapa.avisoDesktop'
+
+function avisoJaDispensado() {
+  try {
+    return window.localStorage.getItem(CHAVE_AVISO) === '1'
+  } catch {
+    return false
+  }
+}
+
+function AvisoDesktop({ onDispensar }) {
+  return (
+    <div className="aviso-desktop mobile-only" role="status" data-prova="aviso-desktop">
+      <p className="aviso-desktop-texto">
+        <strong>Melhor experiência no desktop</strong> — no celular o mapa funciona
+        com zoom, arraste e toque.
+      </p>
+      <button
+        type="button"
+        className="aviso-desktop-ok"
+        onClick={onDispensar}
+        data-prova="aviso-entendi"
+      >
+        Entendi
+      </button>
+    </div>
+  )
+}
+
 function AvisosDetalhe({ carregando, indisponivel, erro }) {
   if (!carregando && !indisponivel && !erro) return null
   return (
@@ -155,9 +187,20 @@ export default function MapWorkspace({
       : null,
   )
   const [municipioSelecionado, setMunicipioSelecionado] = useState(null)
-  // O sheet de detalhe no celular nasce recolhido (peek) e só expande por
-  // toque no cabeçalho ou arraste da alça.
-  const [detalheExpandido, setDetalheExpandido] = useState(false)
+  // PAINEL DE DETALHES (celular): fechado é o PADRÃO — o mapa ocupa a tela e o
+  // usuário só vê o botão flutuante. Quem abre é o botão (`detalheAberto`), não
+  // a seleção: selecionar UF/município/local NÃO empurra painel para a tela.
+  const [detalheAberto, setDetalheAberto] = useState(false)
+  // Aviso de melhor experiência no desktop: só no celular e só até o "Entendi".
+  const [celular, setCelular] = useState(
+    () =>
+      typeof window !== 'undefined' &&
+      window.matchMedia('(max-width: 820px)').matches,
+  )
+  const [avisoVisivel, setAvisoVisivel] = useState(() => !avisoJaDispensado())
+  // Altura real do sheet de detalhe: o botão flutuante senta logo acima dele
+  // quando o painel está aberto (ResizeObserver — nada estimado em CSS).
+  const [alturaDetalhe, setAlturaDetalhe] = useState(0)
   const [detalhe, setDetalhe] = useState(null)
   const [detalheCarregando, setDetalheCarregando] = useState(false)
   const [detalheIndisponivel, setDetalheIndisponivel] = useState(false)
@@ -177,8 +220,38 @@ export default function MapWorkspace({
 
   const painelRef = useRef(null)
   const sheetBodyRef = useRef(null)
+  const sheetDetalheRef = useRef(null)
   const cacheDetalheRef = useRef(new Map())
   const detalheArrasteRef = useRef(null)
+
+  // Só o celular vê o aviso e o botão: a media query é a mesma do CSS (820px).
+  useEffect(() => {
+    const consulta = window.matchMedia('(max-width: 820px)')
+    const aoMudar = (evento) => setCelular(evento.matches)
+    consulta.addEventListener('change', aoMudar)
+    return () => consulta.removeEventListener('change', aoMudar)
+  }, [])
+
+  const dispensarAviso = () => {
+    setAvisoVisivel(false)
+    try {
+      window.localStorage.setItem(CHAVE_AVISO, '1')
+    } catch {
+      /* navegador em modo privado: o aviso volta na próxima visita */
+    }
+  }
+
+  // Altura do sheet para o botão flutuante não cobrir o painel aberto.
+  useEffect(() => {
+    const alvo = sheetDetalheRef.current
+    if (!alvo || typeof ResizeObserver === 'undefined') return undefined
+    const observador = new ResizeObserver(() => {
+      const medida = Math.round(alvo.getBoundingClientRect().height)
+      setAlturaDetalhe((atual) => (atual === medida ? atual : medida))
+    })
+    observador.observe(alvo)
+    return () => observador.disconnect()
+  }, [])
 
   // ---------------------------------------------------------------------
   // REPLAY e MARGENS. Os dois são modos de leitura do mesmo mapa: o replay
@@ -577,15 +650,11 @@ export default function MapWorkspace({
     )
   }, [localSelecionado, locais])
 
-  // Trocar de estado, município ou local sempre devolve o sheet ao peek.
+  // Sem seleção não há o que detalhar: o painel fecha junto (o × da seleção e
+  // o Escape continuam limpando UF/município/local, não só o painel).
   useEffect(() => {
-    setDetalheExpandido(false)
-  }, [
-    ufSelecionada,
-    municipioSelecionado?.codarea,
-    localSelecionado?.nr_local,
-    localSelecionado,
-  ])
+    if (!selecionada) setDetalheAberto(false)
+  }, [selecionada])
 
   // Um painel por vez no celular: ao selecionar estado/município/local, a
   // gaveta do placar fecha e sai de cena (a barra fina do topo já dá o
@@ -614,8 +683,8 @@ export default function MapWorkspace({
     const arraste = detalheArrasteRef.current
     if (!arraste) return
     detalheArrasteRef.current = null
-    if (arraste.delta < -24) setDetalheExpandido(true)
-    else if (arraste.delta > 24) setDetalheExpandido(false)
+    // Arrastar a alça para BAIXO fecha o painel; para cima ele já está aberto.
+    if (arraste.delta > 24) setDetalheAberto(false)
     if (evento.currentTarget.hasPointerCapture?.(evento.pointerId)) {
       evento.currentTarget.releasePointerCapture(evento.pointerId)
     }
@@ -663,11 +732,17 @@ export default function MapWorkspace({
     />
   )
 
+  const mostrarAviso = celular && avisoVisivel
+  const painelDetalheAberto = Boolean(selecionada) && detalheAberto
+
   return (
     <div
       className={`workspace${selecionada ? ' tem-selecao' : ''}${
         margensAberto ? ' margens-abertas' : ''
+      }${painelDetalheAberto ? ' detalhe-aberto' : ''}${
+        mostrarAviso ? ' com-aviso' : ''
       }`}
+      style={{ '--sheet-detalhe-h': painelDetalheAberto ? `${alturaDetalhe}px` : '0px' }}
     >
       <main className="map-stage">
         <MapView
@@ -730,7 +805,29 @@ export default function MapWorkspace({
           />
         ) : null}
         <Legend zoom={zoom} modoMargem={margensAberto} />
+
+        {/* Celular: o ÚNICO jeito de abrir o painel de detalhes. Fica no canto
+            inferior direito, acima do safe-area, 56x56 — não cobre o canvas
+            além da própria área e não intercepta gesto de zoom/arraste. */}
+        {selecionada ? (
+          <button
+            type="button"
+            className={`detalhe-toggle mobile-only${detalheAberto ? ' is-ativo' : ''}`}
+            onClick={() => setDetalheAberto((valor) => !valor)}
+            aria-label={detalheAberto ? 'Esconder detalhes' : 'Mostrar detalhes'}
+            aria-expanded={detalheAberto}
+            aria-controls="sheet-detalhe"
+            data-prova="detalhe-toggle"
+          >
+            <span className="detalhe-toggle-sigla">{ufSelecionada}</span>
+            <span className="detalhe-toggle-seta" aria-hidden="true">
+              {detalheAberto ? '⌄' : '⌃'}
+            </span>
+          </button>
+        ) : null}
       </main>
+
+      {mostrarAviso ? <AvisoDesktop onDispensar={dispensarAviso} /> : null}
 
       <aside className="side-panel" ref={painelRef} aria-label="Painel da apuração">
         {margensAberto ? (
@@ -786,11 +883,14 @@ export default function MapWorkspace({
       />
 
       <section
+        id="sheet-detalhe"
+        ref={sheetDetalheRef}
         className={`bottom-sheet sheet-detalhe mobile-only${
-          selecionada ? (detalheExpandido ? ' is-open' : ' is-peek') : ''
+          painelDetalheAberto ? ' is-open' : ''
         }`}
         aria-label="Detalhes da seleção no mapa"
-        aria-hidden={!selecionada}
+        aria-hidden={!painelDetalheAberto}
+        data-prova="sheet-detalhe"
       >
         <div
           className="sheet-grip"
@@ -804,8 +904,9 @@ export default function MapWorkspace({
           <button
             type="button"
             className="sheet-header-toque"
-            onClick={() => setDetalheExpandido((valor) => !valor)}
-            aria-expanded={detalheExpandido}
+            onClick={() => setDetalheAberto((valor) => !valor)}
+            aria-expanded={detalheAberto}
+            aria-controls="sheet-detalhe-corpo"
           >
             <span className="sheet-header-texto">
               <span className="sheet-header-kicker">
@@ -835,7 +936,7 @@ export default function MapWorkspace({
             ×
           </button>
         </div>
-        <div className="sheet-body" ref={sheetBodyRef}>
+        <div className="sheet-body" id="sheet-detalhe-corpo" ref={sheetBodyRef}>
           {localDetalhe ? (
             <LocalCard
               local={localDetalhe}
