@@ -411,6 +411,58 @@ img.avatar {
   background: linear-gradient(180deg, var(--card-soft), var(--card));
 }
 
+/* Foto da UF (Wikimedia Commons, baixada e servida daqui). Altura fixa e
+   object-fit: cover para o card não mudar de tamanho entre UFs — paisagem,
+   retrato ou foto quadrada caem no mesmo enquadramento. */
+.identidade-foto {
+  position: relative;
+  height: 132px;
+  margin: -1px -1px 11px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--card-soft);
+}
+
+.identidade-foto img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* Sem foto licenciada: placeholder neutro com a sigla, sem imagem de origem
+   duvidosa. */
+.identidade-foto--vazia {
+  display: grid;
+  place-items: center;
+  height: 96px;
+  border: 1px dashed var(--line);
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--card-soft),
+    var(--card-soft) 8px,
+    var(--card) 8px,
+    var(--card) 16px
+  );
+}
+
+.identidade-foto--vazia span {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+/* Crédito da foto no rodapé do card: discreto, mas presente. */
+.detail-credito {
+  margin-top: 10px;
+  font-size: 9.5px;
+  line-height: 1.35;
+  color: var(--muted);
+}
+
 .identidade-topo {
   display: flex;
   align-items: flex-start;

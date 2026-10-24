@@ -1,32 +1,545 @@
 {
   "_nota": "Curadoria editorial do card de estado (pedido do Pedro 22/10: figurinhas + coisas boas de cada UF; ex.: Ceará = praias, RS = Gramado). Texto positivo, factual e sem opinião eleitoral. O automatizador importa este arquivo para dados/estados_identidade.json e serve do próprio site.",
   "UF": {
-    "AC": {"nome": "Acre", "apelido": "Terra dos seringueiros", "figurinhas": ["🌳", "🐒", "🛶"], "destaques": ["Floresta amazônica de porta aberta", "Rio Branco e o Mercado Velho", "Açaí e a cultura seringueira"], "foto_busca": "Rio Branco Acre paisagem"},
-    "AL": {"nome": "Alagoas", "apelido": "Mar de corais", "figurinhas": ["🐚", "🏖️", "🛶"], "destaques": ["Maragogi e as piscinas naturais", "Praias de Maceió", "Sururu e a culinária da lagoa"], "foto_busca": "Maragogi Alagoas praias"},
-    "AP": {"nome": "Amapá", "apelido": "Porta da Amazônia", "figurinhas": ["🌴", "🌍", "🐟"], "destaques": ["Linha do Equador cortando o estado", "Fortaleza de São José de Macapá", "Açaí e pesca de rio"], "foto_busca": "Macapá Amapá rio Amazonas"},
-    "AM": {"nome": "Amazonas", "apelido": "Coração da floresta", "figurinhas": ["🌊", "🎭", "🐒"], "destaques": ["Encontro das Águas", "Teatro Amazonas", "Tucumã, tambaqui e a maior floresta tropical"], "foto_busca": "Encontro das Aguas Manaus"},
-    "BA": {"nome": "Bahia", "apelido": "Axé e dendê", "figurinhas": ["🥁", "🌴", "🙏"], "destaques": ["Pelourinho e o carnaval de Salvador", "Acarajé, moqueca e dendê", "Chapada Diamantina e as praias do litoral"], "foto_busca": "Pelourinho Salvador Bahia"},
-    "CE": {"nome": "Ceará", "apelido": "Terra do sol e do humor", "figurinhas": ["🏖️", "🎶", "🌵"], "destaques": ["Praias: Jericoacoara, Canoa Quebrada, Cumbuco", "Humor cearense e o forró pé de serra", "Carne de sol, baião e renda de bilro"], "foto_busca": "Jericoacoara Ceara praia dunas"},
-    "DF": {"nome": "Distrito Federal", "apelido": "Capital no cerrado", "figurinhas": ["🏛️", "🌾", "🌅"], "destaques": ["Arquitetura de Niemeyer e Lúcio Costa", "Lago Paranoá e o pôr do sol do Pontão", "Cerrado, ipês e a Feira da Ceilândia"], "foto_busca": "Brasilia Congresso Nacional por do sol"},
-    "ES": {"nome": "Espírito Santo", "apelido": "Terra da moqueca", "figurinhas": ["🥘", "⛪", "🏖️"], "destaques": ["Moqueca e torta capixaba", "Convento da Penha", "Praias e o agroturismo da serra"], "foto_busca": "Convento da Penha Vila Velha"},
-    "GO": {"nome": "Goiás", "apelido": "Cerrado e pequi", "figurinhas": ["🌄", "🥥", "💧"], "destaques": ["Chapada dos Veadeiros e suas cachoeiras", "Pequi e o arroz com galinha goiano", "Cidades históricas como Goiás Velho"], "foto_busca": "Chapada dos Veadeiros cachoeira"},
-    "MA": {"nome": "Maranhão", "apelido": "Lençóis e bumba", "figurinhas": ["🏜️", "🐂", "🎉"], "destaques": ["Lençóis Maranhenses", "Bumba meu boi do Maranhão", "Arroz de cuxá e o Centro Histórico de São Luís"], "foto_busca": "Lencois Maranhenses dunas lagoas"},
-    "MT": {"nome": "Mato Grosso", "apelido": "Pantanal", "figurinhas": ["🐊", "🌾", "🎣"], "destaques": ["Pantanal, a maior planície alagada do mundo", "Chapada dos Guimarães", "Pesca de pintado e o arroz com pequi"], "foto_busca": "Pantanal Mato Grosso jacare"},
-    "MS": {"nome": "Mato Grosso do Sul", "apelido": "Bonito é aqui", "figurinhas": ["💧", "🐟", "🦜"], "destaques": ["Bonito e os rios de água cristalina", "Pantanal sul-mato-grossense", "Sobá e a influência da fronteira"], "foto_busca": "Bonito Mato Grosso do Sul rio cristalino"},
-    "MG": {"nome": "Minas Gerais", "apelido": "Queijo, café e serra", "figurinhas": ["🧀", "⛰️", "☕"], "destaques": ["Pão de queijo e os queijos das serras", "Ouro Preto, Mariana e o barroco", "Café, doce de leite e o tropeirismo"], "foto_busca": "Ouro Preto Minas Gerais igreja"},
-    "PA": {"nome": "Pará", "apelido": "Terra do açaí", "figurinhas": ["🐟", "🌴", "🙏"], "destaques": ["Círio de Nazaré", "Ver-o-Peso e o tacacá", "Açaí, maniçoba e o carimbó"], "foto_busca": "Belem Para Ver-o-Peso"},
-    "PB": {"nome": "Paraíba", "apelido": "Onde o sol nasce primeiro", "figurinhas": ["🌽", "🎉", "🏖️"], "destaques": ["O maior São João do mundo, em Campina Grande", "Praias de João Pessoa e o Pôr do Sol da Estação Cabo Branco", "Cajá, macaxeira e o forró"], "foto_busca": "Joao Pessoa Paraiba praias por do sol"},
-    "PR": {"nome": "Paraná", "apelido": "Cataratas e pinhão", "figurinhas": ["🌊", "🌲", "🚂"], "destaques": ["Cataratas do Iguaçu", "Barreado e o litoral de Guaratuba", "Serra do Mar e o trem de Morretes"], "foto_busca": "Cataratas do Iguacu Parana"},
-    "PE": {"nome": "Pernambuco", "apelido": "Frevo e mar", "figurinhas": ["🎭", "🥥", "🏖️"], "destaques": ["Frevo, maracatu e o carnaval de Recife e Olinda", "Praias de Porto de Galinhas e Fernando de Noronha", "Bolo de rolo, tapioca e o mangue"], "foto_busca": "Olinda Pernambuco casario colorido"},
-    "PI": {"nome": "Piauí", "apelido": "Delta e Sete Cidades", "figurinhas": ["🌅", "🐚", "🦀"], "destaques": ["Delta do Parnaíba", "Parque Nacional de Sete Cidades", "Caju, caranguejo e o litoral quase vazio"], "foto_busca": "Delta do Parnaiba Piaui"},
-    "RJ": {"nome": "Rio de Janeiro", "apelido": "Cidade maravilhosa", "figurinhas": ["🏖️", "🎶", "⛰️"], "destaques": ["Cristo Redentor e Pão de Açúcar", "Samba, bossa nova e o carnaval", "Praias de Copacabana, Ipanema e a Região dos Lagos"], "foto_busca": "Rio de Janeiro Cristo Redentor Pao de Acucar"},
-    "RN": {"nome": "Rio Grande do Norte", "apelido": "Dunas e sol o ano inteiro", "figurinhas": ["🏜️", "🦐", "☀️"], "destaques": ["Dunas de Genipabu", "Sol e mar de Natal e Pipa", "Camarão, ginga com tapioca e a maior produção de sal"], "foto_busca": "Genipabu Natal Rio Grande do Norte dunas"},
-    "RS": {"nome": "Rio Grande do Sul", "apelido": "Chimarrão e serra", "figurinhas": ["🍖", "⛰️", "🧉"], "destaques": ["Gramado e Canela, na serra gaúcha", "Churrasco e chimarrão", "Vinícolas da Serra e a tradição gaúcha"], "foto_busca": "Gramado Rio Grande do Sul serra"},
-    "RO": {"nome": "Rondônia", "apelido": "Rio Madeira e café", "figurinhas": ["🌳", "☕", "🐟"], "destaques": ["Rio Madeira e as corredeiras", "Café robusta de qualidade", "Guajará-Mirim e a floresta de fronteira"], "foto_busca": "Rio Madeira Rondonia Porto Velho"},
-    "RR": {"nome": "Roraima", "apelido": "Monte Roraima", "figurinhas": ["🌄", "🦜", "🌾"], "destaques": ["Monte Roraima, o tepui mais famoso", "Lavrado e a savana de Boa Vista", "Aves e a fronteira com três países"], "foto_busca": "Monte Roraima Roraima"},
-    "SC": {"nome": "Santa Catarina", "apelido": "Praias e enxaimel", "figurinhas": ["🌊", "🍺", "🏔️"], "destaques": ["Praias de Florianópolis e Balneário Camboriú", "Oktoberfest de Blumenau", "Serra catarinense e as casas enxaimel"], "foto_busca": "Florianopolis Santa Catarina praias"},
-    "SP": {"nome": "São Paulo", "apelido": "Gastronomia e litoral", "figurinhas": ["🍽️", "🏙️", "🌊"], "destaques": ["A maior cena gastronômica do país", "Avenida Paulista, MASP e a vida cultural", "Litoral norte: Ubatuba, Ilhabela e São Sebastião"], "foto_busca": "Avenida Paulista Sao Paulo"},
-    "SE": {"nome": "Sergipe", "apelido": "Cânions e forró", "figurinhas": ["🛶", "🎶", "🦀"], "destaques": ["Cânions do Xingó", "Forró e o São João de Aracaju", "Caranguejo, mangue e a Orla de Atalaia"], "foto_busca": "Cânions do Xingo Sergipe"},
-    "TO": {"nome": "Tocantins", "apelido": "Jalapão", "figurinhas": ["🏜️", "🌊", "🦜"], "destaques": ["Jalapão, dunas e fervedouros", "Praias de rio e o Rio Tocantins", "Palmas, a capital mais nova do país"], "foto_busca": "Jalapao Tocantins dunas fervedouro"}
+    "AC": {
+      "nome": "Acre",
+      "apelido": "Terra dos seringueiros",
+      "figurinhas": [
+        "🌳",
+        "🐒",
+        "🛶"
+      ],
+      "destaques": [
+        "Floresta amazônica de porta aberta",
+        "Rio Branco e o Mercado Velho",
+        "Açaí e a cultura seringueira"
+      ],
+      "foto_busca": "Rio Branco Acre paisagem",
+      "foto": "uf/AC.jpg",
+      "alt": "Acre: Terra dos seringueiros — imagem de Rio Branco Acre paisagem",
+      "credito": "Agência de Notícias do Acre",
+      "licenca": "CC BY 2.0",
+      "fonte_url": "https://commons.wikimedia.org/wiki/File:Cidade_da_floresta_(4013659229).jpg"
+    },
+    "AL": {
+      "nome": "Alagoas",
+      "apelido": "Mar de corais",
+      "figurinhas": [
+        "🐚",
+        "🏖️",
+        "🛶"
+      ],
+      "destaques": [
+        "Maragogi e as piscinas naturais",
+        "Praias de Maceió",
+        "Sururu e a culinária da lagoa"
+      ],
+      "foto_busca": "Maragogi Alagoas praias",
+      "foto": "uf/AL.jpg",
+      "alt": "Alagoas: Mar de corais — imagem de Maragogi Alagoas praias",
+      "credito": "Beto Quissak",
+      "licenca": "CC BY-SA 4.0",
+      "fonte_url": "https://commons.wikimedia.org/wiki/File:Praia_do_paiva_-_Maragogi_-_Alagoas_(2).jpg"
+    },
+    "AP": {
+      "nome": "Amapá",
+      "apelido": "Porta da Amazônia",
+      "figurinhas": [
+        "🌴",
+        "🌍",
+        "🐟"
+      ],
+      "destaques": [
+        "Linha do Equador cortando o estado",
+        "Fortaleza de São José de Macapá",
+        "Açaí e pesca de rio"
+      ],
+      "foto_busca": "Macapá Amapá rio Amazonas",
+      "foto": "uf/AP.jpg",
+      "alt": "Amapá: Porta da Amazônia — imagem de Macapá Amapá rio Amazonas",
+      "credito": "jose donizetti dias",
+      "licenca": "CC BY-SA 3.0",
+      "fonte_url": "https://commons.wikimedia.org/wiki/File:Rio_Amazonas_Amap%C3%A1_AP_Brasil_-_panoramio.jpg"
+    },
+    "AM": {
+      "nome": "Amazonas",
+      "apelido": "Coração da floresta",
+      "figurinhas": [
+        "🌊",
+        "🎭",
+        "🐒"
+      ],
+      "destaques": [
+        "Encontro das Águas",
+        "Teatro Amazonas",
+        "Tucumã, tambaqui e a maior floresta tropical"
+      ],
+      "foto_busca": "Encontro das Aguas Manaus",
+      "foto": "uf/AM.jpg",
+      "alt": "Amazonas: Coração da floresta — imagem de Encontro das Aguas Manaus",
+      "credito": "James Martins",
+      "licenca": "CC BY 3.0",
+      "fonte_url": "https://commons.wikimedia.org/wiki/File:SOBREVOANDO_O_ENCONTRO_DAS_AGUAS_MANAUS-AM_-_panoramio.jpg"
+    },
+    "BA": {
+      "nome": "Bahia",
+      "apelido": "Axé e dendê",
+      "figurinhas": [
+        "🥁",
+        "🌴",
+        "🙏"
+      ],
+      "destaques": [
+        "Pelourinho e o carnaval de Salvador",
+        "Acarajé, moqueca e dendê",
+        "Chapada Diamantina e as praias do litoral"
+      ],
+      "foto_busca": "Pelourinho Salvador Bahia",
+      "foto": "uf/BA.jpg",
+      "alt": "Bahia: Axé e dendê — imagem de Pelourinho Salvador Bahia",
+      "credito": "Paul R. Burley",
+      "licenca": "CC BY-SA 4.0",
+      "fonte_url": "https://commons.wikimedia.org/wiki/File:Pelourinho_Salvador_Bahia_2018-0601.jpg"
+    },
+    "CE": {
+      "nome": "Ceará",
+      "apelido": "Terra do sol e do humor",
+      "figurinhas": [
+        "🏖️",
+        "🎶",
+        "🌵"
+      ],
+      "destaques": [
+        "Praias: Jericoacoara, Canoa Quebrada, Cumbuco",
+        "Humor cearense e o forró pé de serra",
+        "Carne de sol, baião e renda de bilro"
+      ],
+      "foto_busca": "Jericoacoara Ceara praia dunas",
+      "foto": "uf/CE.jpg",
+      "alt": "Ceará: Terra do sol e do humor — imagem de Jericoacoara Ceara praia dunas",
+      "credito": "Antônio Marcos Capobianco",
+      "licenca": "CC BY-SA 4.0",
+      "fonte_url": "https://commons.wikimedia.org/wiki/File:Jericoacoara_-_Laguna_junto_%C3%A0_praia._-_Duna_do_Por_do_Sol.jpg"
+    },
+    "DF": {
+      "nome": "Distrito Federal",
+      "apelido": "Capital no cerrado",
+      "figurinhas": [
+        "🏛️",
+        "🌾",
+        "🌅"
+      ],
+      "destaques": [
+        "Arquitetura de Niemeyer e Lúcio Costa",
+        "Lago Paranoá e o pôr do sol do Pontão",
+        "Cerrado, ipês e a Feira da Ceilândia"
+      ],
+      "foto_busca": "Brasilia Congresso Nacional por do sol",
+      "foto": "uf/DF.jpg",
+      "alt": "Distrito Federal: Capital no cerrado — imagem de Brasilia Congresso Nacional por do sol",
+      "credito": "Ivano Gutz",
+      "licenca": "CC BY-SA 3.0",
+      "fonte_url": "https://commons.wikimedia.org/wiki/File:Bras%C3%ADlia_-_DF_-_Brasil_-_Sol_poente_por_sobre_o_Congresso_Nacional_e_os_Minist%C3%A9rios,_visto_do_Pal%C3%A1cio_do_Planalto_(Sunset_in_Brasilia)_-_panoramio.jpg"
+    },
+    "ES": {
+      "nome": "Espírito Santo",
+      "apelido": "Terra da moqueca",
+      "figurinhas": [
+        "🥘",
+        "⛪",
+        "🏖️"
+      ],
+      "destaques": [
+        "Moqueca e torta capixaba",
+        "Convento da Penha",
+        "Praias e o agroturismo da serra"
+      ],
+      "foto_busca": "Convento da Penha Vila Velha",
+      "foto": "uf/ES.jpg",
+      "alt": "Espírito Santo: Terra da moqueca — imagem de Convento da Penha Vila Velha",
+      "credito": "MarcoXavier2005",
+      "licenca": "CC BY-SA 3.0",
+      "fonte_url": "https://commons.wikimedia.org/wiki/File:Convento_da_Penha_-_Vila_Velha_-_panoramio.jpg"
+    },
+    "GO": {
+      "nome": "Goiás",
+      "apelido": "Cerrado e pequi",
+      "figurinhas": [
+        "🌄",
+        "🥥",
+        "💧"
+      ],
+      "destaques": [
+        "Chapada dos Veadeiros e suas cachoeiras",
+        "Pequi e o arroz com galinha goiano",
+        "Cidades históricas como Goiás Velho"
+      ],
+      "foto_busca": "Chapada dos Veadeiros cachoeira",
+      "foto": "uf/GO.jpg",
+      "alt": "Goiás: Cerrado e pequi — imagem de Chapada dos Veadeiros cachoeira",
+      "credito": "Adelano Lázaro",
+      "licenca": "CC BY-SA 4.0",
+      "fonte_url": "https://commons.wikimedia.org/wiki/File:Cachoeira_de_Santa_B%C3%A1rbara,_Chapada_dos_Veadeiros,_Goi%C3%A1s,_Brasil.JPG"
+    },
+    "MA": {
+      "nome": "Maranhão",
+      "apelido": "Lençóis e bumba",
+      "figurinhas": [
+        "🏜️",
+        "🐂",
+        "🎉"
+      ],
+      "destaques": [
+        "Lençóis Maranhenses",
+        "Bumba meu boi do Maranhão",
+        "Arroz de cuxá e o Centro Histórico de São Luís"
+      ],
+      "foto_busca": "Lencois Maranhenses dunas lagoas",
+      "foto": "uf/MA.jpg",
+      "alt": "Maranhão: Lençóis e bumba — imagem de Lencois Maranhenses lagoa dunas",
+      "credito": "Heris Luiz Cordeiro Rocha",
+      "licenca": "CC BY-SA 3.0",
+      "fonte_url": "https://commons.wikimedia.org/wiki/File:Dunas_e_lagoas_dos_Len%C3%A7ois_Maranhenses..jpg"
+    },
+    "MT": {
+      "nome": "Mato Grosso",
+      "apelido": "Pantanal",
+      "figurinhas": [
+        "🐊",
+        "🌾",
+        "🎣"
+      ],
+      "destaques": [
+        "Pantanal, a maior planície alagada do mundo",
+        "Chapada dos Guimarães",
+        "Pesca de pintado e o arroz com pequi"
+      ],
+      "foto_busca": "Pantanal Mato Grosso jacare",
+      "foto": "uf/MT.jpg",
+      "alt": "Mato Grosso: Pantanal — imagem de Pantanal Mato Grosso jacare",
+      "credito": "dany13",
+      "licenca": "CC BY 2.0",
+      "fonte_url": "https://commons.wikimedia.org/wiki/File:Brazil_Pantanal_Mato_Grosso_Do_Sul_Salobra_River_Caiman_Jacar%C3%A9_Still_Stalk_Yacare_Caiman_(17086966380).jpg"
+    },
+    "MS": {
+      "nome": "Mato Grosso do Sul",
+      "apelido": "Bonito é aqui",
+      "figurinhas": [
+        "💧",
+        "🐟",
+        "🦜"
+      ],
+      "destaques": [
+        "Bonito e os rios de água cristalina",
+        "Pantanal sul-mato-grossense",
+        "Sobá e a influência da fronteira"
+      ],
+      "foto_busca": "Bonito Mato Grosso do Sul rio cristalino",
+      "foto": "uf/MS.jpg",
+      "alt": "Mato Grosso do Sul: Bonito é aqui — imagem de Rio da Prata Bonito Mato Grosso do Sul",
+      "credito": "David Morimoto (treez44est)",
+      "licenca": "CC BY-SA 2.0",
+      "fonte_url": "https://commons.wikimedia.org/wiki/File:RiodaPrataemBonito.jpg"
+    },
+    "MG": {
+      "nome": "Minas Gerais",
+      "apelido": "Queijo, café e serra",
+      "figurinhas": [
+        "🧀",
+        "⛰️",
+        "☕"
+      ],
+      "destaques": [
+        "Pão de queijo e os queijos das serras",
+        "Ouro Preto, Mariana e o barroco",
+        "Café, doce de leite e o tropeirismo"
+      ],
+      "foto_busca": "Ouro Preto Minas Gerais igreja",
+      "foto": "uf/MG.jpg",
+      "alt": "Minas Gerais: Queijo, café e serra — imagem de Ouro Preto Minas Gerais igreja",
+      "credito": "José Rosael/Hélio Nobre/Museu Paulista da USP",
+      "licenca": "Public domain",
+      "fonte_url": "https://commons.wikimedia.org/wiki/File:Igreja_de_S%C3%A3o_Francisco_de_Assiz_(P%C3%B3rtico_e_Escultura_do_Aleijadinho)_Ouro_Preto_-_Minas_Gerais)_(cropped).jpg"
+    },
+    "PA": {
+      "nome": "Pará",
+      "apelido": "Terra do açaí",
+      "figurinhas": [
+        "🐟",
+        "🌴",
+        "🙏"
+      ],
+      "destaques": [
+        "Círio de Nazaré",
+        "Ver-o-Peso e o tacacá",
+        "Açaí, maniçoba e o carimbó"
+      ],
+      "foto_busca": "Belem Para Ver-o-Peso",
+      "foto": "uf/PA.jpg",
+      "alt": "Pará: Terra do açaí — imagem de Belem Para Ver-o-Peso",
+      "credito": "Cayambe",
+      "licenca": "CC BY-SA 3.0",
+      "fonte_url": "https://commons.wikimedia.org/wiki/File:Bel%C3%A9m_Fishing_port_and_Ver-o-peso_01.jpg"
+    },
+    "PB": {
+      "nome": "Paraíba",
+      "apelido": "Onde o sol nasce primeiro",
+      "figurinhas": [
+        "🌽",
+        "🎉",
+        "🏖️"
+      ],
+      "destaques": [
+        "O maior São João do mundo, em Campina Grande",
+        "Praias de João Pessoa e o Pôr do Sol da Estação Cabo Branco",
+        "Cajá, macaxeira e o forró"
+      ],
+      "foto_busca": "Joao Pessoa Paraiba praias por do sol",
+      "foto": "uf/PB.jpg",
+      "alt": "Paraíba: Onde o sol nasce primeiro — imagem de Joao Pessoa Paraiba praias por do sol",
+      "credito": "Dante Laurini Jr",
+      "licenca": "CC BY-SA 4.0",
+      "fonte_url": "https://commons.wikimedia.org/wiki/File:Por_do_Sol_na_Praia_do_Jacar%C3%A9.jpg"
+    },
+    "PR": {
+      "nome": "Paraná",
+      "apelido": "Cataratas e pinhão",
+      "figurinhas": [
+        "🌊",
+        "🌲",
+        "🚂"
+      ],
+      "destaques": [
+        "Cataratas do Iguaçu",
+        "Barreado e o litoral de Guaratuba",
+        "Serra do Mar e o trem de Morretes"
+      ],
+      "foto_busca": "Cataratas do Iguacu Parana",
+      "foto": "uf/PR.jpg",
+      "alt": "Paraná: Cataratas e pinhão — imagem de Cataratas do Iguacu",
+      "credito": "Mayra Villas Boas Francisco Zamulko Alt version WB, shadowns, noise, sharpening were altered by Own work",
+      "licenca": "CC BY-SA 4.0",
+      "fonte_url": "https://commons.wikimedia.org/wiki/File:Cataratas_do_Igua%C3%A7u_-_Vista_de_cima_alt.jpg"
+    },
+    "PE": {
+      "nome": "Pernambuco",
+      "apelido": "Frevo e mar",
+      "figurinhas": [
+        "🎭",
+        "🥥",
+        "🏖️"
+      ],
+      "destaques": [
+        "Frevo, maracatu e o carnaval de Recife e Olinda",
+        "Praias de Porto de Galinhas e Fernando de Noronha",
+        "Bolo de rolo, tapioca e o mangue"
+      ],
+      "foto_busca": "Olinda Pernambuco casario colorido",
+      "foto": "uf/PE.jpg",
+      "alt": "Pernambuco: Frevo e mar — imagem de Olinda Pernambuco casario",
+      "credito": "andressavieira",
+      "licenca": "CC BY 2.0",
+      "fonte_url": "https://commons.wikimedia.org/wiki/File:Casario_de_Olinda_-_Pernambuco_(3495280200).jpg"
+    },
+    "PI": {
+      "nome": "Piauí",
+      "apelido": "Delta e Sete Cidades",
+      "figurinhas": [
+        "🌅",
+        "🐚",
+        "🦀"
+      ],
+      "destaques": [
+        "Delta do Parnaíba",
+        "Parque Nacional de Sete Cidades",
+        "Caju, caranguejo e o litoral quase vazio"
+      ],
+      "foto_busca": "Delta do Parnaiba Piaui",
+      "foto": "uf/PI.jpg",
+      "alt": "Piauí: Delta e Sete Cidades — imagem de Delta do Parnaiba Piaui",
+      "credito": "FiloVasconcellos",
+      "licenca": "CC BY-SA 4.0",
+      "fonte_url": "https://commons.wikimedia.org/wiki/File:Delta_do_Parnaiba_Filo_Vasconcellos_(05).jpg"
+    },
+    "RJ": {
+      "nome": "Rio de Janeiro",
+      "apelido": "Cidade maravilhosa",
+      "figurinhas": [
+        "🏖️",
+        "🎶",
+        "⛰️"
+      ],
+      "destaques": [
+        "Cristo Redentor e Pão de Açúcar",
+        "Samba, bossa nova e o carnaval",
+        "Praias de Copacabana, Ipanema e a Região dos Lagos"
+      ],
+      "foto_busca": "Rio de Janeiro Cristo Redentor Pao de Acucar",
+      "foto": "uf/RJ.jpg",
+      "alt": "Rio de Janeiro: Cidade maravilhosa — imagem de Rio de Janeiro Cristo Redentor Pao de Acucar",
+      "credito": "Arian Zwegers from Brussels, Belgium",
+      "licenca": "CC BY 2.0",
+      "fonte_url": "https://commons.wikimedia.org/wiki/File:Rio_de_Janeiro,_Copacabana_Beach,_Morro_da_Urca,_and_Cristo_Redentor_from_P%C3%A3o_de_A%C3%A7%C3%BAcar_(15929750801).jpg"
+    },
+    "RN": {
+      "nome": "Rio Grande do Norte",
+      "apelido": "Dunas e sol o ano inteiro",
+      "figurinhas": [
+        "🏜️",
+        "🦐",
+        "☀️"
+      ],
+      "destaques": [
+        "Dunas de Genipabu",
+        "Sol e mar de Natal e Pipa",
+        "Camarão, ginga com tapioca e a maior produção de sal"
+      ],
+      "foto_busca": "Genipabu Natal Rio Grande do Norte dunas",
+      "foto": "uf/RN.jpg",
+      "alt": "Rio Grande do Norte: Dunas e sol o ano inteiro — imagem de Genipabu Natal Rio Grande do Norte dunas",
+      "credito": "HelenCampos",
+      "licenca": "CC BY-SA 4.0",
+      "fonte_url": "https://commons.wikimedia.org/wiki/File:Dunas_de_Genipabu_em_Natal_-_Rio_Grande_do_Norte.jpg"
+    },
+    "RS": {
+      "nome": "Rio Grande do Sul",
+      "apelido": "Chimarrão e serra",
+      "figurinhas": [
+        "🍖",
+        "⛰️",
+        "🧉"
+      ],
+      "destaques": [
+        "Gramado e Canela, na serra gaúcha",
+        "Churrasco e chimarrão",
+        "Vinícolas da Serra e a tradição gaúcha"
+      ],
+      "foto_busca": "Gramado Rio Grande do Sul serra",
+      "foto": "uf/RS.jpg",
+      "alt": "Rio Grande do Sul: Chimarrão e serra — imagem de Gramado Rio Grande do Sul serra",
+      "credito": "Yeuxpapilon",
+      "licenca": "CC BY-SA 4.0",
+      "fonte_url": "https://commons.wikimedia.org/wiki/File:Vale_do_Quilombo_-_Serra_Ga%C3%BAcha.jpg"
+    },
+    "RO": {
+      "nome": "Rondônia",
+      "apelido": "Rio Madeira e café",
+      "figurinhas": [
+        "🌳",
+        "☕",
+        "🐟"
+      ],
+      "destaques": [
+        "Rio Madeira e as corredeiras",
+        "Café robusta de qualidade",
+        "Guajará-Mirim e a floresta de fronteira"
+      ],
+      "foto_busca": "Rio Madeira Rondonia Porto Velho",
+      "foto": "uf/RO.jpg",
+      "alt": "Rondônia: Rio Madeira e café — imagem de Rio Madeira Rondonia Porto Velho",
+      "credito": "MTur Destinos",
+      "licenca": "Public domain",
+      "fonte_url": "https://commons.wikimedia.org/wiki/File:Silva-Junior_Ponte-do-Rio-Madeira-que-liga-Rondonia-com-Amazonas_Porto-Velho_RO_(40221863344).jpg"
+    },
+    "RR": {
+      "nome": "Roraima",
+      "apelido": "Monte Roraima",
+      "figurinhas": [
+        "🌄",
+        "🦜",
+        "🌾"
+      ],
+      "destaques": [
+        "Monte Roraima, o tepui mais famoso",
+        "Lavrado e a savana de Boa Vista",
+        "Aves e a fronteira com três países"
+      ],
+      "foto_busca": "Monte Roraima Roraima",
+      "foto": "uf/RR.jpg",
+      "alt": "Roraima: Monte Roraima — imagem de Monte Roraima Roraima",
+      "credito": "Tinhojv",
+      "licenca": "CC BY-SA 4.0",
+      "fonte_url": "https://commons.wikimedia.org/wiki/File:Monte_Roraima,_ponto_mais_alto.jpg"
+    },
+    "SC": {
+      "nome": "Santa Catarina",
+      "apelido": "Praias e enxaimel",
+      "figurinhas": [
+        "🌊",
+        "🍺",
+        "🏔️"
+      ],
+      "destaques": [
+        "Praias de Florianópolis e Balneário Camboriú",
+        "Oktoberfest de Blumenau",
+        "Serra catarinense e as casas enxaimel"
+      ],
+      "foto_busca": "Florianopolis Santa Catarina praias",
+      "foto": "uf/SC.jpg",
+      "alt": "Santa Catarina: Praias e enxaimel — imagem de Florianopolis Santa Catarina praias",
+      "credito": "Papa Pic",
+      "licenca": "CC0",
+      "fonte_url": "https://commons.wikimedia.org/wiki/File:Praia_Daniela,_Florianopolis,_Santa_Catarina,_BR_-_17166232567.jpg"
+    },
+    "SP": {
+      "nome": "São Paulo",
+      "apelido": "Gastronomia e litoral",
+      "figurinhas": [
+        "🍽️",
+        "🏙️",
+        "🌊"
+      ],
+      "destaques": [
+        "A maior cena gastronômica do país",
+        "Avenida Paulista, MASP e a vida cultural",
+        "Litoral norte: Ubatuba, Ilhabela e São Sebastião"
+      ],
+      "foto_busca": "Avenida Paulista Sao Paulo",
+      "foto": "uf/SP.jpg",
+      "alt": "São Paulo: Gastronomia e litoral — imagem de Museu de Arte de Sao Paulo Avenida Paulista",
+      "credito": "Rafael Wojtyla",
+      "licenca": "CC BY-SA 4.0",
+      "fonte_url": "https://commons.wikimedia.org/wiki/File:Museu_de_Arte_de_S%C3%A3o_Paulo_-_MASP,_vista_exterior_com_Avenida_Paulista_no_feriado_ao_centro.jpg"
+    },
+    "SE": {
+      "nome": "Sergipe",
+      "apelido": "Cânions e forró",
+      "figurinhas": [
+        "🛶",
+        "🎶",
+        "🦀"
+      ],
+      "destaques": [
+        "Cânions do Xingó",
+        "Forró e o São João de Aracaju",
+        "Caranguejo, mangue e a Orla de Atalaia"
+      ],
+      "foto_busca": "Cânions do Xingo Sergipe",
+      "foto": "uf/SE.jpg",
+      "alt": "Sergipe: Cânions e forró — imagem de Cânions do Xingo Sergipe",
+      "credito": "Ajuliafotos",
+      "licenca": "CC BY-SA 4.0",
+      "fonte_url": "https://commons.wikimedia.org/wiki/File:C%C3%A2nions_Xing%C3%B3.jpg"
+    },
+    "TO": {
+      "nome": "Tocantins",
+      "apelido": "Jalapão",
+      "figurinhas": [
+        "🏜️",
+        "🌊",
+        "🦜"
+      ],
+      "destaques": [
+        "Jalapão, dunas e fervedouros",
+        "Praias de rio e o Rio Tocantins",
+        "Palmas, a capital mais nova do país"
+      ],
+      "foto_busca": "Jalapao Tocantins dunas fervedouro",
+      "foto": "uf/TO.jpg",
+      "alt": "Tocantins: Jalapão — imagem de Jalapao Tocantins",
+      "credito": "Marcelo85photo",
+      "licenca": "CC BY-SA 3.0",
+      "fonte_url": "https://commons.wikimedia.org/wiki/File:Jalap%C3%A3o_-_Tocantins_-_Brasil.jpg"
+    }
   }
 }

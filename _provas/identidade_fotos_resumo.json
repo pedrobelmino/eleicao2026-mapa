@@ -1,0 +1,174 @@
+{
+  "gerado_em": "2026-10-24T01:52:28.619Z",
+  "base": "http://127.0.0.1:8123",
+  "modo": "fotos",
+  "ufs": [
+    "CE",
+    "RS",
+    "BA"
+  ],
+  "viewports": [
+    "desktop_1440x900",
+    "mobile_390x844"
+  ],
+  "impressoes": [
+    {
+      "uf": "CE",
+      "viewport": "desktop_1440x900",
+      "url": "http://127.0.0.1:8123/mapa?uf=CE&z=6.3",
+      "print": "_provas/identidade_foto_CE_desktop_1440x900.png",
+      "foto": {
+        "uf": "CE",
+        "tem_img": true,
+        "src": "/uf/CE.jpg",
+        "alt": "Ceará: Terra do sol e do humor — imagem de Jericoacoara Ceara praia dunas",
+        "carregou": true,
+        "natural": "800x527",
+        "renderizado": "260x132",
+        "object_fit": "cover",
+        "placeholder": null,
+        "credito": "Foto: Antônio Marcos Capobianco · CC BY-SA 4.0",
+        "credito_visivel": true
+      },
+      "scroll": {
+        "documento": 1440,
+        "janela": 1440,
+        "horizontal": false
+      },
+      "console_errors": [],
+      "requests_erro": []
+    },
+    {
+      "uf": "RS",
+      "viewport": "desktop_1440x900",
+      "url": "http://127.0.0.1:8123/mapa?uf=RS&z=6.3",
+      "print": "_provas/identidade_foto_RS_desktop_1440x900.png",
+      "foto": {
+        "uf": "RS",
+        "tem_img": true,
+        "src": "/uf/RS.jpg",
+        "alt": "Rio Grande do Sul: Chimarrão e serra — imagem de Gramado Rio Grande do Sul serra",
+        "carregou": true,
+        "natural": "800x572",
+        "renderizado": "260x132",
+        "object_fit": "cover",
+        "placeholder": null,
+        "credito": "Foto: Yeuxpapilon · CC BY-SA 4.0",
+        "credito_visivel": true
+      },
+      "scroll": {
+        "documento": 1440,
+        "janela": 1440,
+        "horizontal": false
+      },
+      "console_errors": [],
+      "requests_erro": []
+    },
+    {
+      "uf": "BA",
+      "viewport": "desktop_1440x900",
+      "url": "http://127.0.0.1:8123/mapa?uf=BA&z=6.3",
+      "print": "_provas/identidade_foto_BA_desktop_1440x900.png",
+      "foto": {
+        "uf": "BA",
+        "tem_img": true,
+        "src": "/uf/BA.jpg",
+        "alt": "Bahia: Axé e dendê — imagem de Pelourinho Salvador Bahia",
+        "carregou": true,
+        "natural": "800x533",
+        "renderizado": "260x132",
+        "object_fit": "cover",
+        "placeholder": null,
+        "credito": "Foto: Paul R. Burley · CC BY-SA 4.0",
+        "credito_visivel": true
+      },
+      "scroll": {
+        "documento": 1440,
+        "janela": 1440,
+        "horizontal": false
+      },
+      "console_errors": [],
+      "requests_erro": []
+    },
+    {
+      "uf": "CE",
+      "viewport": "mobile_390x844",
+      "url": "http://127.0.0.1:8123/mapa?uf=CE&z=5.9",
+      "print": "_provas/identidade_foto_CE_mobile_390x844.png",
+      "foto": {
+        "uf": "CE",
+        "tem_img": true,
+        "src": "/uf/CE.jpg",
+        "alt": "Ceará: Terra do sol e do humor — imagem de Jericoacoara Ceara praia dunas",
+        "carregou": true,
+        "natural": "800x527",
+        "renderizado": "336x132",
+        "object_fit": "cover",
+        "placeholder": null,
+        "credito": "Foto: Antônio Marcos Capobianco · CC BY-SA 4.0",
+        "credito_visivel": true
+      },
+      "scroll": {
+        "documento": 390,
+        "janela": 390,
+        "horizontal": false
+      },
+      "console_errors": [],
+      "requests_erro": []
+    },
+    {
+      "uf": "RS",
+      "viewport": "mobile_390x844",
+      "url": "http://127.0.0.1:8123/mapa?uf=RS&z=5.9",
+      "print": "_provas/identidade_foto_RS_mobile_390x844.png",
+      "foto": {
+        "uf": "RS",
+        "tem_img": true,
+        "src": "/uf/RS.jpg",
+        "alt": "Rio Grande do Sul: Chimarrão e serra — imagem de Gramado Rio Grande do Sul serra",
+        "carregou": true,
+        "natural": "800x572",
+        "renderizado": "336x132",
+        "object_fit": "cover",
+        "placeholder": null,
+        "credito": "Foto: Yeuxpapilon · CC BY-SA 4.0",
+        "credito_visivel": true
+      },
+      "scroll": {
+        "documento": 390,
+        "janela": 390,
+        "horizontal": false
+      },
+      "console_errors": [],
+      "requests_erro": []
+    },
+    {
+      "uf": "BA",
+      "viewport": "mobile_390x844",
+      "url": "http://127.0.0.1:8123/mapa?uf=BA&z=5.9",
+      "print": "_provas/identidade_foto_BA_mobile_390x844.png",
+      "foto": {
+        "uf": "BA",
+        "tem_img": true,
+        "src": "/uf/BA.jpg",
+        "alt": "Bahia: Axé e dendê — imagem de Pelourinho Salvador Bahia",
+        "carregou": true,
+        "natural": "800x533",
+        "renderizado": "336x132",
+        "object_fit": "cover",
+        "placeholder": null,
+        "credito": "Foto: Paul R. Burley · CC BY-SA 4.0",
+        "credito_visivel": true
+      },
+      "scroll": {
+        "documento": 390,
+        "janela": 390,
+        "horizontal": false
+      },
+      "console_errors": [],
+      "requests_erro": []
+    }
+  ],
+  "problemas": [],
+  "ok": true
+}

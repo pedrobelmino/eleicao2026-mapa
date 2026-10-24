@@ -22,6 +22,11 @@ export default function DetailCard({ uf, onClose, mostrarFechar = true }) {
 
   const cor = corDoPartido(uf.partido_lider)
   const candidatos = (uf.candidatos || []).slice(0, 2)
+  // Foto da UF: baixada do Wikimedia Commons para web/public/uf/<UF>.jpg e
+  // servida pelo próprio site (nada de hotlink). Sem foto licenciada, o card
+  // desenha o placeholder com a sigla do estado.
+  const base = import.meta.env.BASE_URL || '/'
+  const urlFoto = identidade?.foto ? `${base}${identidade.foto}`.replace(/\/{2,}/g, '/') : null
 
   return (
     <article
@@ -51,6 +56,24 @@ export default function DetailCard({ uf, onClose, mostrarFechar = true }) {
 
       {identidade ? (
         <section className="identidade" aria-label={`Identidade de ${uf.nome}`}>
+          {urlFoto ? (
+            <figure className="identidade-foto">
+              <img
+                src={urlFoto}
+                alt={identidade.alt || `Foto de ${uf.nome}`}
+                loading="lazy"
+                decoding="async"
+              />
+            </figure>
+          ) : (
+            <div
+              className="identidade-foto identidade-foto--vazia"
+              role="img"
+              aria-label={`Sem foto licenciada para ${uf.nome}`}
+            >
+              <span>{uf.uf}</span>
+            </div>
+          )}
           <div className="identidade-topo">
             <div className="identidade-copy">
               <h3 className="identidade-apelido">
@@ -137,6 +160,13 @@ export default function DetailCard({ uf, onClose, mostrarFechar = true }) {
           })}
         </ol>
       </section>
+
+      {urlFoto ? (
+        <p className="detail-credito">
+          Foto: {identidade.credito || 'Wikimedia Commons'}
+          {identidade.licenca ? ` · ${identidade.licenca}` : ''}
+        </p>
+      ) : null}
     </article>
   )
 }

@@ -1,0 +1,68 @@
+{
+  "gerado_em": "2026-10-24T01:52:44.535Z",
+  "base": "http://127.0.0.1:8123",
+  "modo": "placeholder",
+  "ufs": [
+    "CE"
+  ],
+  "viewports": [
+    "desktop_1440x900",
+    "mobile_390x844"
+  ],
+  "impressoes": [
+    {
+      "uf": "CE",
+      "viewport": "desktop_1440x900",
+      "url": "http://127.0.0.1:8123/mapa?uf=CE&z=6.3",
+      "print": "_provas/identidade_foto_CE_placeholder_desktop_1440x900.png",
+      "foto": {
+        "uf": "CE",
+        "tem_img": false,
+        "src": null,
+        "alt": null,
+        "carregou": false,
+        "natural": null,
+        "renderizado": null,
+        "object_fit": null,
+        "placeholder": "Sem foto licenciada para Ceará",
+        "credito": null,
+        "credito_visivel": false
+      },
+      "scroll": {
+        "documento": 1440,
+        "janela": 1440,
+        "horizontal": false
+      },
+      "console_errors": [],
+      "requests_erro": []
+    },
+    {
+      "uf": "CE",
+      "viewport": "mobile_390x844",
+      "url": "http://127.0.0.1:8123/mapa?uf=CE&z=5.9",
+      "print": "_provas/identidade_foto_CE_placeholder_mobile_390x844.png",
+      "foto": {
+        "uf": "CE",
+        "tem_img": false,
+        "src": null,
+        "alt": null,
+        "carregou": false,
+        "natural": null,
+        "renderizado": null,
+        "object_fit": null,
+        "placeholder": "Sem foto licenciada para Ceará",
+        "credito": null,
+        "credito_visivel": false
+      },
+      "scroll": {
+        "documento": 390,
+        "janela": 390,
+        "horizontal": false
+      },
+      "console_errors": [],
+      "requests_erro": []
+    }
+  ],
+  "problemas": [],
+  "ok": true
+}
