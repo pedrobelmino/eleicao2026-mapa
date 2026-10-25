@@ -12,23 +12,23 @@ function NaoEncontrado() {
         <p>O endereço não existe neste site. Escolha uma das páginas abaixo.</p>
         <nav>
           <a
-            href="/"
-            onClick={(evento) => {
-              evento.preventDefault()
-              navega('/')
-            }}
-          >
-            ir para a página inicial
-          </a>
-          <a
             href="/eleicao"
-            className="secundario"
             onClick={(evento) => {
               evento.preventDefault()
               navega('/eleicao')
             }}
           >
-            painel da eleição
+            painel da apuração
+          </a>
+          <a
+            href="/sobre"
+            className="secundario"
+            onClick={(evento) => {
+              evento.preventDefault()
+              navega('/sobre')
+            }}
+          >
+            sobre Pedro Belmino
           </a>
           <a
             href="/mapa"
@@ -46,14 +46,17 @@ function NaoEncontrado() {
   )
 }
 
-// Três níveis, um nível por rota:
-//   /        landing "sobre mim" (porta de entrada)
+// Quatro rotas, uma por nível:
+//   /        painel da apuração — fallback para site servido sem nginx (ex.:
+//            vite dev); no ar, a raiz pública redireciona para /eleicao
 //   /eleicao painel da apuração em tempo real (a antiga home)
+//   /sobre   landing "sobre mim"
 //   /mapa    mapa interativo (preservado)
 export default function App() {
   const rota = useRota()
 
-  if (rota === '/') return <Landing />
+  if (rota === '/') return <Home />
+  if (rota === '/sobre') return <Landing />
   if (rota === '/eleicao') return <Home />
   if (rota === '/mapa') return <Mapa />
   return <NaoEncontrado />

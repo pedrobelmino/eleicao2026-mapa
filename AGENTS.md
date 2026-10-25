@@ -1,8 +1,9 @@
 # AGENTS.md — eleicao2026-mapa
 
-Mapa interativo da apuração presidencial 2026, no ar em https://eleicao2026.belmino.dev. Duas rotas
-públicas, sem login: `/` (placar, regiões, fenômeno, insights, UFs, fontes, linha do tempo) e `/mapa`
-(MapLibre com drill-down país → UF → município → local de votação). Todo número vem do feed público
+Mapa interativo da apuração presidencial 2026, no ar em https://eleicao2026.belmino.dev. Três rotas
+públicas, sem login: `/` redireciona (302) para `/eleicao`, o painel (placar, regiões, fenômeno,
+insights, UFs, fontes, linha do tempo); `/sobre` é a landing "sobre mim"; `/mapa` é o MapLibre com
+drill-down país → UF → município → local de votação. Todo número vem do feed público
 do TSE; estimativa só aparece marcada como estimativa.
 
 ## Stack (lida de api/go.mod, web/package.json, Dockerfiles e compose.yaml)

@@ -4,10 +4,10 @@
   "itens": [
     {
       "id": "R01",
-      "regra": "as três rotas públicas respondem 200",
-      "prova": "curl -s -o /dev/null -w '%{http_code}' <base>{/,/eleicao,/mapa}",
-      "criterio": "as 3 rotas devolvem exatamente 200",
-      "origem": "STATE.md 23/10 23:20 — curls 6/6=200 no 8110 no deploy do 6493d46",
+      "regra": "a raiz redireciona (302) para /eleicao e as três páginas publicadas respondem 200",
+      "prova": "curl -s -o /dev/null -w '%{http_code} %{redirect_url}' <base>/ ; curl -s -o /dev/null -w '%{http_code}' <base>{/eleicao,/mapa,/sobre}",
+      "criterio": "/ devolve exatamente 302 com Location apontando para /eleicao; /eleicao, /mapa e /sobre devolvem exatamente 200",
+      "origem": "25/10/2026 — a raiz pública vira porta de entrada do painel (302 /eleicao) e a landing passa a morar em /sobre; medido no regressao.sh (R01)",
       "rapido": true,
       "timeout_s": 60
     },

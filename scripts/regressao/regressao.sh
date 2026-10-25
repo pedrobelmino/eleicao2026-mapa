@@ -53,7 +53,7 @@ COMMIT="$(git -C "$RAIZ" rev-parse --short HEAD 2>/dev/null || echo 'sem-git')"
 
 # pré-voo: sem o site de pé não se mede nada de runtime (os builds seguem valendo)
 SITE_OK=0
-CODIGO_PREVOO="$(curl -s -o /dev/null -m 5 -w '%{http_code}' "$BASE/" 2>/dev/null || echo 000)"
+CODIGO_PREVOO="$(curl -s -o /dev/null -m 5 -w '%{http_code}' "$BASE/eleicao" 2>/dev/null || echo 000)"
 [ "$CODIGO_PREVOO" = "200" ] && SITE_OK=1
 export SITE_OK
 
@@ -67,11 +67,21 @@ exigir_site() {
 num_maior() { awk -v a="$1" -v b="$2" 'BEGIN{print (b+0>a+0)?b+0:a+0}'; }
 
 # ------------------------------------------------------------------- R01
-# três rotas 200 (/, /eleicao, /mapa) — curl, sem browser
+# raiz 302 para /eleicao e três páginas 200 (/eleicao, /mapa, /sobre) — curl, sem browser
 prova_R01() {
   exigir_site || return 2
-  local rota codigo medida="" cok=1
-  for rota in / /eleicao /mapa; do
+  local rota codigo medida="" cok=1 destino
+  # a raiz é a porta de entrada do painel: 302, sem página e sem visita
+  codigo="$(curl -s -o /dev/null -m 8 -w '%{http_code}' "$BASE/" 2>/dev/null || echo 000)"
+  destino="$(curl -s -o /dev/null -m 8 -w '%{redirect_url}' "$BASE/" 2>/dev/null || true)"
+  medida+="/=$codigo->${destino:-sem-location} "
+  [ "$codigo" = "302" ] || cok=0
+  case "${destino%/}" in
+    */eleicao) ;;
+    *) cok=0 ;;
+  esac
+  # as páginas publicadas continuam 200
+  for rota in /eleicao /mapa /sobre; do
     codigo="$(curl -s -o /dev/null -m 8 -w '%{http_code}' "$BASE$rota" 2>/dev/null || echo 000)"
     medida+="$rota=$codigo "
     [ "$codigo" = "200" ] || cok=0

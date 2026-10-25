@@ -24,7 +24,10 @@ cloudflared  (hermes-tunel-belmino.service, ~/.cloudflared/belmino-eleicao.yml)
    ▼
 nginx  (container web)      cabeçalhos, CSP, rate limit 40 req/s por IP, mirror da visita,
    │                        lista de bloqueio por IP (geo) e log de defesa
-   ├── /            → index.html (React SPA)
+   ├── /            → 302 para /eleicao (raiz é a porta de entrada do painel)
+   ├── /eleicao     → index.html (React SPA) + mirror da visita anônima
+   ├── /sobre       → index.html (landing "sobre mim")
+   ├── /mapa        → index.html (mapa interativo) + mirror da visita
    └── /api/        → http://api:8080
                         │
                         ▼
@@ -268,7 +271,8 @@ origem sem parar o site:
 # em ~/.cloudflared/belmino-eleicao.yml, no bloco do hostname eleicao2026.belmino.dev:
 #   service: http://127.0.0.1:8099          (era http://127.0.0.1:8110)
 systemctl --user restart hermes-tunel-belmino.service
-curl -s -o /dev/null -w '%{http_code}\n' https://eleicao2026.belmino.dev/
+curl -s -o /dev/null -w '%{http_code}\n' https://eleicao2026.belmino.dev/eleicao   # 200
+curl -s -o /dev/null -w '%{http_code}\n' https://eleicao2026.belmino.dev/          # 302 (raiz → /eleicao)
 ```
 
 Para voltar ao app: `service: http://127.0.0.1:8110` e reiniciar o mesmo serviço.
@@ -284,8 +288,9 @@ O log do túnel fica em `~/.hermes/logs/tunel-belmino.log`.
 4. `curl -s http://127.0.0.1:8110/api/fonte` → **200**. Se 503, o TSE ainda não
    publicou o arquivo do turno: é esperado antes do fim da votação, não é defeito
    do painel.
-5. `curl -s -o /dev/null -w '%{http_code}\n' https://eleicao2026.belmino.dev/` → 200.
-6. Abrir `/` e `/mapa` no celular: home carrega, mapa abre, e com WebGL bloqueado
+5. `curl -s -o /dev/null -w '%{http_code}\n' https://eleicao2026.belmino.dev/eleicao` → 200;
+   a raiz `https://eleicao2026.belmino.dev/` → **302** para `/eleicao` (redirect, não página).
+6. Abrir `/eleicao` e `/mapa` no celular: home carrega, mapa abre, e com WebGL bloqueado
    a tabela de fallback aparece.
 
 **Fim da votação em diante — apuração**
