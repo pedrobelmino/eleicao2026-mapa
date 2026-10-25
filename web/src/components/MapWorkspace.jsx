@@ -11,7 +11,9 @@ import Legend, { ResumoLideres } from './Legend.jsx'
 import FallbackView from './FallbackView.jsx'
 import ReplayBar, { relogioDoArquivo } from './ReplayBar.jsx'
 import MargensCard from './MargensCard.jsx'
+import AvisoRecorte from './AvisoRecorte.jsx'
 import { indexarUFs, resumoLideres } from '../dados.js'
+import { compararRecorte, lerProcedencia } from '../recorte.js'
 import { API_BASE, fetchJSON } from '../api.js'
 import { percentual } from '../format.js'
 
@@ -165,6 +167,7 @@ function AvisosDetalhe({ carregando, indisponivel, erro }) {
 export default function MapWorkspace({
   estados,
   geojson,
+  versao = 0,
   ufInicial,
   municipioInicial,
   zoomInicial,
@@ -205,6 +208,40 @@ export default function MapWorkspace({
   const [detalheCarregando, setDetalheCarregando] = useState(false)
   const [detalheIndisponivel, setDetalheIndisponivel] = useState(false)
   const [erroDetalhe, setErroDetalhe] = useState(null)
+
+  // ------------------------------------------------------- RECORTE (turno)
+  // A camada de zona/município/local vem dos arquivos do TSE por seção, que só
+  // existem ao final de cada turno. Quando a procedência que o payload declara
+  // diverge do turno que o painel exibe, a camada NÃO é desenhada (detalhe vai
+  // nulo para o MapView) e o mapa avisa o motivo. `verTurnoAnterior` é a saída
+  // explícita: o usuário pode olhar o recorte antigo, mas com selo na cara.
+  const [verTurnoAnterior, setVerTurnoAnterior] = useState(false)
+  const procedenciaPainel = useMemo(
+    () => ({ eleicao: estados?.eleicao, turno: estados?.turno }),
+    [estados],
+  )
+  const recorteZonas = useMemo(() => {
+    const fonte =
+      lerProcedencia(detalhe?.zonas) || lerProcedencia(detalhe?.municipios)
+    return compararRecorte({ painel: procedenciaPainel, fonte })
+  }, [procedenciaPainel, detalhe])
+  // Os decisivos/viradas do card de margens saem da MESMA base municipal: a
+  // procedência vem de `/api/estados` → `municipal`.
+  const recorteMunicipal = useMemo(
+    () =>
+      compararRecorte({
+        painel: procedenciaPainel,
+        fonte: lerProcedencia(estados?.municipal),
+      }),
+    [procedenciaPainel, estados],
+  )
+  const zonasBloqueadas = recorteZonas.divergente && !verTurnoAnterior
+
+  // Recorte mudou (outra UF, outro turno): o toggle volta ao padrão fechado.
+  useEffect(() => {
+    setVerTurnoAnterior(false)
+  }, [recorteZonas.chave])
+
   const [locais, setLocais] = useState(null)
   const [totalLocais, setTotalLocais] = useState(0)
   const [locaisCarregando, setLocaisCarregando] = useState(false)
@@ -285,11 +322,28 @@ export default function MapWorkspace({
   const [margensUfCarregando, setMargensUfCarregando] = useState(false)
   const [margensUfErro, setMargensUfErro] = useState(null)
   const cacheMargensUfRef = useRef(new Map())
+  // Último dado bom de cada painel: o ciclo automático lê daqui para NÃO
+  // esvaziar o card enquanto a requisição nova está no ar (e para manter o
+  // dado em tela quando ela falha).
+  const margensRef = useRef(margens)
+  margensRef.current = margens
+  // Em que `versao` a série do replay foi baixada (ver o efeito abaixo).
+  const versaoReplayRef = useRef(-1)
 
   useEffect(() => {
-    if (!replayAberto || replays[fonte]) return undefined
+    if (!replayAberto) return undefined
+
+    const emCache = replays[fonte]
+    // A série de 2022 é arquivo fechado (história do TSE): baixa uma vez.
+    // A de 2026 CRESCE durante a apuração, então ela é rebaixada a cada ciclo
+    // — sem zerar o passo em que o usuário está (o índice é preservado).
+    if (emCache && (fonte === '2022' || versaoReplayRef.current === versao)) {
+      return undefined
+    }
+
     let ativo = true
-    setReplayCarregando(true)
+    // Atualização silenciosa: com série já em tela, nada de "carregando…".
+    if (!emCache) setReplayCarregando(true)
     setReplayErro(null)
     // Sem `modo`: a série de apuração de 2026, por passo. `modo=2022` é o
     // arquivo histórico do TSE (frames com relógio real).
@@ -299,35 +353,40 @@ export default function MapWorkspace({
         if (!ativo) return
         setReplayCarregando(false)
         if (!resposta?.disponivel) {
-          setReplayErro(resposta?.nota || 'série indisponível')
+          // Sem série nova: mantém a que está na tela se existir.
+          if (!emCache) setReplayErro(resposta?.nota || 'série indisponível')
           return
         }
+        versaoReplayRef.current = versao
         setReplays((anteriores) => ({ ...anteriores, [fonte]: resposta }))
       })
       .catch(() => {
         if (!ativo) return
-        setReplayErro('não foi possível carregar a série do replay')
         setReplayCarregando(false)
+        if (!emCache) setReplayErro('não foi possível carregar a série do replay')
       })
     return () => {
       ativo = false
     }
-  }, [replayAberto, fonte, replays])
+  }, [replayAberto, fonte, versao, replays])
 
   // O agregado nacional de margens (`/api/margens`) é o dado mais lento da
   // tela: ele NÃO pode estar nas dependências, senão o cleanup cancela a
   // própria requisição (`ativo=false`) e o fetch nunca conclui — era o defeito
   // do "calculando margens…" eterno ao lado da lista já renderizada.
+  // `versao` é número, não dado: pode entrar nas dependências sem esse risco.
   useEffect(() => {
-    if (!margensAberto || margens) return undefined
+    if (!margensAberto) return undefined
     let ativo = true
-    setMargensCarregando(true)
+    const tinhaDado = Boolean(margensRef.current)
+    if (!tinhaDado) setMargensCarregando(true)
     setMargensErro(null)
     fetchJSON(`${API_BASE}/margens`)
       .then((resposta) => {
         if (!ativo) return
         if (resposta?.erro) {
-          setMargensErro(String(resposta.erro))
+          // Com dado em tela, um erro do ciclo não vira tela vazia.
+          if (!tinhaDado) setMargensErro(String(resposta.erro))
           setMargensCarregando(false)
           return
         }
@@ -336,16 +395,18 @@ export default function MapWorkspace({
       })
       .catch(() => {
         if (!ativo) return
-        setMargensErro('não foi possível carregar o painel de margens')
         setMargensCarregando(false)
+        if (!tinhaDado) setMargensErro('não foi possível carregar o painel de margens')
       })
     return () => {
       ativo = false
     }
-  }, [margensAberto, margens])
+  }, [margensAberto, versao])
 
   // Item 6 — margens por município da UF aberta. Só busca com o modo MARGEM
   // ligado e uma UF selecionada (sem UF não há município para pintar).
+  // O cache guarda a `versao` em que foi baixado: ciclo novo rebaixa a UF
+  // aberta e mantém a anterior em tela enquanto isso.
   useEffect(() => {
     if (!margensAberto || !ufSelecionada) {
       setMargensUf(null)
@@ -355,40 +416,43 @@ export default function MapWorkspace({
     }
 
     const cache = cacheMargensUfRef.current
-    if (cache.has(ufSelecionada)) {
-      setMargensUf(cache.get(ufSelecionada))
+    const guardado = cache.get(ufSelecionada)
+    if (guardado && guardado.versao === versao) {
+      setMargensUf(guardado.dados)
       setMargensUfErro(null)
       setMargensUfCarregando(false)
       return undefined
     }
 
-    let ativo = true
-    setMargensUf(null)
+    const tinhaDado = Boolean(guardado?.dados)
+    if (tinhaDado) setMargensUf(guardado.dados)
+    else setMargensUf(null)
     setMargensUfErro(null)
-    setMargensUfCarregando(true)
+    setMargensUfCarregando(!tinhaDado)
 
+    let ativo = true
     fetchJSON(`${API_BASE}/uf/${ufSelecionada}/margens`)
       .then((resposta) => {
         if (!ativo) return
         if (resposta?.erro) {
-          setMargensUfErro(String(resposta.erro))
+          if (!tinhaDado) setMargensUfErro(String(resposta.erro))
           setMargensUfCarregando(false)
           return
         }
-        cache.set(ufSelecionada, resposta)
+        cache.set(ufSelecionada, { versao, dados: resposta })
         setMargensUf(resposta)
         setMargensUfCarregando(false)
       })
       .catch(() => {
         if (!ativo) return
-        setMargensUfErro('não foi possível carregar as margens desta UF')
         setMargensUfCarregando(false)
+        if (!tinhaDado) setMargensUfErro('não foi possível carregar as margens desta UF')
       })
 
     return () => {
       ativo = false
     }
-  }, [margensAberto, ufSelecionada])
+  }, [margensAberto, ufSelecionada, versao])
 
   // A série dos dois formatos vira uma lista só de passos (ver normalizarPassos).
   const passos = useMemo(() => normalizarPassos(replay), [replay])
@@ -593,7 +657,7 @@ export default function MapWorkspace({
   // Locais de votação do município: agregados no backend, uma UF/município por
   // vez. Nunca se baixa a lista de locais da UF inteira no front.
   useEffect(() => {
-    if (!ufSelecionada || !cdTse) {
+    if (!ufSelecionada || !cdTse || zonasBloqueadas) {
       setLocais(null)
       setTotalLocais(0)
       setLocalSelecionado(null)
@@ -622,7 +686,7 @@ export default function MapWorkspace({
     return () => {
       ativo = false
     }
-  }, [ufSelecionada, cdTse])
+  }, [ufSelecionada, cdTse, zonasBloqueadas])
 
   // Atalho de prova/drill-down: ?m=<cd_tse> abre o município assim que a malha
   // municipal da UF chega.
@@ -745,12 +809,19 @@ export default function MapWorkspace({
       style={{ '--sheet-detalhe-h': painelDetalheAberto ? `${alturaDetalhe}px` : '0px' }}
     >
       <main className="map-stage">
+        <AvisoRecorte
+          recorte={recorteZonas}
+          verAnterior={verTurnoAnterior}
+          onAlternar={() => setVerTurnoAnterior((atual) => !atual)}
+        />
         <MapView
           geojson={geojson}
+          versao={versao}
           selectedUf={ufSelecionada}
           onSelect={selecionarUf}
           onMapError={() => setMapaFalhou(true)}
-          detalhe={detalhe}
+          detalhe={zonasBloqueadas ? null : detalhe}
+          detalheOculto={zonasBloqueadas}
           municipioSelecionado={municipioSelecionado}
           locais={locais}
           localSelecionado={localSelecionado}
@@ -839,6 +910,7 @@ export default function MapWorkspace({
             uf={ufSelecionada}
             carregandoUf={margensUfCarregando}
             erroUf={margensUfErro}
+            recorteMunicipal={recorteMunicipal}
             onFechar={alternarMargem}
           />
         ) : null}
@@ -980,6 +1052,7 @@ export default function MapWorkspace({
               uf={ufSelecionada}
               carregandoUf={margensUfCarregando}
               erroUf={margensUfErro}
+              recorteMunicipal={recorteMunicipal}
               onFechar={alternarMargem}
             />
           </div>

@@ -37,7 +37,7 @@ export default function CabecalhoApuracao({ dados }) {
         <div className="aviso">
           <b>{proximo.turno}:</b> a apuração ainda não começou no TSE (
           {milhar(proximo.st)} de {milhar(proximo.ts)} seções). O placar abaixo é
-          o {dados.turno}, já encerrado — atualização do painel em{' '}
+          do turno já encerrado — atualização do painel em{' '}
           {String(dados.gerado_em || '')
             .slice(0, 16)
             .replace('T', ' ')}

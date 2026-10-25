@@ -1,9 +1,10 @@
 import { navega } from '../../router.jsx'
-import { coresCandidatos, pct } from './formato.js'
+import { coresCandidatos, pct, semSecaoApurada } from './formato.js'
 
 // Mapa estático do momento, desenhado a partir de publico.mapa. A cor é o
 // candidato que lidera em cada UF e a opacidade cresce com o % apurado.
-// O link grande leva ao mapa interativo, que é o produto final.
+// UF sem seção apurada fica neutra, sem candidato. O link grande leva ao mapa
+// interativo, que é o produto final.
 export default function MapaMomento({ dados }) {
   const mapa = dados.mapa || {}
   const ufs = mapa.ufs || {}
@@ -26,10 +27,13 @@ export default function MapaMomento({ dados }) {
       >
         {Object.entries(ufs).map(([sigla, geometria]) => {
           const info = porUf[sigla] || {}
+          const espera = semSecaoApurada(info)
           const lider = info.lider
-          const cor = cores[lider] || '#b9b2a4'
+          const cor = espera ? '#b9b2a4' : cores[lider] || '#b9b2a4'
           const apurado = Number(info.pct_apurado) || 0
-          const opacidade = 0.3 + 0.7 * Math.min(1, apurado / 100)
+          const opacidade = espera
+            ? 0.22
+            : 0.3 + 0.7 * Math.min(1, apurado / 100)
 
           return (
             <path
@@ -40,9 +44,13 @@ export default function MapaMomento({ dados }) {
               stroke="#fffdf8"
               strokeWidth="1.1"
             >
-              <title>{`${sigla} — ${lider || 'sem dado'} ${pct(
-                info.lider_pct,
-              )}%`}</title>
+              <title>
+                {espera
+                  ? `${sigla} — sem seções apuradas ainda`
+                  : `${sigla} — ${lider || 'sem dado'} ${pct(
+                      info.lider_pct,
+                    )}%`}
+              </title>
             </path>
           )
         })}
@@ -50,7 +58,8 @@ export default function MapaMomento({ dados }) {
 
       <p className="nota">
         Cor = candidato que lidera no estado. Opacidade = parte das seções já
-        apuradas. Geometria pública; números do TSE.
+        apuradas. Estado sem seção apurada fica neutro. Geometria pública;
+        números do TSE.
       </p>
 
       <a

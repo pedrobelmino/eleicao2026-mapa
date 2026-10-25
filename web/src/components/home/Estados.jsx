@@ -1,6 +1,12 @@
-import { coresCandidatos, pct } from './formato.js'
+import {
+  coresCandidatos,
+  fracaoSecoes,
+  pct,
+  semSecaoApurada,
+} from './formato.js'
 
-// Cartões das 27 UFs: sigla, % apurado, líder e faixa proporcional.
+// Cartões das 27 UFs: sigla, fração apurada, líder e faixa proporcional.
+// UF sem seção apurada vira estado de espera, sem líder nem faixa preenchida.
 export default function Estados({ dados }) {
   const ufs = dados.ufs || []
   if (!ufs.length) return <p className="vazio">sem dado por estado.</p>
@@ -11,6 +17,19 @@ export default function Estados({ dados }) {
   return (
     <div className="grade-ufs">
       {ufs.map((uf) => {
+        if (semSecaoApurada(uf)) {
+          return (
+            <div className="uf aguardando" key={uf.uf}>
+              <div className="sigla">
+                {uf.uf}
+                <em>aguardando</em>
+              </div>
+              <div className="lider">sem seções apuradas ainda</div>
+              <div className="faixa espera" />
+            </div>
+          )
+        }
+
         const cor = cores[uf.lider] || '#b9b2a4'
         const largura = Math.min(
           100,
@@ -21,7 +40,7 @@ export default function Estados({ dados }) {
           <div className="uf" style={{ '--cor': cor }} key={uf.uf}>
             <div className="sigla">
               {uf.uf}
-              <em>{pct(uf.pct_apurado, 0)}%</em>
+              <em>{fracaoSecoes(uf)}</em>
             </div>
             <div className="lider">
               {uf.lider || 'sem dado'} {pct(uf.lider_pct)}%

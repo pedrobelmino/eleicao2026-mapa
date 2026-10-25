@@ -1,4 +1,10 @@
-import { milhar, pct } from './formato.js'
+import SeloAmostra from './Amostra.jsx'
+import {
+  fracaoSecoes,
+  milhar,
+  pct,
+  semSecaoApurada,
+} from './formato.js'
 
 function Etiqueta({ tipo }) {
   const classes = {
@@ -28,16 +34,15 @@ export default function Fenomeno({ dados }) {
   const segundo = candidatos[1] || null
 
   // 1) Regiões: ordem de entrada = % de seções já apuradas (maior primeiro).
-  const comPct = regioes
-    .filter(
-      (regiao) =>
-        regiao.pct_apurado !== null && regiao.pct_apurado !== undefined,
-    )
-    .sort(
-      (a, b) => Number(b.pct_apurado || 0) - Number(a.pct_apurado || 0),
-    )
+  // Região sem seção apurada continua na lista, mas vai para o fim em espera.
+  const regioesOrdenadas = [...regioes].sort((a, b) => {
+    const esperaA = semSecaoApurada(a)
+    const esperaB = semSecaoApurada(b)
+    if (esperaA !== esperaB) return esperaA ? 1 : -1
+    return Number(b.pct_apurado || 0) - Number(a.pct_apurado || 0)
+  })
 
-  const barras = comPct.map((regiao, indice) => {
+  const barras = regioesOrdenadas.map((regiao, indice) => {
     const nomeRegiao = regiao.regiao || '?'
     const apurado = Math.max(
       0,
@@ -53,6 +58,22 @@ export default function Fenomeno({ dados }) {
       faltaTexto = 'sem seções faltantes'
     }
 
+    if (semSecaoApurada(regiao)) {
+      return (
+        <div
+          className="barra-regiao aguardando"
+          key={`${nomeRegiao}-${indice}`}
+        >
+          <div className="rot">
+            <div className="nome">
+              <b>{nomeRegiao}</b>
+            </div>
+          </div>
+          <div className="espera">sem seções apuradas ainda</div>
+        </div>
+      )
+    }
+
     return (
       <div
         className={`barra-regiao${
@@ -61,10 +82,10 @@ export default function Fenomeno({ dados }) {
         key={`${nomeRegiao}-${indice}`}
       >
         <div className="rot">
-          <b>{nomeRegiao}</b>
-          <span>
-            {pct(apurado)}% apurado · {faltaTexto}
-          </span>
+          <div className="nome">
+            <b>{nomeRegiao}</b> · <em>{fracaoSecoes(regiao)}</em>
+          </div>
+          <span>{faltaTexto}</span>
         </div>
         <div className="trilho">
           <span style={{ width: `${apurado.toFixed(2)}%` }} />
@@ -75,10 +96,12 @@ export default function Fenomeno({ dados }) {
 
   const blocoBarras = barras.length ? (
     <>
+      <SeloAmostra nacional={nacional} />
       <div className="barras-regiao">{barras}</div>
       <p className="nota">
         Ordem de entrada das regiões pelo percentual de seções já apuradas. O{' '}
-        <b>Nordeste</b> fica em destaque.
+        <b>Nordeste</b> fica em destaque. Região sem nenhuma seção apurada
+        aparece como aguardando, não como 0%.
       </p>
     </>
   ) : (

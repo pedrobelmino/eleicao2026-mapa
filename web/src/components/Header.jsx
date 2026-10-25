@@ -5,15 +5,21 @@ import { apuracao, dataHora, rotuloTurno } from '../format.js'
 // Sem replay a prop é null e o texto volta ao valor oficial da apuração.
 export default function Header({ estados, erro, aoVivo = null }) {
   const carregado = Boolean(estados)
+  // Retrato de outro turno (ou sem dado): a faixa não afirma percentual. O
+  // badge continua mostrando a IDENTIDADE do painel (eleição e turno do
+  // ambiente); o que não entra é número — a apuração em tela é de outro turno.
+  const semNumero = Boolean(estados?.incoerente || estados?.dados_sem_dado)
   const meta = aoVivo
     ? `${rotuloTurno(estados?.turno)} · replay ${apuracao(aoVivo.pct)} apurado · ${aoVivo.carimbo}`
-    : carregado
-      ? `${rotuloTurno(estados.turno)} · apuração ${apuracao(
-          estados.nacional?.pct_apurado,
-        )} · atualizado ${dataHora(estados.gerado_em)}`
-      : erro
-        ? 'apuração indisponível'
-        : 'carregando apuração…'
+    : carregado && semNumero
+      ? `${rotuloTurno(estados.turno)} · aguardando o processamento do TSE`
+      : carregado
+        ? `${rotuloTurno(estados.turno)} · apuração ${apuracao(
+            estados.nacional?.pct_apurado,
+          )} · atualizado ${dataHora(estados.gerado_em)}`
+        : erro
+          ? 'apuração indisponível'
+          : 'carregando apuração…'
 
   return (
     <header className="site-header">
@@ -34,10 +40,10 @@ export default function Header({ estados, erro, aoVivo = null }) {
       <div
         className="header-badge"
         title={`código da eleição no TSE · ${
-          carregado ? rotuloTurno(estados.turno) : '1º turno'
+          carregado ? rotuloTurno(estados.turno) : 'turno aguardando o TSE'
         }`}
         aria-label={`eleição no TSE: código ${carregado ? estados.eleicao : '—'}, ${
-          carregado ? rotuloTurno(estados.turno) : '1º turno'
+          carregado ? rotuloTurno(estados.turno) : 'turno aguardando o TSE'
         }`}
       >
         <span className="badge-label" title="código da eleição no TSE">

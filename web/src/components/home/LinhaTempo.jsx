@@ -62,7 +62,7 @@ export default function LinhaTempo({ dados }) {
           aria-pressed={camada === '2022'}
           onClick={() => setCamada('2022')}
         >
-          2022 (referência TSE, 1º turno)
+          2022 (referência TSE)
         </button>
       </div>
 

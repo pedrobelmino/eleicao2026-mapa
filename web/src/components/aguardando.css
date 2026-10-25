@@ -1,0 +1,68 @@
+/* Estado de espera do painel. Duas variantes porque o site tem dois temas:
+   `home` (fundo escuro, .home-app) e `mapa` (claro, styles.css). As cores saem
+   das variáveis do contexto, com queda para os valores de cada tema. */
+
+.aguardando-tse {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  text-align: center;
+  padding: 34px 22px 36px;
+  border-radius: 18px;
+  border: 1px dashed var(--borda, rgba(28, 35, 43, 0.25));
+  background: var(--card2, var(--card, #fffdf8));
+}
+
+.aguardando-tse--mapa {
+  margin: 28px auto;
+  max-width: 720px;
+  background: #fffdf8;
+  border-color: rgba(28, 35, 43, 0.2);
+  color: #1c232b;
+}
+
+.aguardando-pulso {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--teal, #14b8a6);
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--teal, #14b8a6) 55%, transparent);
+  animation: aguardando-pulso 1.8s ease-out infinite;
+}
+
+@keyframes aguardando-pulso {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--teal, #14b8a6) 55%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 14px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aguardando-pulso {
+    animation: none;
+  }
+}
+
+.aguardando-texto {
+  margin: 0;
+  max-width: 46ch;
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--texto, var(--ink, #1c232b));
+}
+
+.aguardando-tse--home .aguardando-texto {
+  color: var(--texto, #e8eefc);
+}
+
+.aguardando-meta {
+  margin: 0;
+  max-width: 52ch;
+  font-size: 13px;
+  color: var(--fraco, var(--muted, #6d6b64));
+}

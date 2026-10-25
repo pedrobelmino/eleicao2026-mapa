@@ -1,0 +1,187 @@
+@charset "UTF-8";
+
+/* Faixa de estado da atualização automática — BANNER DE ESTADO, não rodapé.
+ *
+ * Regras que este bloco garante:
+ *  - fica na FRENTE: primeiro filho do painel, `position: sticky; top: 0`,
+ *    z-index 60 (acima do .site-header z=30 e dos controles do MapLibre /
+ *    cards flutuantes, que vão até 44);
+ *  - CONTRASTE alto: fundo sólido (sem alfa) + texto escuro 600. O tom do
+ *    fundo e a barra de acento mudam por fase (aguardando/andamento/concluída);
+ *  - NUNCA corta texto: sem `white-space: nowrap`, sem `text-overflow`. Se não
+ *    couber, quebra em duas linhas (celular de 390 px) e a altura cresce — o
+ *    canvas do MapLibre tem ResizeObserver (`MapView`), então ele reacomoda.
+ *
+ * As cores são variáveis para o tema escuro da home sobrescrever só o
+ * necessário (home.css), sem repetir a estrutura.
+ */
+.banner-auto {
+  --banner-h: 34px;
+  --banner-bg: #f7efdd;
+  --banner-fg: #131c28;
+  --banner-meta: #46536a;
+  --banner-accent: #c99a2e;
+
+  flex: 0 0 auto;
+  min-height: var(--banner-h);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  padding: 6px clamp(10px, 2vw, 22px);
+  font-size: 13px;
+  line-height: 1.3;
+  letter-spacing: 0.005em;
+  font-variant-numeric: tabular-nums;
+  color: var(--banner-fg);
+  background: var(--banner-bg);
+  border-bottom: 2px solid var(--banner-accent);
+  box-shadow: 0 2px 12px rgba(16, 22, 29, 0.16);
+  /* Fica no topo enquanto o painel rola (na home o container que rola é o
+   * .home-app; no /mapa não há rolagem de página, então sticky = normal). */
+  position: sticky;
+  top: 0;
+  z-index: 60;
+}
+
+.banner-auto--aguardando {
+  --banner-bg: #fbf2dc;
+  --banner-accent: #c99a2e;
+}
+
+.banner-auto--andamento {
+  --banner-bg: #e9f7f0;
+  --banner-accent: #17724f;
+}
+
+.banner-auto--concluida {
+  --banner-bg: #e9f0fb;
+  --banner-accent: #2a6fbb;
+}
+
+.banner-auto--carregando {
+  --banner-bg: #f1efe9;
+  --banner-accent: #7c8798;
+}
+
+/* Ponto de estado. Sem biblioteca: uma animação de opacidade em CSS puro.
+ * `prefers-reduced-motion` desliga a pulsação (acessibilidade). */
+.banner-ponto {
+  flex: 0 0 auto;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #8a94a6;
+}
+
+.banner-auto--aguardando .banner-ponto {
+  background: #b8860b;
+  box-shadow: 0 0 0 0 rgba(201, 154, 46, 0.55);
+  animation: banner-pulso 2.4s ease-out infinite;
+}
+
+.banner-auto--andamento .banner-ponto {
+  background: #17724f;
+  box-shadow: 0 0 0 0 rgba(31, 158, 111, 0.5);
+  animation: banner-pulso 1.4s ease-out infinite;
+}
+
+.banner-auto--concluida .banner-ponto {
+  background: #2a6fbb;
+}
+
+.banner-auto--carregando .banner-ponto {
+  background: #8a94a6;
+  animation: banner-pulso 2.4s ease-out infinite;
+}
+
+/* Falha de rede: o dado em tela continua (o ciclo não esvazia nada), só o
+ * indicador muda de cor e o rodapé da faixa diz que está tentando de novo. */
+.banner-auto.is-falha {
+  --banner-bg: #fbe8e3;
+  --banner-accent: #b03a30;
+  --banner-meta: #8a2d25;
+}
+
+.banner-auto.is-falha .banner-ponto {
+  background: #b03a30;
+  animation: none;
+  box-shadow: none;
+}
+
+/* Sem nowrap/ellipsis: o texto quebra de linha em vez de ser cortado. */
+.banner-texto {
+  min-width: 0;
+  font-weight: 600;
+}
+
+.banner-meta {
+  margin-left: auto;
+  flex: 0 0 auto;
+  color: var(--banner-meta);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+@keyframes banner-pulso {
+  0% {
+    box-shadow: 0 0 0 0 currentColor;
+    opacity: 1;
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(0, 0, 0, 0);
+    opacity: 0.75;
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .banner-ponto {
+    animation: none !important;
+  }
+}
+
+/* Celular: texto em cima (largura inteira, quebra em 2 linhas se precisar) e a
+ * meta numa linha própria embaixo. Nada de reticências — o sentido da frase
+ * (esperando o TSE / a apuração do 2º turno já vai iniciar / a página se
+ * atualiza sozinha) tem que chegar inteiro numa tela de 390 px. */
+@media (max-width: 620px) {
+  .banner-auto {
+    --banner-h: 0px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+      'ponto texto'
+      'meta meta';
+    row-gap: 3px;
+    column-gap: 8px;
+    align-items: start;
+    padding: 7px 10px 8px;
+    font-size: 12px;
+    line-height: 1.28;
+  }
+
+  .banner-ponto {
+    grid-area: ponto;
+    margin-top: 5px;
+    width: 8px;
+    height: 8px;
+  }
+
+  .banner-texto {
+    grid-area: texto;
+    white-space: normal;
+  }
+
+  .banner-meta {
+    grid-area: meta;
+    margin-left: 0;
+    font-size: 10.5px;
+    white-space: normal;
+  }
+}

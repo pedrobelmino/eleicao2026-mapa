@@ -3,6 +3,9 @@
 
 export const CORES = ['#1e58a8', '#c8102e', '#8a5a00', '#0f766e']
 
+// Abaixo deste piso a amostra ainda é pequena demais para parecer resultado.
+export const AMOSTRA_PISO = 5
+
 export const CORES_2022 = {
   LULA: '#c8102e',
   'JAIR BOLSONARO': '#1e58a8',
@@ -22,6 +25,22 @@ export function pct(valor, casas = 1) {
   const numero = Number(valor)
   if (!Number.isFinite(numero)) return '—'
   return numero.toFixed(casas).replace('.', ',')
+}
+
+// Sem seção apurada não existe resultado para desenhar.
+export function semSecaoApurada(item) {
+  if (item?.st === null || item?.st === undefined) return true
+  return Number(item.st) <= 0
+}
+
+// Fração de seções apuradas no rótulo da amostra ("0,41% das seções").
+export function fracaoSecoes(item) {
+  const valor = item?.pct_apurado
+  if (valor === null || valor === undefined || valor === '') {
+    return '— das seções'
+  }
+  if (!Number.isFinite(Number(valor))) return '— das seções'
+  return `${pct(valor, 2)}% das seções`
 }
 
 export function coresCandidatos(nacional) {

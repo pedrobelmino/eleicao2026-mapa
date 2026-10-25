@@ -7,16 +7,16 @@
 }
 
 .home-app {
-  --fundo: #080c18;
-  --card: #111a2e;
-  --card2: #0e1628;
-  --borda: #1f2b45;
-  --texto: #e8eefc;
-  --fraco: #93a3c4;
-  --teal: #2ee6c5;
-  --azul: #4f8cff;
-  --vermelho: #ff5a67;
-  --amarelo: #f5c542;
+  --fundo: #f4efe4;
+  --card: #fffdf8;
+  --card2: #f8f3e9;
+  --borda: rgba(28, 35, 43, 0.13);
+  --texto: #1c232b;
+  --fraco: #6d6b64;
+  --teal: #0f766e;
+  --azul: #1e58a8;
+  --vermelho: #c8102e;
+  --amarelo: #8a5a00;
 
   height: 100%;
   min-height: 100%;
@@ -27,8 +27,8 @@
   background: var(--fundo);
   color: var(--texto);
   background-image:
-    radial-gradient(900px 500px at 15% -10%, #16305c55, transparent 70%),
-    radial-gradient(700px 420px at 95% 0%, #0d4a3f55, transparent 70%);
+    radial-gradient(900px 500px at 15% -10%, #e9e1d226, transparent 70%),
+    radial-gradient(700px 420px at 95% 0%, #dfe7f126, transparent 70%);
   background-attachment: fixed;
   font-family:
     -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial,
@@ -57,8 +57,8 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--teal);
-  background: #0f3a33;
-  border: 1px solid #1c6155;
+  background: #e6f4f0;
+  border: 1px solid #bfe0d8;
   padding: 5px 11px;
   border-radius: 999px;
   font-weight: 600;
@@ -108,7 +108,7 @@
   border: 1px solid var(--borda);
   border-radius: 18px;
   padding: 18px 18px 20px;
-  box-shadow: 0 14px 34px #0000 0;
+  box-shadow: 0 14px 34px rgba(28, 35, 43, 0.07);
 }
 
 /* Tabela larga rola dentro do card, no eixo X: o documento nunca ganha scroll
@@ -142,7 +142,7 @@
 }
 
 .home-app .cand {
-  background: #0b1424;
+  background: #fffdf8;
   border: 1px solid var(--borda);
   border-radius: 16px;
   padding: 16px;
@@ -207,7 +207,7 @@
   border-radius: 999px;
   overflow: hidden;
   display: flex;
-  background: #0a1120;
+  background: #e9e1d2;
   border: 1px solid var(--borda);
   margin-top: 16px;
 }
@@ -235,10 +235,10 @@
 
 .home-app .aviso {
   border-left: 4px solid var(--amarelo);
-  background: #2a210a;
+  background: #fdf6e3;
   border-radius: 12px;
   padding: 12px 14px;
-  color: #f7e7b6;
+  color: #5c4300;
   font-size: 14px;
 }
 
@@ -247,7 +247,7 @@
   gap: 12px;
   align-items: flex-start;
   padding: 12px 0;
-  border-bottom: 1px dashed #1d2942;
+  border-bottom: 1px dashed rgba(28, 35, 43, 0.13);
 }
 
 .home-app .insight:last-child {
@@ -271,21 +271,21 @@
 }
 
 .home-app .t-dado {
-  background: #0d3b3a;
-  color: #5cf0d6;
-  border: 1px solid #1b6b66;
+  background: #e6f4f0;
+  color: #0b5c52;
+  border: 1px solid #bfe0d8;
 }
 
 .home-app .t-conta {
-  background: #1a2c4f;
-  color: #9dc0ff;
-  border: 1px solid #2f4c85;
+  background: #e8eefa;
+  color: #1e58a8;
+  border: 1px solid #c3d4ee;
 }
 
 .home-app .t-estimativa {
-  background: #3a2a08;
-  color: #f7cf7a;
-  border: 1px solid #7a5a12;
+  background: #fdf3d9;
+  color: #8a5a00;
+  border: 1px solid #e8d099;
 }
 
 .home-app .tabela {
@@ -307,7 +307,7 @@
 
 .home-app .tabela td {
   padding: 10px 8px;
-  border-bottom: 1px solid #16203441;
+  border-bottom: 1px solid rgba(28, 35, 43, 0.13);
 }
 
 .home-app .tabela tr:last-child td {
@@ -319,13 +319,13 @@
 }
 
 .home-app .tabela tr.destaque {
-  background: #12233d66;
+  background: rgba(30, 88, 168, 0.07);
 }
 
 .home-app .mini {
   height: 6px;
   border-radius: 999px;
-  background: #0a1120;
+  background: #e9e1d2;
   overflow: hidden;
   min-width: 52px;
 }
@@ -343,7 +343,7 @@
 }
 
 .home-app .uf {
-  background: #0b1424;
+  background: #fffdf8;
   border: 1px solid var(--borda);
   border-radius: 12px;
   padding: 9px 10px;
@@ -375,7 +375,7 @@
   height: 4px;
   border-radius: 999px;
   margin-top: 7px;
-  background: #16223a;
+  background: #e9e1d2;
 }
 
 .home-app .uf .faixa span {
@@ -398,8 +398,8 @@
   margin-top: 16px;
   padding: 13px 22px;
   border-radius: 14px;
-  background: linear-gradient(96deg, var(--teal), var(--azul));
-  color: #04121a;
+  background: linear-gradient(96deg, #0f766e, #1e58a8);
+  color: #fffdf8;
   text-decoration: none;
   font-size: 16px;
   font-weight: 800;
@@ -416,7 +416,7 @@
 }
 
 .home-app .metrica {
-  background: #0b1424;
+  background: #fffdf8;
   border: 1px solid var(--borda);
   border-radius: 14px;
   padding: 14px;
@@ -474,7 +474,7 @@
 
 .home-app .barras .bar {
   width: 100%;
-  background: linear-gradient(180deg, var(--teal), #1b7f74);
+  background: linear-gradient(180deg, #0f766e, #0b5c52);
   border-radius: 6px 6px 0 0;
 }
 
@@ -493,7 +493,7 @@
   gap: 12px;
   align-items: center;
   justify-content: space-between;
-  background: linear-gradient(100deg, #19243c, #141d31);
+  background: #fffdf8;
   border: 1px solid var(--borda);
   border-radius: 18px;
   padding: 18px;
@@ -505,8 +505,8 @@
 }
 
 .home-app .cta a {
-  background: linear-gradient(96deg, #2ee6c5, #4f8cff);
-  color: #04121a;
+  background: linear-gradient(96deg, #0f766e, #1e58a8);
+  color: #fffdf8;
   text-decoration: none;
   font-weight: 800;
   padding: 12px 20px;
@@ -563,8 +563,8 @@
   font: inherit;
   font-size: 13px;
   font-weight: 700;
-  color: #04121a;
-  background: linear-gradient(96deg, var(--teal), var(--azul));
+  color: #fffdf8;
+  background: linear-gradient(96deg, #0f766e, #1e58a8);
   border: 0;
   border-radius: 10px;
   padding: 9px 16px;
@@ -594,7 +594,7 @@
   font-size: 13px;
   font-weight: 700;
   color: var(--texto);
-  background: #0b1424;
+  background: #fffdf8;
   border: 1px solid var(--borda);
   border-radius: 999px;
   padding: 8px 14px;
@@ -612,15 +612,15 @@
 }
 
 .home-app .turno.ativo {
-  background: linear-gradient(96deg, var(--teal), var(--azul));
+  background: linear-gradient(96deg, #0f766e, #1e58a8);
   border-color: transparent;
-  color: #04121a;
+  color: #fffdf8;
 }
 
 .home-app .camada.ativa {
-  background: #123a52;
-  border-color: #2ee6c5;
-  color: #bffcf2;
+  background: #e6f4f0;
+  border-color: #0f766e;
+  color: #0b5c52;
 }
 
 .home-app .selos {
@@ -663,7 +663,7 @@
 .home-app .barra-regiao .trilho {
   height: 11px;
   border-radius: 999px;
-  background: #0a1120;
+  background: #e9e1d2;
   border: 1px solid var(--borda);
   overflow: hidden;
   margin-top: 5px;
@@ -673,12 +673,12 @@
   display: block;
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, #1b7f74, var(--teal));
+  background: linear-gradient(90deg, #0f766e, #0b5c52);
 }
 
 .home-app .barra-regiao.destaque-nordeste {
-  background: #0d2a2a;
-  border: 1px solid #1c6155;
+  background: #eef7f4;
+  border: 1px solid #bfe0d8;
   border-radius: 12px;
   padding: 10px 11px;
   margin: 0 -5px;
@@ -694,7 +694,7 @@
 }
 
 .home-app .fenomeno .conta {
-  background: #0b1424;
+  background: #fffdf8;
   border: 1px solid var(--borda);
   border-radius: 14px;
   padding: 14px;
@@ -721,7 +721,7 @@
   width: 100%;
   height: auto;
   display: block;
-  background: #0a1120;
+  background: #f8f3e9;
   border: 1px solid var(--borda);
   border-radius: 14px;
 }
@@ -744,7 +744,7 @@
 }
 
 .home-app .ponto-unico {
-  background: #0b1424;
+  background: #fffdf8;
   border: 1px solid var(--borda);
   border-radius: 14px;
   padding: 16px;
@@ -861,8 +861,8 @@
 }
 
 .home-app .nao-encontrado a {
-  color: #04121a;
-  background: linear-gradient(96deg, var(--teal), var(--azul));
+  color: #fffdf8;
+  background: linear-gradient(96deg, #0f766e, #1e58a8);
   text-decoration: none;
   font-weight: 800;
   padding: 11px 18px;
@@ -870,7 +870,75 @@
 }
 
 .home-app .nao-encontrado a.secundario {
-  background: #0b1424;
+  background: #fffdf8;
   color: var(--teal);
   border: 1px solid var(--borda);
+}
+
+/* Amostra pequena e região/UF sem seção apurada: estado de espera honesto,
+   sem barra em 0% nem líder de candidato. */
+.home-app .selo-amostra {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #fdf3e0;
+  border: 1px solid #e6cf9b;
+  border-radius: 999px;
+  color: #8a5a00;
+  font-size: 12px;
+  padding: 4px 10px;
+  margin: 0 0 10px;
+}
+
+.home-app .barra-regiao .rot .nome {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+}
+
+.home-app .barra-regiao .rot .nome em {
+  font-style: normal;
+  font-size: 12px;
+  color: #6d6b64;
+}
+
+.home-app .barra-regiao.aguardando .espera {
+  border: 1px dashed rgba(28, 35, 43, 0.18);
+  border-radius: 999px;
+  background: transparent;
+  color: #6d6b64;
+  font-size: 11.5px;
+  line-height: 1.35;
+  text-align: center;
+  padding: 3px 10px;
+  margin-top: 5px;
+}
+
+.home-app .mini-espera {
+  font-size: 10.5px;
+  color: #6d6b64;
+}
+
+.home-app .uf.aguardando {
+  background: #f8f3e9;
+  border: 1px dashed rgba(28, 35, 43, 0.13);
+}
+
+.home-app .uf.aguardando .sigla em {
+  color: #6d6b64;
+}
+
+.home-app .uf.aguardando .lider {
+  white-space: normal;
+}
+
+/* A fração apurada fica ao lado da sigla, sem quebrar em duas linhas. */
+.home-app .uf .sigla em {
+  white-space: nowrap;
+  font-size: 10.5px;
+}
+
+.home-app .uf .faixa.espera {
+  background: transparent;
+  border: 1px dashed rgba(28, 35, 43, 0.18);
 }

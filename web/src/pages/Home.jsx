@@ -1,7 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { API_BASE, fetchJSON } from '../api.js'
 import { definirMeta } from '../meta.js'
 import '../home.css'
+import BannerAtualizacao from '../components/BannerAtualizacao.jsx'
+import {
+  INTERVALO_APURANDO_MS,
+  INTERVALO_PARADO_MS,
+  estadoDaApuracao,
+  useAtualizacaoAutomatica,
+} from '../atualizacao.js'
 import Selos from '../components/home/Selos.jsx'
 import CabecalhoApuracao from '../components/home/CabecalhoApuracao.jsx'
 import Placar from '../components/home/Placar.jsx'
@@ -13,12 +20,32 @@ import Estados from '../components/home/Estados.jsx'
 import Fontes from '../components/home/Fontes.jsx'
 import LinhaTempo from '../components/home/LinhaTempo.jsx'
 import Rodape from '../components/Rodape.jsx'
-
-const CANAL_YOUTUBE = 'https://www.youtube.com/@belmino.c.f'
+import AguardandoTSE from '../components/AguardandoTSE.jsx'
 
 export default function Home() {
   const [estado, setEstado] = useState({ fase: 'loading', dados: null })
   const [tentativa, setTentativa] = useState(0)
+
+  const dados = estado.dados
+
+  // O retrato em disco pode ser de OUTRO turno (a virada troca ELEICAO/TURNO
+  // no ambiente antes de o TSE publicar o arquivo novo). Nesse estado a API
+  // responde `incoerente: true` e payload zerado: a tela troca os cards pelo
+  // estado de espera em vez de mostrar 100% de uma apuração que já passou.
+  const incoerente = Boolean(dados?.incoerente || dados?.sem_dado)
+
+  // Banner: fase vem do DADO na tela (não do relógio). Sem dado não há fase
+  // afirmada: o banner mostra o TEXTO_ESPERA fixo (sem ordinal de turno) e
+  // troca sozinho quando o voto novo chega.
+  const apuracao = estadoDaApuracao({
+    pct: dados?.nacional?.pct_apurado,
+    turno: dados?.dados_turno ?? dados?.turno,
+    semDado: Boolean(dados?.sem_dado),
+    incoerente: Boolean(dados?.incoerente),
+  })
+  // 60 s com a apuração parada, 30 s enquanto os votos estão chegando.
+  const intervaloDeCarga =
+    apuracao.fase === 'andamento' ? INTERVALO_APURANDO_MS : INTERVALO_PARADO_MS
 
   // Nível 2 tem título e descrição próprios (a raiz é a landing).
   useEffect(() => {
@@ -29,26 +56,46 @@ export default function Home() {
     })
   }, [])
 
+  // UMA função de carga, usada pela montagem E pelo ciclo automático. O
+  // caminho de atualização nunca passa por `setEstado({ fase: 'loading' })`:
+  // o dado novo entra por cima do velho e a tela não pisca.
+  const carregar = useCallback(async () => {
+    try {
+      const resposta = await fetchJSON(`${API_BASE}/home`)
+      // O ciclo NÃO pode esvaziar o painel: 200 sem `publico` é falha, não
+      // "dado vazio" (senão um defeito do coletor viraria tela em branco).
+      if (!resposta?.publico) throw new Error('resposta sem dados')
+      setEstado({ fase: 'ready', dados: resposta.publico })
+      return true
+    } catch {
+      setEstado((atual) => (atual.dados ? atual : { fase: 'error', dados: null }))
+      return false
+    }
+  }, [])
+
+  const atualizacao = useAtualizacaoAutomatica({
+    aoCiclar: carregar,
+    intervaloMs: intervaloDeCarga,
+  })
+  // A montagem precisa das funções de registro estáveis do hook; guardar o
+  // objeto inteiro no ref evita reassinar o ciclo a cada render.
+  const registrarLeituraRef = useRef(atualizacao.registrarLeitura)
+  const registrarFalhaRef = useRef(atualizacao.registrarFalha)
+  registrarLeituraRef.current = atualizacao.registrarLeitura
+  registrarFalhaRef.current = atualizacao.registrarFalha
+
   useEffect(() => {
     let ativo = true
-    setEstado({ fase: 'loading', dados: null })
-
-    fetchJSON(`${API_BASE}/home`)
-      .then((resposta) => {
-        if (!ativo) return
-        setEstado({ fase: 'ready', dados: resposta?.publico || null })
-      })
-      .catch(() => {
-        if (!ativo) return
-        setEstado({ fase: 'error', dados: null })
-      })
-
+    carregar().then((ok) => {
+      if (!ativo) return
+      if (ok) registrarLeituraRef.current()
+      else registrarFalhaRef.current()
+    })
     return () => {
       ativo = false
     }
-  }, [tentativa])
+  }, [carregar, tentativa])
 
-  const dados = estado.dados
   const temMapa =
     Boolean(dados) &&
     !dados.sem_dado &&
@@ -56,6 +103,13 @@ export default function Home() {
 
   return (
     <div className="home-app">
+      <BannerAtualizacao
+        fase={apuracao.fase}
+        pct={apuracao.pct}
+        ultimaLeitura={atualizacao.ultimaLeitura}
+        falha={atualizacao.falha}
+        pausada={atualizacao.pausada}
+      />
       <div className="envelope">
         <header className="topo">
           <span className="selo">
@@ -72,6 +126,17 @@ export default function Home() {
         </header>
 
         {dados ? (
+          incoerente ? (
+            <main>
+              <div className="pilha">
+                <AguardandoTSE
+                  eleicao={dados.eleicao}
+                  turno={dados.turno}
+                  variante="home"
+                />
+              </div>
+            </main>
+          ) : (
           <main>
             <div className="pilha">
               <CabecalhoApuracao dados={dados} />
@@ -139,6 +204,7 @@ export default function Home() {
               </div>
             </div>
           </main>
+          )
         ) : (
           <div className="pilha">
             <div className="card">
@@ -146,7 +212,7 @@ export default function Home() {
                 Coletando os números do TSE…
                 <br />
                 <span className="vazio">
-                  a página recarrega sozinha em instantes.
+                  os dados se atualizam sozinhos, sem recarregar a página.
                 </span>
               </div>
               {estado.fase === 'error' ? (
@@ -165,26 +231,12 @@ export default function Home() {
         )}
 
         <div className="pilha">
-          <div className="cta">
-            <p>
-              <b>Gostou do painel?</b> Ele é atualizado direto da fonte oficial
-              e eu explico os bastidores no canal.
-            </p>
-            <a
-              href={CANAL_YOUTUBE}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Se inscreve no meu canal do YouTube (abre em nova aba)"
-            >
-              Se inscreve no meu canal →
-            </a>
-          </div>
-
           <Rodape
             variante="home"
             eleicao={dados?.eleicao}
             turno={dados?.turno}
-            geradoEm={dados?.gerado_em}
+            geradoEm={incoerente ? null : dados?.gerado_em}
+            mostrarCanal={false}
           />
         </div>
       </div>

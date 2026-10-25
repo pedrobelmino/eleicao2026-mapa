@@ -1089,6 +1089,7 @@ function aplicarDetalhe(
   aoPendente,
   temSelecao,
   municipioSelecionado,
+  oculto = false,
 ) {
   if (!mapa) return
   // O gate certo para addSource/addLayer é a existência do estilo, não o
@@ -1099,7 +1100,15 @@ function aplicarDetalhe(
     return
   }
 
-  if (!detalhe) {
+  if (!detalhe || oculto) {
+    // `oculto` é decisão de procedência (zona/local de outro turno): as
+    // camadas SAEM da tela, mesmo com município selecionado. Sem esse ramo o
+    // detalhe do turno anterior ficaria desenhado sob o rótulo do atual.
+    if (oculto) {
+      removerDetalhe(mapa)
+      publicarDebug(mapa, locais, null, null)
+      return
+    }
     // Durante o recarregamento do detalhe o município continua selecionado e o
     // que está na tela é a última versão válida. Nunca apagar as camadas nesse
     // intervalo: o load/styledata pode reaplicar com detalhe=null antes de os
@@ -1853,6 +1862,10 @@ export default function MapView({
   onSelect,
   onMapError,
   detalhe,
+  // Gate de recorte (zona/município/local de outro turno): força a remoção das
+  // camadas de detalhe mesmo com município selecionado — o caminho "preserva a
+  // última aplicação válida" existe para recarregamento, não para mentira.
+  detalheOculto = false,
   municipioSelecionado,
   locais,
   localSelecionado,
@@ -1863,6 +1876,7 @@ export default function MapView({
   replay,
   modoMargem,
   margensUf,
+  versao = 0,
 }) {
   const containerRef = useRef(null)
   const mapRef = useRef(null)
@@ -1872,6 +1886,7 @@ export default function MapView({
   const onSelectRef = useRef(onSelect)
   const onMapErrorRef = useRef(onMapError)
   const detalheRef = useRef(detalhe)
+  const detalheOcultoRef = useRef(detalheOculto)
   const municipioSelecionadoRef = useRef(municipioSelecionado)
   const zoomInicialRef = useRef(zoomInicial)
   const onZoomRef = useRef(onZoom)
@@ -1901,6 +1916,7 @@ export default function MapView({
   onSelectRef.current = onSelect
   onMapErrorRef.current = onMapError
   detalheRef.current = detalhe
+  detalheOcultoRef.current = detalheOculto
   municipioSelecionadoRef.current = municipioSelecionado
   zoomInicialRef.current = zoomInicial
   onZoomRef.current = onZoom
@@ -2039,9 +2055,10 @@ export default function MapView({
         const detalheAtual = detalheRef.current
         const locaisAtuais = locaisRef.current
         const municipioAtual = municipioSelecionadoRef.current
+        const ocultoAtual = detalheOcultoRef.current
         const temSelecao = Boolean(municipioAtual)
 
-        if (!detalheAtual && temSelecao) {
+        if (!detalheAtual && temSelecao && !ocultoAtual) {
           // O detalhe ainda não voltou, mas há município selecionado: preserva
           // as camadas da última aplicação válida e tenta de novo no próximo
           // idle, uma única vez.
@@ -2069,6 +2086,7 @@ export default function MapView({
           reaplicarDetalhe,
           temSelecao,
           municipioAtual,
+          ocultoAtual,
         )
         atualizarDebug()
       }, 150)
@@ -2197,6 +2215,7 @@ export default function MapView({
         reaplicarDetalhe,
         Boolean(municipioSelecionadoRef.current),
         municipioSelecionadoRef.current,
+        detalheOcultoRef.current,
       )
       atualizarDebug()
       onZoomRef.current?.(mapa.getZoom())
@@ -2456,6 +2475,9 @@ export default function MapView({
   // feature-state). Nada aqui mexe em geometria, altura de prisma ou zoom — as
   // duas lições caras do projeto: expressão com 'zoom' dentro de altura de
   // extrusão derruba o mapa, e o resto é pintura.
+  // `versao` está nas dependências porque o ciclo automático troca o GeoJSON
+  // por `setData` a cada rodada, e `setData` zera o feature-state: a pintura
+  // (cor por partido/margem) precisa ser reaplicada em cima do dado novo.
   useEffect(() => {
     const mapa = mapRef.current
     if (!mapa) return undefined
@@ -2473,7 +2495,7 @@ export default function MapView({
       mapa.off('load', aplicar)
       mapa.off('styledata', aplicar)
     }
-  }, [replay, modoMargem])
+  }, [replay, modoMargem, versao])
 
   // ITEM 6 — calor por município: feature-state + visibility, reaplicados quando
   // o modo troca, quando a lista da UF chega e quando a malha municipal é
@@ -2502,13 +2524,15 @@ export default function MapView({
     if (!mapa) return undefined
 
     // Recarregando o detalhe do município: não tocar no mapa, senão as
-    // camadas válidas da seleção atual seriam apagadas.
-    if (municipioSelecionado && !detalhe) return undefined
+    // camadas válidas da seleção atual seriam apagadas. Exceto quando o gate de
+    // recorte está ligado — aí apagar é exatamente o objetivo.
+    if (municipioSelecionado && !detalhe && !detalheOculto) return undefined
 
     const aplicar = () => {
       const detalheAtual = detalheRef.current
       const municipioAtual = municipioSelecionadoRef.current
-      if (municipioAtual && !detalheAtual) return
+      const ocultoAtual = detalheOcultoRef.current
+      if (municipioAtual && !detalheAtual && !ocultoAtual) return
       aplicarDetalhe(
         mapa,
         detalheAtual,
@@ -2516,6 +2540,7 @@ export default function MapView({
         reaplicarDetalheRef.current,
         Boolean(municipioAtual),
         municipioAtual,
+        ocultoAtual,
       )
     }
     // Aplica já (as funções internas só dependem de getStyle) e reaplica no
@@ -2527,7 +2552,7 @@ export default function MapView({
     return () => {
       mapa.off('load', aplicar)
     }
-  }, [detalhe, municipioSelecionado, locais, localSelecionado])
+  }, [detalhe, detalheOculto, municipioSelecionado, locais, localSelecionado])
 
   // Anel em volta do local escolhido + as urnas daquele local na laje do
   // prédio. Ao abrir um local a câmera aproxima (uma vez) para a grade de urnas
@@ -2653,6 +2678,13 @@ export default function MapView({
 
   // Aproxima a UF escolhida, inclina a câmera para os prismas e aplica o zoom
   // inicial da URL uma única vez, depois do fitBounds.
+  //
+  // ATENÇÃO (atualização automática): esta câmera reage a TROCA DE SELEÇÃO e à
+  // chegada da malha (false -> true), nunca a uma nova versão dos dados. Se
+  // `geojson` entrasse nas dependências, cada ciclo de 60 s reenquadraria o
+  // mapa e o zoom/pan do usuário seria perdido — era o jeito mais fácil de
+  // quebrar a regra "atualizar dado não mexe na interação".
+  const temGeo = Boolean(geojson)
   useEffect(() => {
     const mapa = mapRef.current
     if (!mapa) return undefined
@@ -2661,9 +2693,10 @@ export default function MapView({
       mapa.easeTo({ pitch: 0, bearing: 0, duration: 650 })
       return undefined
     }
-    if (!geojson) return undefined
+    const colecao = geojsonRef.current
+    if (!colecao) return undefined
 
-    const feature = geojson.features?.find(
+    const feature = colecao.features?.find(
       (item) => item.properties?.uf === selectedUf,
     )
     const limites = limitesDaGeometria(feature?.geometry)
@@ -2738,7 +2771,7 @@ export default function MapView({
       if (reserva != null) window.clearTimeout(reserva)
       mapa.off('moveend', concluirAproximacao)
     }
-  }, [selectedUf, geojson])
+  }, [selectedUf, temGeo])
 
   // Atalho de URL (?m=<cd_tse>&z=): enquadra o município e aplica o zoom pedido
   // uma única vez, depois que a animação de enquadramento da UF assentar.

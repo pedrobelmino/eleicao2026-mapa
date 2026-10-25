@@ -1,4 +1,5 @@
 import { numero, percentual, pontos } from '../format.js'
+import { motivoDoBloqueio } from '../recorte.js'
 
 // Card "DE ONDE ESTÁ GANHANDO" (item 6 do ROADMAP).
 //
@@ -81,6 +82,7 @@ export default function MargensCard({
   uf,
   carregandoUf,
   erroUf,
+  recorteMunicipal,
   onFechar,
 }) {
   const nacional = margens?.nacional
@@ -117,6 +119,23 @@ export default function MargensCard({
             Municípios decisivos · {uf}
             <span className="margens-sub-nota">margem × peso</span>
           </h3>
+
+          {/* Procedência: os decisivos/viradas saem da base municipal do TSE,
+              que durante a apuração do 2º turno ainda é a do 1º. O selo é
+              obrigatório — número do 1º turno com rótulo de 2º é mentira. */}
+          {recorteMunicipal?.divergente ? (
+            <>
+              <span className="margem-selo-recorte" data-prova="margem-selo-recorte">
+                {recorteMunicipal.rotuloFonte || 'turno anterior'}
+                {recorteMunicipal.eleicao
+                  ? ` · eleição ${recorteMunicipal.eleicao}`
+                  : ''}
+              </span>
+              <p className="margem-recorte-nota" data-prova="margem-recorte-nota">
+                {motivoDoBloqueio(recorteMunicipal)}
+              </p>
+            </>
+          ) : null}
 
           {erroUf ? <p className="margem-erro">{erroUf}</p> : null}
           {carregandoUf && decisivos.length === 0 ? (
