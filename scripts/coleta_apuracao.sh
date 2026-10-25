@@ -102,8 +102,27 @@ cp "$PAINEL_JSON" "$SITE_JSON.tmp" && mv "$SITE_JSON.tmp" "$SITE_JSON"
 logar "publicado em $SITE_JSON (gerado_em=$GERADO)"
 
 # A api lê o arquivo UMA vez no boot: sem restart o dado novo não aparece.
-saida="$(cd "$PROJETO" && docker compose -p eleicao2026-mapa restart api 2>&1)"
-logar "restart da api -> $? ${saida//$'\n'/ }"
+# O systemd roda este script com PATH enxuto (/usr/local/bin:/usr/bin:/bin) e o
+# docker desta máquina é do snap (/snap/bin/docker) — resolver o binário de forma
+# explícita e validar antes de chamar: com `docker` cru o restart virava rc=127
+# ("docker: comando não encontrado") e o job passou 14 ticks sem reiniciar a api.
+DOCKER_BIN="$(command -v docker 2>/dev/null || true)"
+if [ -z "$DOCKER_BIN" ] && [ -x /snap/bin/docker ]; then
+  DOCKER_BIN=/snap/bin/docker
+fi
+if [ -z "$DOCKER_BIN" ] || [ ! -x "$DOCKER_BIN" ]; then
+  logar "ERRO DOCKER AUSENTE: binário do docker não encontrado nem em PATH=$PATH nem em /snap/bin/docker — snapshot publicado em $SITE_JSON, mas a api NÃO foi reiniciada (dado velho no ar)"
+  exit 3
+fi
+logar "docker: usando $DOCKER_BIN"
+
+saida="$(cd "$PROJETO" && "$DOCKER_BIN" compose -p eleicao2026-mapa restart api 2>&1)"
+rc_restart=$?
+if [ "$rc_restart" -ne 0 ]; then
+  logar "ERRO RESTART API: $DOCKER_BIN compose -p eleicao2026-mapa restart api -> rc=$rc_restart ${saida//$'\n'/ }"
+  exit 2
+fi
+logar "restart da api -> rc=0 ${saida//$'\n'/ }"
 
 for _ in $(seq 1 30); do
   saude="$(curl -s -m 5 "$(jq -r '.api_base // "http://127.0.0.1:8110"' "$CONFIG" 2>/dev/null || echo http://127.0.0.1:8110)/api/health" 2>/dev/null)"
