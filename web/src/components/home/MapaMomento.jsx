@@ -27,7 +27,7 @@ export default function MapaMomento({ dados }) {
         {Object.entries(ufs).map(([sigla, geometria]) => {
           const info = porUf[sigla] || {}
           const lider = info.lider
-          const cor = cores[lider] || '#22304c'
+          const cor = cores[lider] || '#b9b2a4'
           const apurado = Number(info.pct_apurado) || 0
           const opacidade = 0.3 + 0.7 * Math.min(1, apurado / 100)
 
@@ -37,7 +37,7 @@ export default function MapaMomento({ dados }) {
               d={geometria.d}
               fill={cor}
               fillOpacity={opacidade.toFixed(2)}
-              stroke="#0a1220"
+              stroke="#fffdf8"
               strokeWidth="1.1"
             >
               <title>{`${sigla} — ${lider || 'sem dado'} ${pct(

@@ -136,13 +136,13 @@ export default function GraficoSerie({
                 y1={yy.toFixed(1)}
                 x2={L + LARGURA}
                 y2={yy.toFixed(1)}
-                stroke="#1f2b45"
+                stroke="rgba(28,35,43,0.13)"
                 strokeWidth="1"
               />
               <text
                 x={L - 8}
                 y={(yy + 4).toFixed(1)}
-                fill="#93a3c4"
+                fill="#6d6b64"
                 fontSize="11"
                 textAnchor="end"
               >
@@ -161,13 +161,13 @@ export default function GraficoSerie({
                 y1={T}
                 x2={xx.toFixed(1)}
                 y2={T + ALTURA}
-                stroke="#162034"
+                stroke="rgba(28,35,43,0.08)"
                 strokeWidth="1"
               />
               <text
                 x={xx.toFixed(1)}
                 y={T + ALTURA + 20}
-                fill="#93a3c4"
+                fill="#6d6b64"
                 fontSize="11"
                 textAnchor="middle"
               >
@@ -180,7 +180,7 @@ export default function GraficoSerie({
         <text
           x={L + LARGURA / 2}
           y={H - 4}
-          fill="#93a3c4"
+          fill="#6d6b64"
           fontSize="11"
           textAnchor="middle"
         >
@@ -189,7 +189,7 @@ export default function GraficoSerie({
         <text
           x="12"
           y={T + ALTURA / 2}
-          fill="#93a3c4"
+          fill="#6d6b64"
           fontSize="11"
           textAnchor="middle"
           transform={`rotate(-90 12 ${T + ALTURA / 2})`}

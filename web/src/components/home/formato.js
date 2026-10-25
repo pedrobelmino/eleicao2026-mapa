@@ -1,11 +1,11 @@
 // Formatação e cores usadas pelos blocos da home. As regras seguem a home
 // antiga: ponto de milhar, vírgula decimal e "—" quando o dado falta.
 
-export const CORES = ['#4f8cff', '#ff5a67', '#f5c542', '#3ddc97']
+export const CORES = ['#1e58a8', '#c8102e', '#8a5a00', '#0f766e']
 
 export const CORES_2022 = {
-  LULA: '#ff5a67',
-  'JAIR BOLSONARO': '#4f8cff',
+  LULA: '#c8102e',
+  'JAIR BOLSONARO': '#1e58a8',
 }
 
 export function milhar(valor) {

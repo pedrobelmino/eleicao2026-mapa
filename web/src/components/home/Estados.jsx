@@ -11,7 +11,7 @@ export default function Estados({ dados }) {
   return (
     <div className="grade-ufs">
       {ufs.map((uf) => {
-        const cor = cores[uf.lider] || '#22304c'
+        const cor = cores[uf.lider] || '#b9b2a4'
         const largura = Math.min(
           100,
           Math.max(0, Number(uf.lider_pct) || 0),

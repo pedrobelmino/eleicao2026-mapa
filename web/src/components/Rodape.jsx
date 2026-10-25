@@ -26,6 +26,7 @@ export default function Rodape({
   municipalAviso = null,
   dadosAviso = null,
   variante = 'mapa',
+  mostrarCanal = true,
 }) {
   const curto = variante === 'mapa'
   const identificacao = [
@@ -69,9 +70,11 @@ export default function Rodape({
           ? 'sem cookies, sem IP, visitas contadas de forma anônima'
           : 'sem cookies, sem IP, sem rastreamento — a contagem de visitas é anônima (hash do dia, sem endereço)'}
       </p>
-      <p>
-        <b>Canal</b> {link(CANAL, '@belmino.c.f')} no YouTube
-      </p>
+      {mostrarCanal ? (
+        <p>
+          <b>Canal</b> {link(CANAL, '@belmino.c.f')} no YouTube
+        </p>
+      ) : null}
     </footer>
   )
 }

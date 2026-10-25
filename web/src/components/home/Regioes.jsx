@@ -53,7 +53,7 @@ export default function Regioes({ dados }) {
                 return (
                   <td
                     className="dir"
-                    style={{ color: cores[nome] || '#fff' }}
+                    style={{ color: cores[nome] || '#1c232b' }}
                     key={nome}
                   >
                     {pct(candidato.pct)}%
