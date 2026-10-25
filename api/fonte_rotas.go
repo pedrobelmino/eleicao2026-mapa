@@ -32,20 +32,34 @@ type configResposta struct {
 	// secoes_<UF>.json, que vêm do dump por seção — outro caminho, outro
 	// relógio). `aviso` vazio = os arquivos são da eleição configurada.
 	Municipal procedenciaMunicipal `json:"municipal"`
+	// Procedência do retrato público (publico.json). `incoerente: true` = o que
+	// está em disco é de outro turno; as rotas de dado respondem zerado até o
+	// TSE publicar o arquivo do turno configurado.
+	Incoerente    bool   `json:"incoerente"`
+	DadosEleicao  string `json:"dados_eleicao"`
+	DadosTurno    string `json:"dados_turno"`
+	DadosGeradoEm string `json:"dados_gerado_em"`
+	DadosAviso    string `json:"dados_aviso"`
 }
 
 func (a *app) handleConfig(w http.ResponseWriter, _ *http.Request) {
 	modeloUF, modeloFotos := modelosDeURL(a.fonte)
+	procedencia := a.procedenciaDoSnapshot()
 	writeJSON(w, http.StatusOK, configResposta{
-		Eleicao:     a.fonte.Eleicao,
-		Turno:       a.fonte.Turno,
-		RotuloTurno: a.fonte.Rotulo,
-		TSEBase:     a.fonte.Base,
-		Portal:      a.fonte.Portal,
-		URLNacional: a.fonte.Nacional,
-		URLUF:       modeloUF,
-		URLFotos:    modeloFotos,
-		Municipal:   a.procedenciaDoMunicipal(),
+		Eleicao:       a.fonte.Eleicao,
+		Turno:         a.fonte.Turno,
+		RotuloTurno:   a.fonte.Rotulo,
+		TSEBase:       a.fonte.Base,
+		Portal:        a.fonte.Portal,
+		URLNacional:   a.fonte.Nacional,
+		URLUF:         modeloUF,
+		URLFotos:      modeloFotos,
+		Municipal:     a.procedenciaDoMunicipal(),
+		Incoerente:    procedencia.Incoerente,
+		DadosEleicao:  procedencia.Eleicao,
+		DadosTurno:    procedencia.Turno,
+		DadosGeradoEm: procedencia.GeradoEm,
+		DadosAviso:    procedencia.Aviso,
 	})
 }
 

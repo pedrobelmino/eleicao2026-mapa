@@ -115,11 +115,5 @@ func rotuloDoTurno(turno string) string {
 // o que publicar do turno novo) e a tela precisa dizer isso em vez de mostrar
 // número velho com rótulo novo.
 func (a *app) avisoDoSnapshot() string {
-	arquivo := a.dados.Publico
-	if arquivo.Eleicao == "" || arquivo.Eleicao == a.cfg.Eleicao {
-		return ""
-	}
-	return fmt.Sprintf(
-		"placar, estados e margens: dados do %s (eleição %s) — o %s ainda não tem voto publicado no TSE",
-		rotuloDoTurno(arquivo.Turno), arquivo.Eleicao, a.fonte.Rotulo)
+	return a.procedenciaDoSnapshot().Aviso
 }

@@ -645,17 +645,38 @@ type healthResposta struct {
 	// Fonte é a URL oficial de onde o turno configurado sai. Fica no health
 	// porque é a primeira coisa que a checklist do dia confere.
 	Fonte string `json:"fonte"`
+	// Procedência do retrato público: `incoerente: true` significa que o que
+	// está em disco é de OUTRO turno (virada antes do primeiro voto do turno
+	// publicado). Nesse estado as rotas de dado servem payload zerado.
+	Incoerente    bool   `json:"incoerente"`
+	DadosEleicao  string `json:"dados_eleicao"`
+	DadosTurno    string `json:"dados_turno"`
+	DadosGeradoEm string `json:"dados_gerado_em"`
+	DadosAviso    string `json:"dados_aviso"`
 }
 
 func (a *app) handleHealth(w http.ResponseWriter, _ *http.Request) {
+	procedencia := a.procedenciaDoSnapshot()
+	ufs := len(a.dados.Publico.UFs)
+	features := len(a.dados.Malha.Features)
+	if procedencia.Incoerente {
+		// Sem número de outro turno nem no health: quem lê esta rota (checklist,
+		// monitor) precisa ver o mesmo estado que o site mostra.
+		ufs, features = 0, 0
+	}
 	writeJSON(w, http.StatusOK, healthResposta{
-		OK:       true,
-		Eleicao:  a.cfg.Eleicao,
-		Turno:    a.cfg.Turno,
-		GeradoEm: a.dados.Publico.GeradoEm,
-		UFs:      len(a.dados.Publico.UFs),
-		Features: len(a.dados.Malha.Features),
-		Fonte:    a.fonte.Nacional,
+		OK:            true,
+		Eleicao:       a.cfg.Eleicao,
+		Turno:         a.cfg.Turno,
+		GeradoEm:      a.dados.Publico.GeradoEm,
+		UFs:           ufs,
+		Features:      features,
+		Fonte:         a.fonte.Nacional,
+		Incoerente:    procedencia.Incoerente,
+		DadosEleicao:  procedencia.Eleicao,
+		DadosTurno:    procedencia.Turno,
+		DadosGeradoEm: procedencia.GeradoEm,
+		DadosAviso:    procedencia.Aviso,
 	})
 }
 
@@ -697,9 +718,30 @@ type estadosResposta struct {
 	DadosTurno   string `json:"dados_turno"`
 	DadosSemDado bool   `json:"dados_sem_dado"`
 	DadosAviso   string `json:"dados_aviso"`
+	// Incoerente = o retrato em disco não é do turno do painel. Quando true, a
+	// resposta vai ZERADA: melhor nenhum número do que número de outro turno.
+	Incoerente bool `json:"incoerente"`
 }
 
 func (a *app) handleEstados(w http.ResponseWriter, _ *http.Request) {
+	procedencia := a.procedenciaDoSnapshot()
+	if procedencia.Incoerente {
+		writeJSON(w, http.StatusOK, estadosResposta{
+			Eleicao:      a.cfg.Eleicao,
+			Turno:        a.cfg.Turno,
+			Fonte:        a.fonte.Nacional,
+			Nacional:     json.RawMessage(nacionalZerado),
+			UFs:          []ufResposta{},
+			Municipal:    a.procedenciaDoMunicipal(),
+			DadosEleicao: procedencia.Eleicao,
+			DadosTurno:   procedencia.Turno,
+			DadosSemDado: true,
+			DadosAviso:   procedencia.Aviso,
+			Incoerente:   true,
+		})
+		return
+	}
+
 	ufs := make([]ufResposta, 0, len(a.dados.Publico.UFs))
 	for _, uf := range a.dados.Publico.UFs {
 		candidatos := make([]candidatoResposta, 0, len(uf.Candidatos))
@@ -737,11 +779,23 @@ func (a *app) handleEstados(w http.ResponseWriter, _ *http.Request) {
 		DadosEleicao: a.dados.Publico.Eleicao,
 		DadosTurno:   a.dados.Publico.Turno,
 		DadosSemDado: a.dados.Publico.SemDado,
-		DadosAviso:   a.avisoDoSnapshot(),
+		DadosAviso:   procedencia.Aviso,
 	})
 }
 
 func (a *app) handleHome(w http.ResponseWriter, _ *http.Request) {
+	// Mesmo portão do /api/estados: sem retrato do turno, o payload vai
+	// zerado. O front troca os cards pelo estado de espera; servir o número
+	// do turno anterior com o rótulo do turno novo é o defeito que isto evita.
+	if a.procedenciaDoSnapshot().Incoerente {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"eleicao": a.cfg.Eleicao,
+			"turno":   a.cfg.Turno,
+			"publico": a.montarPublicoZerado(),
+		})
+		return
+	}
+
 	eleicao := jsonString(a.cfg.Eleicao)
 	turno := jsonString(a.cfg.Turno)
 
@@ -873,6 +927,15 @@ func jsonString(valor string) []byte {
 }
 
 func (a *app) handleUfsGeoJSON(w http.ResponseWriter, _ *http.Request) {
+	if a.procedenciaDoSnapshot().Incoerente {
+		writeJSON(w, http.StatusOK, malhaZerada{
+			Type:       "FeatureCollection",
+			Features:   []struct{}{},
+			SemDado:    true,
+			Incoerente: true,
+		})
+		return
+	}
 	writeJSON(w, http.StatusOK, a.dados.Malha)
 }
 
