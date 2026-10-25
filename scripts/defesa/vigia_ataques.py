@@ -16,7 +16,7 @@ O que NÃO faz, por decisão de projeto:
 
 Regras de detecção (janela deslizante, limiares configuráveis por ambiente):
 
-  LIMITE_REQ_MIN   120   requisições do mesmo IP em 60 s
+  LIMITE_REQ_MIN   1200  requisições do mesmo IP em 60 s (só rotas NÃO isentas)
   LIMITE_429       20    respostas 429 (rate limit) em 60 s
   DURACAO_MIN      30    janela do bloqueio, renovável enquanto o abuso durar
 
@@ -25,6 +25,19 @@ visitante legítimo nunca produz. Acúmulo de caminhos suspeitos NÃO bloqueia:
 isso virou ESCORE DE SUSPEITA (scripts/defesa/suspeita.py), que identifica,
 classifica (limpo/observar/suspeito/malicioso) e avisa no Telegram, deixando o
 bloqueio para decisão manual do Pedro (bloquear.sh <ip> <motivo>).
+
+Duas travas contra falso positivo, medidas em 25/10:
+
+  * ROTAS ISENTAS (ROTAS_ISENTAS): `/api/health`, `/api/home`, `/api/estados` e
+    `/api/fonte` são o que UMA abertura de página pede. Requisição nessas rotas
+    não conta para surto nem para 429 — o objetivo é pegar varredura, não
+    navegação. Quem corta excesso nelas é o `limit_req` do nginx (zona `fonte`,
+    2 r/s com burst 3), que responde 429 sem derrubar o visitante.
+  * ALLOWLIST (var/defesa/allowlist.txt): IP ou faixa que NUNCA é bloqueada
+    automaticamente nem acusada no escore. Contém o IP do Pedro e a faixa do
+    provedor dele (191.31.0.0/16 = Telefônica/Vivo, confirmado por RDAP em
+    25/10): num CGNAT de operadora, bloquear um IP derruba vizinhos inocentes.
+    Bloqueio MANUAL continua possível — é decisão do Pedro, não do limiar.
 
 Por que: em 25/10 a partir das 17 h tem apuração e visitante legítimo fica
 conectado por horas, atualizando o painel (polling/SSE). Volume de requisição
@@ -64,6 +77,9 @@ DEFESA_DIR = Path(os.environ.get("DEFESA_DIR", RAIZ / "var" / "defesa"))
 ARQ_LOG = DEFESA_DIR / "acessos.log"
 ARQ_BLOQUEIOS = DEFESA_DIR / "bloqueios.conf"
 ARQ_ESTADO = DEFESA_DIR / "estado.json"
+# Allowlist persistente: linhas "IP" ou "CIDR", "#" comenta. Arquivo ausente ou
+# vazio NÃO deixa o Pedro desprotegido — cai em ALLOWLIST_PADRAO e avisa no log.
+ARQ_ALLOWLIST = Path(os.environ.get("DEFESA_ALLOWLIST", DEFESA_DIR / "allowlist.txt"))
 LOG_VIGIA = Path(os.environ.get("DEFESA_LOG", Path.home() / ".hermes/logs/eleicao-defesa.log"))
 
 # Módulo irmão: escore de suspeita (mesmas regras do painel 8113, conferidas
@@ -72,7 +88,7 @@ LOG_VIGIA = Path(os.environ.get("DEFESA_LOG", Path.home() / ".hermes/logs/eleica
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import suspeita  # noqa: E402
 
-LIMITE_REQ_MIN = int(os.environ.get("LIMITE_REQ_MIN", "120"))
+LIMITE_REQ_MIN = int(os.environ.get("LIMITE_REQ_MIN", "1200"))
 LIMITE_429 = int(os.environ.get("LIMITE_429", "20"))
 DURACAO_MIN = int(os.environ.get("DURACAO_MIN", "30"))
 MANUAL_DURACAO_MIN = int(os.environ.get("MANUAL_DURACAO_MIN", "240"))
@@ -175,6 +191,68 @@ FAIXAS_BORDA = (
 )
 REDES_BORDA = tuple(ipaddress.ip_network(faixa) for faixa in FAIXAS_BORDA)
 
+# --------------------------------------------------------------- allowlist
+# IP/faixa que NUNCA é bloqueado automaticamente e nunca vira escore.
+#
+# Por que existe: em 25/10 o vigia bloqueou o IP do próprio Pedro (191.31.15.133,
+# "179 req em 60s") — 179 é navegação, não ataque. E o IP dele é de CGNAT de
+# operadora: bloquear um endereço desses derruba vizinhos inocentes que dividem o
+# mesmo IP público. A allowlist é do Pedro, então é ele quem edita.
+#
+# ALLOWLIST_PADRAO só vale se o arquivo não existir ou estiver vazio: apagar o
+# arquivo por engano não pode reabrir a temporada de bloqueio do dono do site.
+ALLOWLIST_PADRAO = ("191.31.15.133", "191.31.15.0/24")
+
+
+def ler_allowlist() -> tuple[ipaddress._BaseNetwork, ...]:
+    """Lê ARQ_ALLOWLIST (IP ou CIDR por linha). Devolve redes; falha não derruba."""
+    brutas: list[str] = []
+    try:
+        for linha in ARQ_ALLOWLIST.read_text(encoding="utf-8").splitlines():
+            limpa = linha.split("#", 1)[0].strip()
+            if limpa:
+                brutas.append(limpa)
+    except OSError:
+        logar(f"aviso: allowlist {ARQ_ALLOWLIST} ilegível/ausente — usando a padrão")
+    if not brutas:
+        logar(f"aviso: allowlist vazia — usando a padrão ({', '.join(ALLOWLIST_PADRAO)})")
+        brutas = list(ALLOWLIST_PADRAO)
+    redes = []
+    for bruta in brutas:
+        try:
+            redes.append(ipaddress.ip_network(bruta, strict=False))
+        except ValueError:
+            logar(f"aviso: allowlist ignorou entrada inválida {bruta!r}")
+    return tuple(redes)
+
+
+def ip_allowlistado(texto: str, redes=None) -> bool:
+    """True se o IP cai em alguma faixa da allowlist (comparação por rede)."""
+    try:
+        endereco = ipaddress.ip_address((texto or "").strip().strip("[]"))
+    except ValueError:
+        return False
+    if redes is None:
+        redes = ler_allowlist()
+    return any(endereco in rede for rede in redes)
+
+
+# Rotas de LEITURA que uma abertura de página pede. Não contam para o limiar:
+# o alvo do bloqueio automático é varredura, e varredura se parece com muitos
+# caminhos, não com a mesma rota de leitura repetida pela navegação.
+ROTAS_ISENTAS = (
+    "/api/health",
+    "/api/home",
+    "/api/estados",
+    "/api/fonte",
+)
+
+
+def rota_isenta(uri: str) -> bool:
+    """True para as rotas de leitura isentas (ignora query string)."""
+    caminho = (uri or "").split("?", 1)[0].rstrip("/")
+    return any(caminho == rota for rota in ROTAS_ISENTAS)
+
 
 def ip_borda(texto: str) -> bool:
     """True só para IP dentro das faixas oficiais da Cloudflare (a borda).
@@ -276,12 +354,19 @@ def analisar(linhas: list[str], agora_ts: datetime) -> dict:
             continue
 
         registro = resumo.setdefault(
-            ip, {"req60": 0, "c429": 0, "suspeitos": 0, "exemplo": "", "metodo": metodo}
+            ip,
+            {"req60": 0, "req_isentas": 0, "c429": 0, "suspeitos": 0, "exemplo": "", "metodo": metodo},
         )
         if instante >= limite_rate:
-            registro["req60"] += 1
-            if codigo == 429:
-                registro["c429"] += 1
+            if rota_isenta(uri):
+                # Abertura de página: conta separado e NÃO entra no limiar. Se
+                # contasse, uma navegação normal (ou um F5 repetido) virava
+                # "surto" — foi exatamente o falso positivo de 25/10.
+                registro["req_isentas"] += 1
+            else:
+                registro["req60"] += 1
+                if codigo == 429:
+                    registro["c429"] += 1
         if instante >= limite_suspeita:
             varredura = bool(PADROES_ATAQUE.search(uri))
             if varredura or codigo >= 500:
@@ -298,15 +383,23 @@ def decidir(resumo: dict) -> list[dict]:
     o site (o loopback é o túnel; a borda é por onde todo mundo chega).
     """
     decisoes = []
+    redes = ler_allowlist()
     for ip, dados in resumo.items():
         if not ip_publico(ip) or ip_borda(ip):
+            continue
+        if ip_allowlistado(ip, redes):
+            # Nunca automático. Se ainda estiver bloqueado de antes, `aplicar`
+            # tira da lista neste ciclo; aqui a decisão já nem nasce.
             continue
         motivo = detalhe = ""
         contagem = 0
         if dados["req60"] >= LIMITE_REQ_MIN:
             motivo = "surto"
             contagem = dados["req60"]
-            detalhe = f"{dados['req60']} req em {JANELA_RATE_S}s (limite {LIMITE_REQ_MIN}/min)"
+            detalhe = (
+                f"{dados['req60']} req em {JANELA_RATE_S}s (limite {LIMITE_REQ_MIN}/min)"
+                f" · {dados.get('req_isentas', 0)} em rotas isentas"
+            )
         elif dados["c429"] >= LIMITE_429:
             motivo = "429 recorrente"
             contagem = dados["c429"]
@@ -421,6 +514,7 @@ def acumular_suspeitas(linhas: list[str], estado: dict, agora_ts: datetime) -> d
         except (ValueError, TypeError, KeyError) as exc:  # linha torta não derruba ciclo
             logar(f"aviso: linha ignorada no escore ({type(exc).__name__}: {exc})")
     suspeita.podar(acumulado, carimbo(agora_ts))
+    redes_allowlist = ler_allowlist()
 
     avaliacoes = {}
     borda = {
@@ -445,6 +539,10 @@ def acumular_suspeitas(linhas: list[str], estado: dict, agora_ts: datetime) -> d
 
     for ip, reg in acumulado.items():
         if not ip_publico(ip) or ip_borda(ip):
+            continue
+        if ip_allowlistado(ip, redes_allowlist):
+            # IP do dono do site não é suspeito: o escore só avisaria o Pedro
+            # sobre o próprio acesso (foi o que aconteceu em 25/10, escore 100).
             continue
         avaliacoes[ip] = suspeita.avaliar(reg)
     return avaliacoes
@@ -589,8 +687,19 @@ def aplicar(decisoes: list[dict], estado: dict, ensaio: bool, agora_ts: datetime
     """
     avisos = []
     bloqueios = estado["bloqueios"]
+    redes = ler_allowlist()
     ledger = setor_suspeita(estado)["avisos"]
     podar_avisos(ledger, agora_ts)
+
+    # Allowlist vence bloqueio AUTOMÁTICO existente: se o IP do Pedro entrou na
+    # lista antes de ser protegido, sai agora — é o que impede o dono do site de
+    # ficar tomando 403. Bloqueio com origem "manual" é decisão do Pedro e fica.
+    for ip in list(bloqueios):
+        if bloqueios[ip].get("origem") == "manual":
+            continue
+        if ip_allowlistado(ip, redes):
+            del bloqueios[ip]
+            logar(f"DESBLOQUEIO por allowlist {ip} (protegido, o bloqueio vigente era automático)")
 
     for decisao in decisoes:
         ip = decisao["ip"]
@@ -598,6 +707,9 @@ def aplicar(decisoes: list[dict], estado: dict, ensaio: bool, agora_ts: datetime
             # Cinto e suspensório: `decidir` já filtra, mas nenhum caminho novo
             # pode transformar a borda em bloqueio e derrubar o site.
             logar(f"RECUSADO: {ip} é BORDA Cloudflare — decisão de bloqueio descartada")
+            continue
+        if ip_allowlistado(ip, redes):
+            logar(f"RECUSADO: {ip} está na allowlist — decisão automática de bloqueio descartada")
             continue
         registro = bloqueios.get(ip)
         if registro is None:
@@ -745,6 +857,13 @@ def status() -> int:
     print(f"última execução: {estado.get('ultima_execucao') or '—'}")
     print(f"total de bloqueios (histórico): {estado.get('total_bloqueios', 0)}")
     print(f"bloqueios ativos: {len(bloqueios)}")
+    redes = ler_allowlist()
+    print(
+        f"allowlist ({ARQ_ALLOWLIST}): {len(redes)} faixa(s) — "
+        "nunca bloqueada(s) automaticamente e fora do escore"
+    )
+    for rede in redes:
+        print(f"  {str(rede):24} protegida")
     for ip, registro in sorted(bloqueios.items()):
         print(
             f"  {ip:16} {registro.get('motivo','?'):16} até {registro.get('ate','?')} "
@@ -762,6 +881,8 @@ def status() -> int:
         avaliados = []
         for ip, reg in acumulado.items():
             if not ip_publico(ip) or ip_borda(ip):
+                continue
+            if ip_allowlistado(ip, redes):
                 continue
             avaliados.append((ip, suspeita.avaliar(reg), reg))
         avaliados.sort(key=lambda item: (-item[1]["escore"], item[0]))
@@ -826,6 +947,10 @@ def bloquear(alvo: str, motivo: str, minutos: int) -> int:
         return 65
 
     motivo_limpo = " ".join((motivo or "").split())[:120] or "manual"
+    if ip_allowlistado(ip):
+        # Não recusa: bloquear o próprio IP é decisão do Pedro, não do limiar.
+        # O bloqueio manual sobrevive ao ciclo (ver `aplicar`), mas fica avisado.
+        logar(f"aviso: {ip} está na allowlist e foi bloqueado MANUALMENTE — decisão do Pedro")
     estado = ler_estado()
     bloqueios = estado.setdefault("bloqueios", {})
     agora_ts = agora()

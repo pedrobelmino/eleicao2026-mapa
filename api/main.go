@@ -9,6 +9,7 @@ import (
 	"log"
 	"math"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -435,6 +436,14 @@ type app struct {
 	apuracaoMu   sync.Mutex
 	apuracaoResp *apuracaoReplayResposta
 
+	// Série de 2022: o payload tem ~3 MB e a remontagem a partir do .jsonl
+	// custava ~47 ms de CPU POR requisição. Os bytes ficam prontos aqui e são
+	// regerados só quando o arquivo muda (mtime) e o TTL venceu.
+	serieMu       sync.Mutex
+	serieCorpo    []byte
+	serieMtime    time.Time
+	serieGeradoEm time.Time
+
 	// Borda: limites de taxa/concorrência, contadores do painel privado e a
 	// contagem anônima de visitas (mesmo banco do painel Python).
 	limit *limitador
@@ -788,7 +797,48 @@ func lerSerie2022(caminho string) ([]json.RawMessage, error) {
 }
 
 func (a *app) handleSerie2022(w http.ResponseWriter, _ *http.Request) {
-	pontos, err := lerSerie2022(a.cfg.Serie2022File)
+	corpo := a.corpoSerie2022()
+	w.Header().Set("Content-Length", strconv.Itoa(len(corpo)))
+	escreverJSONCru(w, http.StatusOK, corpo)
+}
+
+// serie2022TTL é a validade do payload pronto. Variável, não constante, para o
+// teste poder forçar a regeração.
+var serie2022TTL = 45 * time.Second
+
+// corpoSerie2022 devolve o payload já serializado, do cache quando possível.
+// A invalidação tem dois gatilhos: o mtime do .jsonl (arquivo novo = payload
+// novo) e o TTL, que garante que uma escrita com mtime preservado ainda seja
+// vista em menos de um minuto.
+func (a *app) corpoSerie2022() []byte {
+	a.serieMu.Lock()
+	defer a.serieMu.Unlock()
+
+	agora := time.Now()
+	var mtime time.Time
+	if informacao, err := os.Stat(a.cfg.Serie2022File); err == nil {
+		mtime = informacao.ModTime()
+	}
+
+	if a.serieCorpo != nil && mtime.Equal(a.serieMtime) && agora.Sub(a.serieGeradoEm) < serie2022TTL {
+		return a.serieCorpo
+	}
+
+	corpo := montarSerie2022(a.cfg.Serie2022File)
+	a.serieCorpo, a.serieMtime, a.serieGeradoEm = corpo, mtime, agora
+	return corpo
+}
+
+// invalidarCacheSerie2022 descarta o payload pronto (usado nos testes).
+func (a *app) invalidarCacheSerie2022() {
+	a.serieMu.Lock()
+	a.serieCorpo, a.serieMtime, a.serieGeradoEm = nil, time.Time{}, time.Time{}
+	a.serieMu.Unlock()
+}
+
+// montarSerie2022 lê o .jsonl e devolve o corpo da resposta pronto.
+func montarSerie2022(caminho string) []byte {
+	pontos, err := lerSerie2022(caminho)
 	fonte := fonteSerie2022
 	if err != nil {
 		pontos = nil
@@ -798,7 +848,7 @@ func (a *app) handleSerie2022(w http.ResponseWriter, _ *http.Request) {
 		pontos = []json.RawMessage{}
 	}
 
-	resposta := make([]byte, 0, 160)
+	resposta := make([]byte, 0, 160+len(pontos)*360)
 	resposta = append(resposta, `{"eleicao":"2022","fonte":`...)
 	resposta = append(resposta, jsonString(fonte)...)
 	resposta = append(resposta, `,"total":`...)
@@ -811,8 +861,7 @@ func (a *app) handleSerie2022(w http.ResponseWriter, _ *http.Request) {
 		resposta = append(resposta, ponto...)
 	}
 	resposta = append(resposta, ']', '}', '\n')
-
-	escreverJSONCru(w, http.StatusOK, resposta)
+	return resposta
 }
 
 func jsonString(valor string) []byte {
@@ -927,10 +976,42 @@ func withHead(next http.Handler) http.Handler {
 	})
 }
 
+// origemPublica é a única origem EXTERNA autorizada a ler a API por CORS. É o
+// host que serve o painel; nada mais precisa de permissão de leitura.
+const origemPublica = "https://eleicao2026.belmino.dev"
+
+// mesmaOrigem diz se o Origin da requisição é o próprio endereço que a atende.
+// Cobre o front chamando o mesmo domínio e o preview em loopback, que não
+// dependem de CORS para funcionar (o navegador trata como same-origin), mas
+// recebem o eco quando pedem.
+func mesmaOrigem(r *http.Request, origem string) bool {
+	alvo, err := url.Parse(origem)
+	if err != nil || alvo.Host == "" {
+		return false
+	}
+
+	esquema := "http"
+	if r.TLS != nil {
+		esquema = "https"
+	}
+	if encaminhado := r.Header.Get("X-Forwarded-Proto"); encaminhado != "" {
+		// O nginx manda um valor só; se vier lista, o primeiro é o do cliente.
+		esquema = strings.TrimSpace(strings.Split(encaminhado, ",")[0])
+	}
+
+	return strings.EqualFold(alvo.Host, r.Host) && strings.EqualFold(alvo.Scheme, esquema)
+}
+
 func withCORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasPrefix(r.URL.Path, "/api/") {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
+			// Nunca "*": o cabeçalho só aparece com a origem exata que pediu, e
+			// o Vary impede cache compartilhado de servir a origem de outro.
+			origem := r.Header.Get("Origin")
+			if origem != "" && (origem == origemPublica || mesmaOrigem(r, origem)) {
+				w.Header().Set("Access-Control-Allow-Origin", origem)
+				w.Header().Add("Vary", "Origin")
+			}
 		}
 		next.ServeHTTP(w, r)
 	})

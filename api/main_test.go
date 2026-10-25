@@ -36,8 +36,8 @@ func TestHealth(t *testing.T) {
 	if resposta.Code != http.StatusOK {
 		t.Fatalf("status = %d, quer 200", resposta.Code)
 	}
-	if origem := resposta.Header().Get("Access-Control-Allow-Origin"); origem != "*" {
-		t.Errorf("Access-Control-Allow-Origin = %q, quer %q", origem, "*")
+	if origem := resposta.Header().Get("Access-Control-Allow-Origin"); origem != "" {
+		t.Errorf("Access-Control-Allow-Origin = %q, quer vazio (sem Origin na requisição)", origem)
 	}
 	if contentType := resposta.Header().Get("Content-Type"); !strings.HasPrefix(contentType, "application/json") {
 		t.Errorf("Content-Type = %q, quer application/json", contentType)
