@@ -1,8 +1,10 @@
 import { navega } from '../../router.jsx'
-import { coresCandidatos, pct, semSecaoApurada } from './formato.js'
+import { corDoLider, pct, semSecaoApurada } from './formato.js'
 
 // Mapa estático do momento, desenhado a partir de publico.mapa. A cor é o
-// candidato que lidera em cada UF e a opacidade cresce com o % apurado.
+// CANDIDATO que lidera em cada UF — PL azul, PT vermelho, regra fixa — e a
+// opacidade cresce com o % apurado. Lula à frente numa UF pinta VERMELHO:
+// a cor nunca é "de quem está ganhando", é do candidato.
 // UF sem seção apurada fica neutra, sem candidato. O link grande leva ao mapa
 // interativo, que é o produto final.
 export default function MapaMomento({ dados }) {
@@ -11,8 +13,6 @@ export default function MapaMomento({ dados }) {
 
   if (dados.sem_dado || !Object.keys(ufs).length) return null
 
-  const nacional = dados.nacional || {}
-  const cores = coresCandidatos(nacional)
   const porUf = {}
   for (const uf of dados.ufs || []) porUf[uf.uf] = uf
 
@@ -29,7 +29,7 @@ export default function MapaMomento({ dados }) {
           const info = porUf[sigla] || {}
           const espera = semSecaoApurada(info)
           const lider = info.lider
-          const cor = espera ? '#b9b2a4' : cores[lider] || '#b9b2a4'
+          const cor = espera ? '#b9b2a4' : corDoLider(info)
           const apurado = Number(info.pct_apurado) || 0
           const opacidade = espera
             ? 0.22

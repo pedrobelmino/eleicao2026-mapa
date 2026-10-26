@@ -1,12 +1,14 @@
-import { coresCandidatos, CORES, milhar, pct } from './formato.js'
+import { corDoCandidato, milhar, pct } from './formato.js'
 import Avatar from '../Avatar.jsx'
 
 // Placar nacional com os dois primeiros colocados, na ordem publicada pelo TSE.
 // A barra proporcional e a legenda ficam no mesmo grid dos cartões, como na
 // home antiga.
+//
+// cor = CANDIDATO (PL azul / PT vermelho), nunca = quem lidera. A ordem da
+// lista do TSE decide o LUGAR do cartão, jamais a cor dele.
 export default function Placar({ dados }) {
   const nacional = dados.nacional || {}
-  const cores = coresCandidatos(nacional)
   const candidatos = (nacional.candidatos || []).slice(0, 2)
 
   if (!candidatos.length) {
@@ -20,7 +22,7 @@ export default function Placar({ dados }) {
   return (
     <>
       {candidatos.map((candidato) => {
-        const cor = cores[candidato.nome] || CORES[0]
+        const cor = corDoCandidato(candidato)
 
         return (
           <div className="cand" style={{ '--cor': cor }} key={candidato.nome}>
@@ -42,7 +44,7 @@ export default function Placar({ dados }) {
 
       <div className="barra" aria-hidden="true">
         {candidatos.map((candidato) => {
-          const cor = cores[candidato.nome] || CORES[0]
+          const cor = corDoCandidato(candidato)
           const largura = Math.max(0, Math.min(100, Number(candidato.pct) || 0))
           return (
             <div
@@ -55,7 +57,7 @@ export default function Placar({ dados }) {
 
       <div className="legenda">
         {candidatos.map((candidato) => {
-          const cor = cores[candidato.nome] || CORES[0]
+          const cor = corDoCandidato(candidato)
           return (
             <span key={candidato.nome}>
               <b style={{ background: cor }} />

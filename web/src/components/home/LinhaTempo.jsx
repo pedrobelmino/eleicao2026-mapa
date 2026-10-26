@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { API_BASE, fetchJSON } from '../../api.js'
 import GraficoSerie from './GraficoSerie.jsx'
-import { coresCandidatos } from './formato.js'
 
 // Linha do tempo com duas camadas: a série de 2026 (vem em /api/home) e a
 // referência de 2022 (buscada só quando a camada é aberta).
@@ -35,7 +34,6 @@ export default function LinhaTempo({ dados }) {
   }, [camada, serie2022, erro2022])
 
   const nacional = dados.nacional || {}
-  const cores = coresCandidatos(nacional)
   const nomes = (nacional.candidatos || [])
     .slice(0, 2)
     .map((candidato) => candidato.nome)
@@ -72,7 +70,7 @@ export default function LinhaTempo({ dados }) {
             pontos={dados.serie || []}
             rotulo="2026"
             nomesPreferidos={nomes}
-            cores={cores}
+            candidatos={nacional.candidatos || []}
             fonte={dados.fonte_gerada_texto}
           />
         ) : null}

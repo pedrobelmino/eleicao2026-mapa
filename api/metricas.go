@@ -416,11 +416,11 @@ func (a *app) saude() []saudeServico {
 	// dados: se o publico.json parar de ser regerado no dia da eleição, o mapa
 	// congela sem erro nenhum. Aqui a idade do arquivo é o sinal: 6 h é o ponto
 	// de atenção, 24 h é falha (fora do dia da eleição a coleta é diária).
-	detalheDados := "gerado_em " + a.dados.Publico.GeradoEm
+	detalheDados := "gerado_em " + a.dados().Publico.GeradoEm
 	okDados := false
-	momentoDados, errData := time.Parse(time.RFC3339, a.dados.Publico.GeradoEm)
+	momentoDados, errData := time.Parse(time.RFC3339, a.dados().Publico.GeradoEm)
 	if errData != nil {
-		momentoDados, errData = time.Parse("2006-01-02T15:04:05", a.dados.Publico.GeradoEm)
+		momentoDados, errData = time.Parse("2006-01-02T15:04:05", a.dados().Publico.GeradoEm)
 	}
 	if errData == nil {
 		idade := time.Since(momentoDados)
@@ -430,7 +430,7 @@ func (a *app) saude() []saudeServico {
 			detalheDados += " — atenção: passou de 6h"
 		}
 	} else {
-		detalheDados = "gerado_em ilegível: " + a.dados.Publico.GeradoEm
+		detalheDados = "gerado_em ilegível: " + a.dados().Publico.GeradoEm
 	}
 	servicos = append(servicos, saudeServico{
 		Servico: "dados",
@@ -477,9 +477,9 @@ func (a *app) handleMetricasJSON(w http.ResponseWriter, r *http.Request) {
 	corpo["app"] = map[string]any{
 		"eleicao":         a.cfg.Eleicao,
 		"turno":           a.cfg.Turno,
-		"dados_gerado_em": a.dados.Publico.GeradoEm,
-		"ufs":             len(a.dados.Publico.UFs),
-		"features":        len(a.dados.Malha.Features),
+		"dados_gerado_em": a.dados().Publico.GeradoEm,
+		"ufs":             len(a.dados().Publico.UFs),
+		"features":        len(a.dados().Malha.Features),
 	}
 	corpo["limites"] = a.limit.estatisticas()
 	corpo["saude"] = a.saude()

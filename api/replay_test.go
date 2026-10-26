@@ -225,7 +225,7 @@ func TestMargens(t *testing.T) {
 		contribuicao += uf.Contribuicao
 	}
 
-	publico := aplicacao.dados.Publico
+	publico := aplicacao.dados().Publico
 	var esperado int64
 	for _, uf := range publico.UFs {
 		for _, candidato := range uf.Candidatos {

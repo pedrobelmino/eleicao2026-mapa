@@ -17,6 +17,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 )
@@ -419,8 +420,13 @@ func margemPercentual(margemVotos, vv int64) float64 {
 }
 
 type app struct {
-	cfg        config
-	dados      *dados
+	cfg config
+	// Retrato público (publico.json + malha) servido às rotas. Fica atrás de um
+	// ponteiro atômico porque é trocado em tempo de execução pelo hot-reload
+	// (ver hot_reload.go): a coleta publica o arquivo e a api passa a servir o
+	// snapshot novo SEM restart — restart era a causa dos 502 de 5 em 5 min.
+	// Leitura sempre por a.dados(), uma vez por requisição.
+	dadosPtr   atomic.Pointer[dados]
 	municipais map[string]*dadosUF
 	// Replay e margens são calculados uma vez no boot (série de 2022, coletas
 	// de 2026 e uma passada na base municipal); as rotas só serializam.
@@ -490,9 +496,8 @@ func novaApp(cfg config) (*app, error) {
 	log.Printf("limites: %.0f req/s por IP (rajada %.0f), %d simultâneas no total, %d por IP",
 		limites.TaxaPorIP, limites.RajadaPorIP, limites.MaxSimultaneas, limites.MaxPorIP)
 
-	return &app{
+	aplicacao := &app{
 		cfg:           cfg,
-		dados:         dadosCarregados,
 		municipais:    municipais,
 		serie2022:     serie,
 		eleicao2022:   dados2022,
@@ -505,7 +510,10 @@ func novaApp(cfg config) (*app, error) {
 			dadosCarregados.Publico, municipais, dados2022, cfg.Eleicao, cfg.Turno,
 		),
 		margensUF: montarMargensUF(municipais, dados2022, cfg.Eleicao, cfg.Turno),
-	}, nil
+	}
+	// Primeiro retrato no ar. A partir daqui quem troca é o vigia (hot-reload).
+	aplicacao.dadosPtr.Store(dadosCarregados)
+	return aplicacao, nil
 }
 
 func (a *app) handler() http.Handler {
@@ -657,8 +665,8 @@ type healthResposta struct {
 
 func (a *app) handleHealth(w http.ResponseWriter, _ *http.Request) {
 	procedencia := a.procedenciaDoSnapshot()
-	ufs := len(a.dados.Publico.UFs)
-	features := len(a.dados.Malha.Features)
+	ufs := len(a.dados().Publico.UFs)
+	features := len(a.dados().Malha.Features)
 	if procedencia.Incoerente {
 		// Sem número de outro turno nem no health: quem lê esta rota (checklist,
 		// monitor) precisa ver o mesmo estado que o site mostra.
@@ -668,7 +676,7 @@ func (a *app) handleHealth(w http.ResponseWriter, _ *http.Request) {
 		OK:            true,
 		Eleicao:       a.cfg.Eleicao,
 		Turno:         a.cfg.Turno,
-		GeradoEm:      a.dados.Publico.GeradoEm,
+		GeradoEm:      a.dados().Publico.GeradoEm,
 		UFs:           ufs,
 		Features:      features,
 		Fonte:         a.fonte.Nacional,
@@ -742,8 +750,8 @@ func (a *app) handleEstados(w http.ResponseWriter, _ *http.Request) {
 		return
 	}
 
-	ufs := make([]ufResposta, 0, len(a.dados.Publico.UFs))
-	for _, uf := range a.dados.Publico.UFs {
+	ufs := make([]ufResposta, 0, len(a.dados().Publico.UFs))
+	for _, uf := range a.dados().Publico.UFs {
 		candidatos := make([]candidatoResposta, 0, len(uf.Candidatos))
 		for _, candidato := range uf.Candidatos {
 			candidatos = append(candidatos, candidatoResposta{
@@ -771,14 +779,14 @@ func (a *app) handleEstados(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, estadosResposta{
 		Eleicao:      a.cfg.Eleicao,
 		Turno:        a.cfg.Turno,
-		GeradoEm:     a.dados.Publico.GeradoEm,
-		Fonte:        a.dados.Publico.Fonte,
-		Nacional:     a.dados.Publico.Nacional,
+		GeradoEm:     a.dados().Publico.GeradoEm,
+		Fonte:        a.dados().Publico.Fonte,
+		Nacional:     a.dados().Publico.Nacional,
 		UFs:          ufs,
 		Municipal:    a.procedenciaDoMunicipal(),
-		DadosEleicao: a.dados.Publico.Eleicao,
-		DadosTurno:   a.dados.Publico.Turno,
-		DadosSemDado: a.dados.Publico.SemDado,
+		DadosEleicao: a.dados().Publico.Eleicao,
+		DadosTurno:   a.dados().Publico.Turno,
+		DadosSemDado: a.dados().Publico.SemDado,
 		DadosAviso:   procedencia.Aviso,
 	})
 }
@@ -799,13 +807,13 @@ func (a *app) handleHome(w http.ResponseWriter, _ *http.Request) {
 	eleicao := jsonString(a.cfg.Eleicao)
 	turno := jsonString(a.cfg.Turno)
 
-	resposta := make([]byte, 0, len(a.dados.PublicoBruto)+len(eleicao)+len(turno)+32)
+	resposta := make([]byte, 0, len(a.dados().PublicoBruto)+len(eleicao)+len(turno)+32)
 	resposta = append(resposta, `{"eleicao":`...)
 	resposta = append(resposta, eleicao...)
 	resposta = append(resposta, `,"turno":`...)
 	resposta = append(resposta, turno...)
 	resposta = append(resposta, `,"publico":`...)
-	resposta = append(resposta, a.dados.PublicoBruto...)
+	resposta = append(resposta, a.dados().PublicoBruto...)
 	resposta = append(resposta, '}', '\n')
 
 	escreverJSONCru(w, http.StatusOK, resposta)
@@ -936,18 +944,18 @@ func (a *app) handleUfsGeoJSON(w http.ResponseWriter, _ *http.Request) {
 		})
 		return
 	}
-	writeJSON(w, http.StatusOK, a.dados.Malha)
+	writeJSON(w, http.StatusOK, a.dados().Malha)
 }
 
 // handleIdentidade serve a curadoria do card de estado (figurinhas emoji,
 // apelido e destaques por UF). Sem o arquivo, responde {"UF":{}} com 200: o
 // front fica sem figurinha e o mapa não quebra por causa de enfeite.
 func (a *app) handleIdentidade(w http.ResponseWriter, _ *http.Request) {
-	if len(a.dados.Identidade) == 0 {
+	if len(a.dados().Identidade) == 0 {
 		escreverJSONCru(w, http.StatusOK, []byte("{\"UF\":{}}\n"))
 		return
 	}
-	escreverJSONCru(w, http.StatusOK, a.dados.Identidade)
+	escreverJSONCru(w, http.StatusOK, a.dados().Identidade)
 }
 
 func writeJSON(w http.ResponseWriter, status int, valor any) {
@@ -1119,7 +1127,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	log.Printf("dados carregados: %d UFs, %d features", len(aplicacao.dados.Publico.UFs), len(aplicacao.dados.Malha.Features))
+	log.Printf("dados carregados: %d UFs, %d features", len(aplicacao.dados().Publico.UFs), len(aplicacao.dados().Malha.Features))
+	// A partir daqui o snapshot novo entra sem restart: a coleta só publica o
+	// publico.json e o vigia troca o retrato no ar (ver hot_reload.go).
+	aplicacao.iniciarVigiaDados()
 	// Uma linha só com a origem: no dia da eleição é o que se olha primeiro
 	// para saber se o painel está no turno certo.
 	log.Print(descricaoFonte(aplicacao.fonte))

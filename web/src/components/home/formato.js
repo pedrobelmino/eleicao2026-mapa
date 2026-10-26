@@ -1,7 +1,18 @@
 // Formatação e cores usadas pelos blocos da home. As regras seguem a home
 // antiga: ponto de milhar, vírgula decimal e "—" quando o dado falta.
+//
+// COR = CANDIDATO (PL azul / PT vermelho), NUNCA = quem lidera.
+// Regra do Pedro (25/10/2026): FLAVIO BOLSONARO (PL) é SEMPRE #1e58a8 e LULA
+// (PT) é SEMPRE #c8102e, em toda a interface — placar, barras, tabelas por
+// região/UF, legenda, tooltip e mapa. A cor não pode mudar com o líder do
+// momento nem com a posição do candidato na lista do TSE (a lista vem ordenada
+// por votos: colorir por índice pintava de azul quem estava na frente).
+import { CORES_PARTIDO, COR_NEUTRA } from '../../mapa.js'
 
-export const CORES = ['#1e58a8', '#c8102e', '#8a5a00', '#0f766e']
+// Paleta por PARTIDO. Nada aqui é posicional: um partido desconhecido fica
+// cinza neutro em vez de herdar a cor da posição na lista.
+export const CORES = CORES_PARTIDO
+export { COR_NEUTRA }
 
 // Abaixo deste piso a amostra ainda é pequena demais para parecer resultado.
 export const AMOSTRA_PISO = 5
@@ -43,12 +54,27 @@ export function fracaoSecoes(item) {
   return `${pct(valor, 2)}% das seções`
 }
 
-export function coresCandidatos(nacional) {
-  const mapa = {}
-  for (const [indice, candidato] of (nacional?.candidatos || []).entries()) {
-    mapa[candidato.nome] = CORES[indice % CORES.length]
-  }
-  return mapa
+// Cor padrão de um candidato: PARTIDO, nunca índice/posição.
+// PL (Flávio Bolsonaro) -> azul; PT (Lula) -> vermelho; resto -> cinza neutro.
+export function corDoCandidato(candidato) {
+  const partido = String(candidato?.partido || '').toUpperCase()
+  return CORES_PARTIDO[partido] || COR_NEUTRA
+}
+
+// Partido do líder de uma UF/região: lido da lista de candidatos DAQUELE item
+// (nome -> partido). A cor sai do partido, nunca da ordem de chegada.
+export function partidoDoLider(item) {
+  const lider = item?.lider
+  if (!lider) return ''
+  const achou = (item?.candidatos || []).find((c) => c?.nome === lider)
+  return String(achou?.partido || '').toUpperCase()
+}
+
+// Cor do líder de uma UF/região: só o PARTIDO do líder; sem partido, cinza
+// neutro. Nunca a posição na lista.
+export function corDoLider(item) {
+  const partido = partidoDoLider(item)
+  return CORES_PARTIDO[partido] || COR_NEUTRA
 }
 
 export function origemDe(ponto) {

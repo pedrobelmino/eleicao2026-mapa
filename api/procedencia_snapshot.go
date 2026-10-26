@@ -45,7 +45,7 @@ func numeroDoTurno(valor string) string {
 //
 //	incoerente = o retrato em disco não é do turno que a tela exibe
 func (a *app) procedenciaDoSnapshot() procedenciaSnapshot {
-	arquivo := a.dados.Publico
+	arquivo := a.dados().Publico
 	procedencia := procedenciaSnapshot{
 		Eleicao:  arquivo.Eleicao,
 		Turno:    arquivo.Turno,

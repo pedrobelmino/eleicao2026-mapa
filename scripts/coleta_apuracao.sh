@@ -34,6 +34,22 @@ FORCAR=0
 mkdir -p "$(dirname "$LOG")"
 logar() { printf '%s %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*" >>"$LOG"; }
 
+# ------------------------------------------ limite de vida (liberar a trava)
+# Uma coleta travada (rede muda, docker pendurado) não pode segurar a trava para
+# sempre. Este bloco re-executa o próprio script sob `timeout` ANTES de pegar o
+# flock: quando o limite estoura o processo morre e o kernel libera a trava.
+# 1740 s < TimeoutStartSec=1800 do systemd (o systemd continua sendo a última linha).
+LIMITE_S="${ELEICAO_LIMITE_S:-1740}"
+if [ "${ELEICAO_SOB_TIMEOUT:-0}" != 1 ]; then
+  export ELEICAO_SOB_TIMEOUT=1 ELEICAO_LIMITE_S="$LIMITE_S"
+  timeout -k 30 "$LIMITE_S" /bin/bash "$0" "$@"
+  rc=$?
+  if [ "$rc" = 124 ] || [ "$rc" = 137 ]; then
+    logar "AVISO: coleta encerrada no limite de ${LIMITE_S}s (timeout) — trava liberada"
+  fi
+  exit "$rc"
+fi
+
 # ---------------------------------------------------------------- dia da eleição
 DIA="$(jq -r '.dia_eleicao // "2026-10-25"' "$CONFIG" 2>/dev/null || echo 2026-10-25)"
 HOJE="$(date +%F)"
@@ -51,6 +67,26 @@ PY
     exit 0
   fi
 fi
+
+# ------------------------------------------------- trava de exclusão mútua (flock)
+# O timer roda de 5 em 5 min e uma coleta forçada pode cair em cima: duas
+# execuções reescrevendo publico.json e reiniciando a api ao mesmo tempo. A trava
+# cobre coleta + publicação + restart — o fd 9 fica aberto até o script sair.
+# NÃO BLOQUEANTE: se já há coleta rodando, este ciclo é PULADO (empilhar é pior:
+# o dado que importa é o último do TSE, não a fila). O kernel libera a trava
+# quando o dono morre; o `timeout` acima limita a vida do dono.
+LOCK_DIR="$BASE_HERMES/run"
+LOCK="$LOCK_DIR/eleicao-coleta.lock"
+mkdir -p "$LOCK_DIR"
+exec 9>>"$LOCK"                     # append: `>` truncaria o pid do dono
+if ! flock -n 9; then
+  dono="$(tail -1 "$LOCK" 2>/dev/null)"
+  logar "outra coleta em andamento (${dono:-dono desconhecido}) — pulando este ciclo"
+  exit 0
+fi
+truncate -s 0 "$LOCK" 2>/dev/null || true
+printf 'pid=%s desde=%s\n' "$$" "$(date '+%F %T')" >&9
+logar "trava adquirida: $LOCK (pid=$$)"
 
 # ------------------------------------------------------------------- coleta TSE
 cd "$PAINEL" || { logar "ERRO: repositório do painel ausente em $PAINEL"; exit 1; }
@@ -98,10 +134,57 @@ if [ -f "$SITE_JSON" ] && cmp -s "$PAINEL_JSON" "$SITE_JSON"; then
   exit 0
 fi
 
-cp "$PAINEL_JSON" "$SITE_JSON.tmp" && mv "$SITE_JSON.tmp" "$SITE_JSON"
+# Escrita atômica: cópia para um temporário NO MESMO diretório, flush em disco e
+# rename. O rename é atômico no mesmo filesystem: quem lê (a api, o servidor)
+# vê o arquivo antigo inteiro ou o novo inteiro, nunca meio arquivo.
+TMP_SITE="$SITE_JSON.tmp.$$"
+if ! cp "$PAINEL_JSON" "$TMP_SITE" || ! sync "$TMP_SITE" 2>/dev/null; then
+  rm -f "$TMP_SITE"
+  logar "ERRO: falha ao preparar $TMP_SITE — site e api não são tocados"
+  exit 1
+fi
+if ! mv -f "$TMP_SITE" "$SITE_JSON"; then
+  rm -f "$TMP_SITE"
+  logar "ERRO: falha no rename para $SITE_JSON — site e api não são tocados"
+  exit 1
+fi
 logar "publicado em $SITE_JSON (gerado_em=$GERADO)"
 
-# A api lê o arquivo UMA vez no boot: sem restart o dado novo não aparece.
+# ------------------------------------------------------------------- api no ar
+# A api recarrega o publico.json SOZINHA (hot-reload em api/hot_reload.go: stat
+# a cada 2 s + troca ATÔMICA do retrato servido). Reiniciar o container deixou
+# de ser necessário — e era exatamente o que gerava 502 para quem estava com a
+# página aberta durante a apuração (recreate de ~9 s, 12 janelas de erro por
+# hora; medido em 25/10/2026 nos acessos de Android real).
+#
+# Aqui só se ESPERA o gerado_em do /api/health refletir o snapshot publicado.
+API_BASE="$(jq -r '.api_base // "http://127.0.0.1:8110"' "$CONFIG" 2>/dev/null || echo http://127.0.0.1:8110)"
+
+# gerado_em que a api está servindo agora (vazio = não respondeu).
+gerado_no_ar() {
+  local saude
+  saude="$(curl -s -m 3 "$API_BASE/api/health" 2>/dev/null)" || { printf ''; return 0; }
+  printf '%s' "$saude" | jq -r '.gerado_em // ""' 2>/dev/null
+}
+
+# Até 30 s de espera. O relógio normal é ~2–4 s (tique do vigia de 2 s + recarga
+# de ~40 ms); o aviso em 10 s existe para o log mostrar que algo está lento
+# ANTES de cogitar restart.
+ESPERA_HOT_S=30
+for i in $(seq 1 "$ESPERA_HOT_S"); do
+  gerado_api="$(gerado_no_ar)"
+  if [ "$gerado_api" = "$GERADO" ]; then
+    logar "hot-reload confirmado: /api/health gerado_em=$GERADO em ${i}s, SEM restart da api"
+    exit 0
+  fi
+  if [ "$i" = 10 ]; then
+    logar "hot-reload ainda não refletiu em 10s (api em gerado_em=${gerado_api:-sem-resposta}) — sigo esperando sem restart até ${ESPERA_HOT_S}s"
+  fi
+  sleep 1
+done
+logar "AVISO: hot-reload não refletiu gerado_em=$GERADO em ${ESPERA_HOT_S}s — caindo no RESTART (fallback)"
+
+# ------------------------------------------- FALLBACK: restart (só se falhou)
 # O systemd roda este script com PATH enxuto (/usr/local/bin:/usr/bin:/bin) e o
 # docker desta máquina é do snap (/snap/bin/docker) — resolver o binário de forma
 # explícita e validar antes de chamar: com `docker` cru o restart virava rc=127
@@ -111,10 +194,10 @@ if [ -z "$DOCKER_BIN" ] && [ -x /snap/bin/docker ]; then
   DOCKER_BIN=/snap/bin/docker
 fi
 if [ -z "$DOCKER_BIN" ] || [ ! -x "$DOCKER_BIN" ]; then
-  logar "ERRO DOCKER AUSENTE: binário do docker não encontrado nem em PATH=$PATH nem em /snap/bin/docker — snapshot publicado em $SITE_JSON, mas a api NÃO foi reiniciada (dado velho no ar)"
+  logar "ERRO DOCKER AUSENTE: binário do docker não encontrado nem em PATH=$PATH nem em /snap/bin/docker — snapshot publicado em $SITE_JSON, mas a api NÃO foi reiniciada e o hot-reload não confirmou (dado velho no ar)"
   exit 3
 fi
-logar "docker: usando $DOCKER_BIN"
+logar "fallback: docker em $DOCKER_BIN"
 
 saida="$(cd "$PROJETO" && "$DOCKER_BIN" compose -p eleicao2026-mapa restart api 2>&1)"
 rc_restart=$?
@@ -122,13 +205,13 @@ if [ "$rc_restart" -ne 0 ]; then
   logar "ERRO RESTART API: $DOCKER_BIN compose -p eleicao2026-mapa restart api -> rc=$rc_restart ${saida//$'\n'/ }"
   exit 2
 fi
-logar "restart da api -> rc=0 ${saida//$'\n'/ }"
+logar "restart da api (fallback) -> rc=0 ${saida//$'\n'/ }"
 
 for _ in $(seq 1 30); do
-  saude="$(curl -s -m 5 "$(jq -r '.api_base // "http://127.0.0.1:8110"' "$CONFIG" 2>/dev/null || echo http://127.0.0.1:8110)/api/health" 2>/dev/null)"
+  saude="$(curl -s -m 5 "$API_BASE/api/health" 2>/dev/null)"
   gerado_api="$(printf '%s' "$saude" | jq -r '.gerado_em // ""' 2>/dev/null)"
   if [ "$gerado_api" = "$GERADO" ]; then
-    logar "api servindo o snapshot novo: /api/health gerado_em=$gerado_api turno=$(printf '%s' "$saude" | jq -r '.turno')"
+    logar "api servindo o snapshot novo (após restart): /api/health gerado_em=$gerado_api turno=$(printf '%s' "$saude" | jq -r '.turno')"
     exit 0
   fi
   sleep 2

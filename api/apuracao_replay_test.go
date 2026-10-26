@@ -148,9 +148,9 @@ func TestReplayApuracaoPorSecao(t *testing.T) {
 	}
 
 	// O último passo é o arquivo inteiro: bate com o agregado publicado por UF.
-	if aplicacao.dados != nil && aplicacao.dados.Publico != nil {
+	if aplicacao.dados() != nil && aplicacao.dados().Publico != nil {
 		var esperadoLula, esperadoFlavio int64
-		for _, uf := range aplicacao.dados.Publico.UFs {
+		for _, uf := range aplicacao.dados().Publico.UFs {
 			for _, candidato := range uf.Candidatos {
 				switch candidato.Nome {
 				case "LULA":

@@ -353,16 +353,16 @@ func montarApuracaoReplay(a *app) *apuracaoReplayResposta {
 			"ordem em que as seções entram (UF menor fecha primeiro; seções na ordem do arquivo do TSE)",
 		},
 	}
-	if a.dados != nil && a.dados.Publico != nil {
-		resposta.GeradoEm = a.dados.Publico.GeradoEm
+	if a.dados() != nil && a.dados().Publico != nil {
+		resposta.GeradoEm = a.dados().Publico.GeradoEm
 		var extra publicoApuracao
-		if len(a.dados.PublicoBruto) > 0 {
-			if err := json.Unmarshal(a.dados.PublicoBruto, &extra); err == nil {
+		if len(a.dados().PublicoBruto) > 0 {
+			if err := json.Unmarshal(a.dados().PublicoBruto, &extra); err == nil {
 				resposta.FonteGeradaTexto = extra.FonteGeradaTexto
 			}
 		}
-		if a.dados.Publico.Fonte != "" {
-			resposta.Fonte = a.dados.Publico.Fonte
+		if a.dados().Publico.Fonte != "" {
+			resposta.Fonte = a.dados().Publico.Fonte
 		}
 	}
 
@@ -381,8 +381,8 @@ func montarApuracaoReplay(a *app) *apuracaoReplayResposta {
 	resposta.Disponivel = true
 	resposta.SecoesTotal = passos[len(passos)-1].SecoesTotal
 	resposta.Passos = passos
-	if a.dados != nil && a.dados.Publico != nil {
-		resposta.UFsBase = baseDoReplay(porUF, a.dados.Publico)
+	if a.dados() != nil && a.dados().Publico != nil {
+		resposta.UFsBase = baseDoReplay(porUF, a.dados().Publico)
 	}
 
 	// Candidatos na ordem do placar do arquivo: os dois que a base traz por UF.
@@ -392,8 +392,8 @@ func montarApuracaoReplay(a *app) *apuracaoReplayResposta {
 			continue
 		}
 		candidato := candidatoApuracao{Codigo: codigo, Nome: nome}
-		if a.dados != nil && a.dados.Publico != nil {
-			for _, uf := range a.dados.Publico.UFs {
+		if a.dados() != nil && a.dados().Publico != nil {
+			for _, uf := range a.dados().Publico.UFs {
 				for _, publicado := range uf.Candidatos {
 					if publicado.Nome == nome {
 						candidato.Partido = publicado.Partido
@@ -410,8 +410,8 @@ func montarApuracaoReplay(a *app) *apuracaoReplayResposta {
 
 	// Conferência: soma de seções do dump contra o agregado publicado por UF.
 	var secoesPublico int64
-	if a.dados != nil && a.dados.Publico != nil {
-		for _, uf := range a.dados.Publico.UFs {
+	if a.dados() != nil && a.dados().Publico != nil {
+		for _, uf := range a.dados().Publico.UFs {
 			secoesPublico += uf.Ts
 		}
 	}

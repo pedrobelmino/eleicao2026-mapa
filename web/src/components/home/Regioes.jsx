@@ -1,5 +1,5 @@
 import SeloAmostra from './Amostra.jsx'
-import { coresCandidatos, pct, semSecaoApurada } from './formato.js'
+import { corDoCandidato, pct, semSecaoApurada } from './formato.js'
 
 // Percentual de candidato com 1 casa; sem número, só o traço (sem "%").
 function pctCandidato(valor) {
@@ -15,7 +15,6 @@ export default function Regioes({ dados }) {
   if (!regioes.length) return <p className="vazio">sem dado por região.</p>
 
   const nacional = dados.nacional || {}
-  const cores = coresCandidatos(nacional)
   const nomes = (nacional.candidatos || []).slice(0, 2).map((c) => c.nome)
 
   return (
@@ -77,7 +76,7 @@ export default function Regioes({ dados }) {
                         style={
                           espera
                             ? undefined
-                            : { color: cores[nome] || '#1c232b' }
+                            : { color: corDoCandidato(candidato) }
                         }
                         key={nome}
                       >

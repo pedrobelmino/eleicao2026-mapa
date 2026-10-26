@@ -1,13 +1,12 @@
 import {
-  CORES,
+  COR_NEUTRA,
   CORES_2022,
+  corDoCandidato,
   origemDe,
   pct,
   pontosValidos,
   resumoOrigem,
 } from './formato.js'
-
-const PALETA = CORES
 const W = 720
 const H = 300
 const L = 46
@@ -24,7 +23,7 @@ export default function GraficoSerie({
   pontos,
   rotulo,
   nomesPreferidos,
-  cores,
+  candidatos = [],
   fonte,
 }) {
   const ps = pontosValidos(pontos)
@@ -70,9 +69,15 @@ export default function GraficoSerie({
     nomes = vistos.slice(0, 2)
   }
 
-  const mapaCores = rotulo === '2022' ? CORES_2022 : cores || {}
-  const corDe = (nome, indice) =>
-    mapaCores[nome] || PALETA[indice % PALETA.length]
+  // cor = CANDIDATO (PL azul / PT vermelho), nunca = quem lidera: 2022 usa a
+  // paleta histórica por nome; o resto resolve o PARTIDO no array de
+  // candidatos. Quem não estiver no array fica CINZA NEUTRO. Antes a sobra caía
+  // numa paleta por índice, então a posição da lista virava cor.
+  const corDe = (nome) => {
+    if (rotulo === '2022') return CORES_2022[nome] || COR_NEUTRA
+    const achou = (candidatos || []).find((c) => c?.nome === nome)
+    return achou ? corDoCandidato(achou) : COR_NEUTRA
+  }
 
   let maxY = 0
   for (const ponto of ps) {
@@ -112,9 +117,9 @@ export default function GraficoSerie({
   return (
     <>
       <div className="serie-legenda">
-        {nomes.map((nome, indice) => (
+        {nomes.map((nome) => (
           <span key={nome}>
-            <b style={{ background: corDe(nome, indice) }} />
+            <b style={{ background: corDe(nome) }} />
             {nome}
           </span>
         ))}
@@ -197,8 +202,8 @@ export default function GraficoSerie({
           votos válidos (%)
         </text>
 
-        {nomes.map((nome, indice) => {
-          const cor = corDe(nome, indice)
+        {nomes.map((nome) => {
+          const cor = corDe(nome)
           let caminho = ''
           let total = 0
           let ultimo = null
