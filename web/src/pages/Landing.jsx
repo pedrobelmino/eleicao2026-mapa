@@ -42,8 +42,20 @@ export default function Landing() {
     definirMeta({
       titulo: 'Pedro Belmino — Analista de Sistemas',
       descricao:
-        'Pedro Belmino, analista de sistemas. Desenvolvimento em Java, Go e IA. Perfis no LinkedIn, GitHub, Medium e no canal Belmino Souls. Monitoramento da eleição 2026 em tempo real.',
+        'Pedro Belmino, analista de sistemas. Desenvolvimento em Java, Go e IA. Perfis no LinkedIn, GitHub, Medium e no canal Belmino Souls. Portfólio com o monitoramento da eleição 2026 e o mapa interativo.',
     })
+  }, [])
+
+  // O SPA é client-rendered: no acesso direto a /sobre#portfolio o navegador
+  // procura a âncora antes de o React montar a seção, então não rola sozinho.
+  // Aqui a rolagem é feita depois do primeiro render.
+  useEffect(() => {
+    const alvo = window.location.hash.replace(/^#/, '')
+    if (!alvo) return undefined
+    const quadro = window.requestAnimationFrame(() => {
+      document.getElementById(alvo)?.scrollIntoView({ block: 'start' })
+    })
+    return () => window.cancelAnimationFrame(quadro)
   }, [])
 
   return (
@@ -81,27 +93,42 @@ export default function Landing() {
           ))}
         </nav>
 
-        <section className="landing-eleicao" aria-labelledby="landing-eleicao-titulo">
-          <div className="landing-eleicao-texto">
-            <span className="landing-etiqueta">projeto em produção</span>
-            <h2 id="landing-eleicao-titulo">Monitoramento da eleição 2026</h2>
-            <p>
-              Painel da apuração presidencial que lê os dados oficiais do TSE e
-              se atualiza sozinho: placar, regiões, estados e o mapa interativo
-              com drill-down até o local de votação.
-            </p>
-          </div>
-          <a
-            className="landing-cta"
-            href="/eleicao"
-            onClick={(evento) => {
-              evento.preventDefault()
-              navega('/eleicao')
-            }}
-          >
-            Acompanhar a apuração ao vivo
-            <span aria-hidden="true">→</span>
-          </a>
+        <section
+          id="portfolio"
+          className="landing-portfolio"
+          aria-labelledby="landing-portfolio-titulo"
+        >
+          <h2 id="landing-portfolio-titulo">Portfólio</h2>
+
+          <article className="landing-eleicao">
+            <div className="landing-eleicao-texto">
+              <span className="landing-etiqueta">produto em produção</span>
+              <h3>Eleição 2026 — acompanhamento e mapa</h3>
+              <p>
+                Painel da apuração presidencial que lê os dados oficiais do TSE
+                e se atualiza sozinho: placar, regiões, estados e o mapa
+                interativo com drill-down até o local de votação.
+              </p>
+            </div>
+            <div className="landing-eleicao-acoes">
+              <button
+                type="button"
+                className="landing-cta"
+                onClick={() => navega('/eleicao')}
+              >
+                Acompanhar a apuração
+                <span aria-hidden="true">→</span>
+              </button>
+              <button
+                type="button"
+                className="landing-cta landing-cta--secundario"
+                onClick={() => navega('/mapa')}
+              >
+                Abrir o mapa interativo
+                <span aria-hidden="true">→</span>
+              </button>
+            </div>
+          </article>
         </section>
 
         <footer className="landing-rodape">
