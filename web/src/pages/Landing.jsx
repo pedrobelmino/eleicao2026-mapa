@@ -3,46 +3,18 @@ import { navega } from '../router.jsx'
 import { definirMeta } from '../meta.js'
 import '../landing.css'
 
-// Nível 1 das rotas: quem é o Pedro, para onde ir a partir daqui.
-// Os quatro links externos abrem em aba nova (target=_blank + rel noopener).
-// O Medium ainda NÃO tem URL confirmada — o item fica visível, mas travado.
-const LINKS = [
-  {
-    chave: 'linkedin',
-    titulo: 'LinkedIn',
-    descricao: 'trajetória, experiências e contato profissional',
-    href: 'https://www.linkedin.com/in/pedrobelmino',
-    rotulo: 'in/pedrobelmino',
-  },
-  {
-    chave: 'github',
-    titulo: 'GitHub',
-    descricao: 'código, projetos e experimentos abertos',
-    href: 'https://github.com/pedrobelmino',
-    rotulo: 'github.com/pedrobelmino',
-  },
-  {
-    chave: 'medium',
-    titulo: 'Medium',
-    descricao: 'textos sobre engenharia e arquitetura',
-    href: 'https://medium.com/@pedrobelmino',
-    rotulo: '@pedrobelmino',
-  },
-  {
-    chave: 'youtube',
-    titulo: 'YouTube · Belmino Souls',
-    descricao: 'canal de games: Dark Souls, Elden Ring e outros soulslike',
-    href: 'https://www.youtube.com/@belmino.c.f',
-    rotulo: '@belmino.c.f',
-  },
-]
+// Página /sobre: só o portfólio.
+// Ordem de 28/10/2026 (ADV-218): o bloco "sobre mim" (selo, nome, linha de
+// apresentação e o menu de perfis LinkedIn/GitHub/Medium/YouTube) saiu daqui.
+// O que sobra é o produto, e o rodapé neutro do site — nada de apresentação
+// pessoal na página. Rollback: Landing.jsx.bak-antes-remover-sobre-20261028.
 
 export default function Landing() {
   useEffect(() => {
     definirMeta({
-      titulo: 'Pedro Belmino — Analista de Sistemas',
+      titulo: 'Portfólio — Pedro Belmino',
       descricao:
-        'Pedro Belmino, analista de sistemas. Desenvolvimento em Java, Go e IA. Perfis no LinkedIn, GitHub, Medium e no canal Belmino Souls. Portfólio com o monitoramento da eleição 2026 e o mapa interativo.',
+        'Portfólio de Pedro Belmino: monitoramento da eleição presidencial 2026, com placar da apuração em tempo real e mapa interativo da votação.',
     })
   }, [])
 
@@ -61,49 +33,17 @@ export default function Landing() {
   return (
     <div className="landing-app">
       <div className="landing-envelope">
-        <header className="landing-topo">
-          <span className="landing-selo">
-            <i aria-hidden="true" />
-            analista de sistemas
-          </span>
-          <h1>Pedro Belmino</h1>
-          <p className="landing-linha">
-            Construo sistemas em <b>Java</b> e <b>Go</b> e ponho <b>IA</b> para
-            trabalhar dentro deles — arquitetura de soluções, APIs e automação
-            de verdade, com teste antes de confiar.
-          </p>
-        </header>
-
-        <nav className="landing-portas" aria-label="perfis e canais">
-          {LINKS.map((item) => (
-            <a
-              key={item.chave}
-              className={`landing-porta landing-porta--${item.chave}${
-                item.pendente ? ' landing-porta--pendente' : ''
-              }`}
-              href={item.href}
-              {...(item.pendente
-                ? { 'aria-disabled': 'true', title: 'link ainda não confirmado' }
-                : { target: '_blank', rel: 'noopener noreferrer' })}
-            >
-              <span className="landing-porta-nome">{item.titulo}</span>
-              <span className="landing-porta-desc">{item.descricao}</span>
-              <span className="landing-porta-url">{item.rotulo} ↗</span>
-            </a>
-          ))}
-        </nav>
-
         <section
           id="portfolio"
           className="landing-portfolio"
           aria-labelledby="landing-portfolio-titulo"
         >
-          <h2 id="landing-portfolio-titulo">Portfólio</h2>
+          <h1 id="landing-portfolio-titulo">Portfólio</h1>
 
           <article className="landing-eleicao">
             <div className="landing-eleicao-texto">
               <span className="landing-etiqueta">produto em produção</span>
-              <h3>Eleição 2026 — acompanhamento e mapa</h3>
+              <h2>Eleição 2026 — acompanhamento e mapa</h2>
               <p>
                 Painel da apuração presidencial que lê os dados oficiais do TSE
                 e se atualiza sozinho: placar, regiões, estados e o mapa
@@ -132,9 +72,6 @@ export default function Landing() {
         </section>
 
         <footer className="landing-rodape">
-          <p>
-            Fortaleza · Ceará — <b>Pedro Belmino</b>, analista de sistemas.
-          </p>
           <p className="landing-rodape-fino">
             Painel eleitoral sem cookies, sem IP e sem rastreamento: a contagem
             de visitas é anônima.
