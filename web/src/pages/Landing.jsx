@@ -3,78 +3,119 @@ import { navega } from '../router.jsx'
 import { definirMeta } from '../meta.js'
 import '../landing.css'
 
-// Página /sobre: só o portfólio.
-// Ordem de 28/10/2026 (ADV-218): o bloco "sobre mim" (selo, nome, linha de
-// apresentação e o menu de perfis LinkedIn/GitHub/Medium/YouTube) saiu daqui.
-// O que sobra é o produto, e o rodapé neutro do site — nada de apresentação
-// pessoal na página. Rollback: Landing.jsx.bak-antes-remover-sobre-20261028.
+// Página /sobre — quem é o Pedro, sem o portfólio.
+// 28/10/2026 (ADV-235): o portfólio saiu daqui e virou a rota /portfolio. O
+// bloco "sobre mim" (selo, nome, linha de apresentação, menu de perfis e a
+// linha de identidade do rodapé) volta inteiro — é o conteúdo que a ordem de
+// ADV-218 tinha removido por engano.
+// Rollback: Landing.jsx.bak-adv235-20261028-2205.
+// Os quatro links externos abrem em aba nova (target=_blank + rel noopener).
+const LINKS = [
+  {
+    chave: 'linkedin',
+    titulo: 'LinkedIn',
+    descricao: 'trajetória, experiências e contato profissional',
+    href: 'https://www.linkedin.com/in/pedrobelmino',
+    rotulo: 'in/pedrobelmino',
+  },
+  {
+    chave: 'github',
+    titulo: 'GitHub',
+    descricao: 'código, projetos e experimentos abertos',
+    href: 'https://github.com/pedrobelmino',
+    rotulo: 'github.com/pedrobelmino',
+  },
+  {
+    chave: 'medium',
+    titulo: 'Medium',
+    descricao: 'textos sobre engenharia e arquitetura',
+    href: 'https://medium.com/@pedrobelmino',
+    rotulo: '@pedrobelmino',
+  },
+  {
+    chave: 'youtube',
+    titulo: 'YouTube · Belmino Souls',
+    descricao: 'canal de games: Dark Souls, Elden Ring e outros soulslike',
+    href: 'https://www.youtube.com/@belmino.c.f',
+    rotulo: '@belmino.c.f',
+  },
+]
 
 export default function Landing() {
   useEffect(() => {
     definirMeta({
-      titulo: 'Portfólio — Pedro Belmino',
+      titulo: 'Pedro Belmino — Analista de Sistemas',
       descricao:
-        'Portfólio de Pedro Belmino: monitoramento da eleição presidencial 2026, com placar da apuração em tempo real e mapa interativo da votação.',
+        'Pedro Belmino, analista de sistemas. Desenvolvimento em Java, Go e IA. Perfis no LinkedIn, GitHub, Medium e no canal Belmino Souls. Portfólio de produtos em produção na página Portfólio.',
     })
-  }, [])
-
-  // O SPA é client-rendered: no acesso direto a /sobre#portfolio o navegador
-  // procura a âncora antes de o React montar a seção, então não rola sozinho.
-  // Aqui a rolagem é feita depois do primeiro render.
-  useEffect(() => {
-    const alvo = window.location.hash.replace(/^#/, '')
-    if (!alvo) return undefined
-    const quadro = window.requestAnimationFrame(() => {
-      document.getElementById(alvo)?.scrollIntoView({ block: 'start' })
-    })
-    return () => window.cancelAnimationFrame(quadro)
   }, [])
 
   return (
     <div className="landing-app">
       <div className="landing-envelope">
-        <section
-          id="portfolio"
-          className="landing-portfolio"
-          aria-labelledby="landing-portfolio-titulo"
-        >
-          <h1 id="landing-portfolio-titulo">Portfólio</h1>
+        <nav className="landing-secoes" aria-label="seções do site">
+          <a
+            className="landing-secao"
+            href="/sobre"
+            aria-current="page"
+            onClick={(evento) => {
+              evento.preventDefault()
+              navega('/sobre')
+            }}
+          >
+            Quem sou eu
+          </a>
+          <a
+            className="landing-secao"
+            href="/portfolio"
+            data-prova="nav-portfolio"
+            onClick={(evento) => {
+              evento.preventDefault()
+              navega('/portfolio')
+            }}
+          >
+            Portfólio <span aria-hidden="true">→</span>
+          </a>
+        </nav>
 
-          <article className="landing-eleicao">
-            <div className="landing-eleicao-texto">
-              <span className="landing-etiqueta">produto em produção</span>
-              <h2>Eleição 2026 — acompanhamento e mapa</h2>
-              <p>
-                Painel da apuração presidencial que lê os dados oficiais do TSE
-                e se atualiza sozinho: placar, regiões, estados e o mapa
-                interativo com drill-down até o local de votação.
-              </p>
-            </div>
-            <div className="landing-eleicao-acoes">
-              <button
-                type="button"
-                className="landing-cta"
-                onClick={() => navega('/eleicao')}
-              >
-                Acompanhar a apuração
-                <span aria-hidden="true">→</span>
-              </button>
-              <button
-                type="button"
-                className="landing-cta landing-cta--secundario"
-                onClick={() => navega('/mapa')}
-              >
-                Abrir o mapa interativo
-                <span aria-hidden="true">→</span>
-              </button>
-            </div>
-          </article>
-        </section>
+        <header className="landing-topo">
+          <span className="landing-selo">
+            <i aria-hidden="true" />
+            analista de sistemas
+          </span>
+          <h1>Pedro Belmino</h1>
+          <p className="landing-linha">
+            Construo sistemas em <b>Java</b> e <b>Go</b> e ponho <b>IA</b> para
+            trabalhar dentro deles — arquitetura de soluções, APIs e automação
+            de verdade, com teste antes de confiar.
+          </p>
+        </header>
+
+        <nav className="landing-portas" aria-label="perfis e canais">
+          {LINKS.map((item) => (
+            <a
+              key={item.chave}
+              className={`landing-porta landing-porta--${item.chave}${
+                item.pendente ? ' landing-porta--pendente' : ''
+              }`}
+              href={item.href}
+              {...(item.pendente
+                ? { 'aria-disabled': 'true', title: 'link ainda não confirmado' }
+                : { target: '_blank', rel: 'noopener noreferrer' })}
+            >
+              <span className="landing-porta-nome">{item.titulo}</span>
+              <span className="landing-porta-desc">{item.descricao}</span>
+              <span className="landing-porta-url">{item.rotulo} ↗</span>
+            </a>
+          ))}
+        </nav>
 
         <footer className="landing-rodape">
+          <p>
+            Fortaleza · Ceará — <b>Pedro Belmino</b>, analista de sistemas.
+          </p>
           <p className="landing-rodape-fino">
-            Painel eleitoral sem cookies, sem IP e sem rastreamento: a contagem
-            de visitas é anônima.
+            Site sem cookies, sem IP e sem rastreamento.
           </p>
         </footer>
       </div>

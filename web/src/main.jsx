@@ -1,8 +1,13 @@
 import React from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App.jsx'
+import { encaminharLinkLegado } from './router.jsx'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import './styles.css'
+
+// Link legado /sobre#portfolio -> /portfolio (ADV-235). Antes do render, para a
+// página errada não piscar na tela.
+encaminharLinkLegado()
 
 class ErrorBoundary extends React.Component {
   constructor(props) {

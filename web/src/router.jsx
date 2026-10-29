@@ -10,6 +10,25 @@ export function normalizarRota(caminho) {
   return rota || '/'
 }
 
+// Link legado (ADV-235): o portfólio saiu da /sobre e virou a rota /portfolio.
+// O endereço antigo /sobre#portfolio continua sendo usado em links por aí e
+// passa a cair em /portfolio.
+export const ANCORA_LEGADA = 'portfolio'
+export const ROTA_PORTFOLIO = '/portfolio'
+
+// Troca a URL antes do primeiro render (chamada por main.jsx): o SPA é
+// client-rendered, então sem isto a /sobre apareceria por um instante antes de
+// o encaminhamento acontecer. Devolve true quando encaminhou.
+export function encaminharLinkLegado() {
+  const rota = normalizarRota(window.location.pathname)
+  const ancora = window.location.hash.replace(/^#/, '')
+  if (rota === '/sobre' && ancora === ANCORA_LEGADA) {
+    window.history.replaceState({}, '', ROTA_PORTFOLIO)
+    return true
+  }
+  return false
+}
+
 export function useRota() {
   const [rota, setRota] = useState(() =>
     normalizarRota(window.location.pathname),
@@ -17,8 +36,18 @@ export function useRota() {
 
   useEffect(() => {
     const aoMudar = () => setRota(normalizarRota(window.location.pathname))
+    // hashchange não muda o pathname: se o legado for acionado dentro da
+    // própria /sobre, encaminharLinkLegado() já corrigiu a URL, e aqui só
+    // avisamos o React.
+    const aoMudarAncora = () => {
+      if (encaminharLinkLegado()) setRota(ROTA_PORTFOLIO)
+    }
     window.addEventListener('popstate', aoMudar)
-    return () => window.removeEventListener('popstate', aoMudar)
+    window.addEventListener('hashchange', aoMudarAncora)
+    return () => {
+      window.removeEventListener('popstate', aoMudar)
+      window.removeEventListener('hashchange', aoMudarAncora)
+    }
   }, [])
 
   return rota

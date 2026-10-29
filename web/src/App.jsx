@@ -1,4 +1,5 @@
 import Landing from './pages/Landing.jsx'
+import Portfolio from './pages/Portfolio.jsx'
 import Home from './pages/Home.jsx'
 import Mapa from './pages/Mapa.jsx'
 import { navega, useRota } from './router.jsx'
@@ -46,17 +47,19 @@ function NaoEncontrado() {
   )
 }
 
-// Quatro rotas, uma por nível:
-//   /        painel da apuração — fallback para site servido sem nginx (ex.:
-//            vite dev); no ar, a raiz pública redireciona para /eleicao
-//   /eleicao painel da apuração em tempo real (a antiga home)
-//   /sobre   landing "sobre mim"
-//   /mapa    mapa interativo (preservado)
+// Cinco rotas, uma por nível:
+//   /          painel da apuração — fallback para site servido sem nginx (ex.:
+//              vite dev); no ar, a raiz pública redireciona para /eleicao
+//   /eleicao   painel da apuração em tempo real (a antiga home)
+//   /sobre     landing "sobre mim"
+//   /portfolio portfólio de produtos em produção (saiu de dentro da /sobre)
+//   /mapa      mapa interativo (preservado)
 export default function App() {
   const rota = useRota()
 
   if (rota === '/') return <Home />
   if (rota === '/sobre') return <Landing />
+  if (rota === '/portfolio') return <Portfolio />
   if (rota === '/eleicao') return <Home />
   if (rota === '/mapa') return <Mapa />
   return <NaoEncontrado />

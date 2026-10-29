@@ -1,9 +1,10 @@
-/* Página /sobre — só o portfólio. Usa os tokens de styles.css (:root) e não
+/* Páginas /sobre e /portfolio. Usa os tokens de styles.css (:root) e não
    reaproveita .home-app (aquela folha é escura e escopada no painel).
-   28/10/2026 (ADV-218): o bloco "sobre mim" saiu da página; as regras de
-   cabeçalho (.landing-topo, .landing-selo, .landing-linha) e do menu de perfis
-   (.landing-porta*) foram removidas junto com o markup.
-   Rollback: landing.css.bak-antes-remover-sobre-20261028. */
+   28/10/2026 (ADV-235): as duas páginas voltaram a ser separadas — o cabeçalho
+   "sobre mim" (.landing-topo/.landing-selo/.landing-linha) e o menu de perfis
+   (.landing-porta*) voltam para a /sobre, e o bloco do produto fica só na
+   /portfolio. A navegação entre as duas é .landing-secoes/.landing-secao.
+   Rollback: landing.css.bak-adv235-20261028-2205. */
 
 .landing-app,
 .landing-app * {
@@ -33,6 +34,161 @@
   gap: 26px;
 }
 
+/* ------------------------------------------------------------- navegação */
+
+.landing-secoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.landing-secao {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--pl);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    transform 140ms ease,
+    border-color 140ms ease;
+}
+
+.landing-secao:hover,
+.landing-secao:focus-visible {
+  transform: translateY(-1px);
+  border-color: var(--line-strong);
+  outline: none;
+}
+
+.landing-secao[aria-current='page'] {
+  background: rgba(30, 88, 168, 0.09);
+  border-color: rgba(30, 88, 168, 0.28);
+}
+
+/* ------------------------------------------------------------- cabeçalho */
+
+.landing-topo {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.landing-selo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  padding: 6px 12px 6px 10px;
+  border-radius: 999px;
+  background: rgba(30, 88, 168, 0.09);
+  border: 1px solid rgba(30, 88, 168, 0.22);
+  color: var(--pl);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.landing-selo i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--pl);
+  box-shadow: 0 0 0 3px rgba(30, 88, 168, 0.16);
+}
+
+.landing-topo h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(38px, 7vw, 56px);
+  line-height: 1.03;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.landing-linha {
+  margin: 0;
+  max-width: 62ch;
+  font-size: 16px;
+  color: #333a44;
+}
+
+.landing-linha b {
+  font-weight: 650;
+  color: var(--ink);
+}
+
+/* --------------------------------------------------------------- portas */
+
+.landing-portas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.landing-porta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+  color: inherit;
+  text-decoration: none;
+  transition:
+    transform 140ms ease,
+    border-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.landing-porta:hover,
+.landing-porta:focus-visible {
+  transform: translateY(-2px);
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow-float);
+  outline: none;
+}
+
+.landing-porta-nome {
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.landing-porta-desc {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.landing-porta-url {
+  margin-top: 6px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--pl);
+}
+
+.landing-porta--youtube .landing-porta-url {
+  color: var(--pt);
+}
+
+.landing-porta--pendente {
+  border-style: dashed;
+  box-shadow: none;
+  background: var(--card-soft);
+}
+
+.landing-porta--pendente .landing-porta-url {
+  color: var(--muted);
+}
+
 /* -------------------------------------------------------------- portfólio */
 
 .landing-portfolio {
@@ -50,14 +206,6 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--muted);
-}
-
-.landing-eleicao h2 {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 24px;
-  line-height: 1.15;
-  letter-spacing: -0.01em;
 }
 
 .landing-eleicao {
@@ -86,6 +234,14 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--pl);
+}
+
+.landing-eleicao h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 24px;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
 }
 
 .landing-eleicao p {
@@ -162,6 +318,11 @@
   margin: 0;
 }
 
+.landing-rodape b {
+  color: var(--ink);
+  font-weight: 650;
+}
+
 .landing-rodape-fino {
   margin-top: 4px;
   font-size: 11px;
@@ -173,6 +334,10 @@
   .landing-envelope {
     padding: 30px 16px 28px;
     gap: 20px;
+  }
+
+  .landing-portas {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .landing-eleicao {
